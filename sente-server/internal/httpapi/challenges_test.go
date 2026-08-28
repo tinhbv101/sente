@@ -114,7 +114,7 @@ func TestTheInviteLinkJourney(t *testing.T) {
 	binhConn := connect(t, server, binh, accepted.GameID)
 	readUntil(t, binhConn, "game_state")
 	send(t, anConn, "move", incomingMove{Kind: "play", Point: "e5", ExpectedMoveNumber: 0})
-	readUntil(t, binhConn, "move_made")
+	readMoveMade(t, binhConn, 1)
 
 	// The link is spent.
 	var after challengeResponse
@@ -354,6 +354,28 @@ func TestForwardedForIsIgnoredUnlessTrusted(t *testing.T) {
 	// The rightmost entry is what our own proxy appended; the left is forgeable.
 	if got := api.clientIP(request); got != "10.0.0.1" {
 		t.Errorf("with trust the proxy's own entry wins, got %q", got)
+	}
+
+	// Behind a CDN the rightmost entry is the CDN itself, so a dedicated header
+	// takes precedence when configured -- and is ignored when not.
+	request.Header.Set("CF-Connecting-IP", "198.51.100.4")
+	if got := api.clientIP(request); got != "10.0.0.1" {
+		t.Errorf("an unconfigured CDN header must be ignored, got %q", got)
+	}
+	api.config.ClientIPHeader = "CF-Connecting-IP"
+	if got := api.clientIP(request); got != "198.51.100.4" {
+		t.Errorf("the configured CDN header should win, got %q", got)
+	}
+	// Without proxy trust the CDN header is forgeable too, so it is ignored.
+	api.config.TrustProxyHeaders = false
+	if got := api.clientIP(request); got != "10.0.0.7" {
+		t.Errorf("no trust means no headers at all, got %q", got)
+	}
+	// An absent header falls back to X-Forwarded-For rather than to nothing.
+	api.config.TrustProxyHeaders = true
+	request.Header.Del("CF-Connecting-IP")
+	if got := api.clientIP(request); got != "10.0.0.1" {
+		t.Errorf("a missing CDN header should fall back, got %q", got)
 	}
 	_ = server
 }

@@ -48,19 +48,21 @@ type config struct {
 	runMigrations  bool
 	publicBaseURL  string
 	trustProxy     bool
+	clientIPHeader string
 }
 
 func loadConfig() (config, error) {
 	hostname, _ := os.Hostname()
 	c := config{
-		addr:          envOr("SENTE_ADDR", ":8080"),
-		databaseURL:   os.Getenv("SENTE_DATABASE_URL"),
-		redisURL:      envOr("SENTE_REDIS_URL", "redis://localhost:6379"),
-		jwtSecret:     os.Getenv("SENTE_JWT_SECRET"),
-		nodeID:        envOr("SENTE_NODE_ID", hostname),
-		runMigrations: envOr("SENTE_MIGRATE", "true") == "true",
-		publicBaseURL: strings.TrimRight(os.Getenv("SENTE_PUBLIC_URL"), "/"),
-		trustProxy:    envOr("SENTE_TRUST_PROXY", "false") == "true",
+		addr:           envOr("SENTE_ADDR", ":8080"),
+		databaseURL:    os.Getenv("SENTE_DATABASE_URL"),
+		redisURL:       envOr("SENTE_REDIS_URL", "redis://localhost:6379"),
+		jwtSecret:      os.Getenv("SENTE_JWT_SECRET"),
+		nodeID:         envOr("SENTE_NODE_ID", hostname),
+		runMigrations:  envOr("SENTE_MIGRATE", "true") == "true",
+		publicBaseURL:  strings.TrimRight(os.Getenv("SENTE_PUBLIC_URL"), "/"),
+		trustProxy:     envOr("SENTE_TRUST_PROXY", "false") == "true",
+		clientIPHeader: os.Getenv("SENTE_CLIENT_IP_HEADER"),
 	}
 	if origins := os.Getenv("SENTE_ALLOWED_ORIGINS"); origins != "" {
 		c.allowedOrigins = strings.Split(origins, ",")
@@ -208,6 +210,7 @@ func run(logger *slog.Logger) error {
 		Issuer: issuer, Limiter: ratelimit.New(redisClient), Logger: logger,
 		AllowedOrigins: config.allowedOrigins,
 		PublicBaseURL:  config.publicBaseURL, TrustProxyHeaders: config.trustProxy,
+		ClientIPHeader: config.clientIPHeader,
 	})
 
 	// Invitations nobody answered are closed once an hour. Reads already treat them

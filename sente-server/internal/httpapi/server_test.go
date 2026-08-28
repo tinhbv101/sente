@@ -215,6 +215,29 @@ func readUntil(t *testing.T, conn *websocket.Conn, kind string) Message {
 	return Message{}
 }
 
+// readMoveMade waits for the move with the given number. The server echoes a
+// player's own move back to them on the same channel the opponent sees it on
+// (docs/06 §3.5), so waiting for "any move_made" can return that echo and let
+// the test race ahead of the opponent. Waiting for the number cannot.
+func readMoveMade(t *testing.T, conn *websocket.Conn, moveNo int) moveMadePayload {
+	t.Helper()
+	for attempt := 0; attempt < 8; attempt++ {
+		message := readUntil(t, conn, "move_made")
+		var made moveMadePayload
+		if err := json.Unmarshal(message.Payload, &made); err != nil {
+			t.Fatal(err)
+		}
+		if made.MoveNumber == moveNo {
+			return made
+		}
+		if made.MoveNumber > moveNo {
+			t.Fatalf("move %d arrived before move %d", made.MoveNumber, moveNo)
+		}
+	}
+	t.Fatalf("never saw move %d", moveNo)
+	return moveMadePayload{}
+}
+
 func send(t *testing.T, conn *websocket.Conn, kind string, payload any) {
 	t.Helper()
 	message, err := newMessage(kind, payload)
@@ -293,24 +316,15 @@ func TestTwoPlayersPlayOverWebSocket(t *testing.T) {
 	// Black plays; both sockets must see it.
 	send(t, blackConn, "move", incomingMove{Kind: "play", Point: "e5", ExpectedMoveNumber: 0})
 	for name, conn := range map[string]*websocket.Conn{"black": blackConn, "white": whiteConn} {
-		message := readUntil(t, conn, "move_made")
-		var made moveMadePayload
-		if err := json.Unmarshal(message.Payload, &made); err != nil {
-			t.Fatal(err)
-		}
-		if made.MoveNumber != 1 || made.Color != "black" || made.Point == nil || *made.Point != "E5" {
+		made := readMoveMade(t, conn, 1)
+		if made.Color != "black" || made.Point == nil || *made.Point != "E5" {
 			t.Errorf("%s saw the wrong move: %+v", name, made)
 		}
 	}
 
 	// White answers from the other socket.
 	send(t, whiteConn, "move", incomingMove{Kind: "play", Point: "e7", ExpectedMoveNumber: 1})
-	message := readUntil(t, blackConn, "move_made")
-	var second moveMadePayload
-	if err := json.Unmarshal(message.Payload, &second); err != nil {
-		t.Fatal(err)
-	}
-	if second.MoveNumber != 2 || second.Color != "white" {
+	if second := readMoveMade(t, blackConn, 2); second.Color != "white" {
 		t.Errorf("black saw the wrong reply: %+v", second)
 	}
 }
@@ -353,7 +367,7 @@ func TestIllegalMovesComeBackWithTheRulesCode(t *testing.T) {
 	readUntil(t, whiteConn, "game_state")
 
 	send(t, blackConn, "move", incomingMove{Kind: "play", Point: "e5", ExpectedMoveNumber: 0})
-	readUntil(t, whiteConn, "move_made")
+	readMoveMade(t, whiteConn, 1)
 
 	send(t, whiteConn, "move", incomingMove{Kind: "play", Point: "e5", ExpectedMoveNumber: 1})
 	message := readUntil(t, whiteConn, "error")
@@ -377,12 +391,12 @@ func TestPassingTwiceOpensScoringAndAgreementEndsTheGame(t *testing.T) {
 	readUntil(t, whiteConn, "game_state")
 
 	send(t, blackConn, "move", incomingMove{Kind: "play", Point: "c3", ExpectedMoveNumber: 0})
-	readUntil(t, whiteConn, "move_made")
+	readMoveMade(t, whiteConn, 1)
 	send(t, whiteConn, "move", incomingMove{Kind: "play", Point: "g7", ExpectedMoveNumber: 1})
-	readUntil(t, blackConn, "move_made")
+	readMoveMade(t, blackConn, 2)
 
 	send(t, blackConn, "move", incomingMove{Kind: "pass", ExpectedMoveNumber: 2})
-	readUntil(t, whiteConn, "move_made")
+	readMoveMade(t, whiteConn, 3)
 	send(t, whiteConn, "move", incomingMove{Kind: "pass", ExpectedMoveNumber: 3})
 	readUntil(t, blackConn, "scoring_state")
 

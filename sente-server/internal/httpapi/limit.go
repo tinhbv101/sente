@@ -19,6 +19,14 @@ import (
 // by setting the header.
 func (s *Server) clientIP(r *http.Request) string {
 	if s.config.TrustProxyHeaders {
+		// Behind a CDN there are two proxies, and X-Forwarded-For's rightmost entry
+		// is the CDN's own address: every user would share one bucket. The CDN
+		// puts the real client in a header of its own (Cloudflare: CF-Connecting-IP).
+		if s.config.ClientIPHeader != "" {
+			if ip := strings.TrimSpace(r.Header.Get(s.config.ClientIPHeader)); ip != "" {
+				return ip
+			}
+		}
 		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
 			parts := strings.Split(forwarded, ",")
 			// The rightmost entry is the one our own proxy appended, so it is the

@@ -39,6 +39,9 @@ type Config struct {
 	// TrustProxyHeaders enables X-Forwarded-For. Only set it when the server is
 	// actually behind a proxy that overwrites the header.
 	TrustProxyHeaders bool
+	// ClientIPHeader names a header carrying the real client address, for setups
+	// with a CDN in front of the proxy. Honoured only with TrustProxyHeaders.
+	ClientIPHeader string
 	// AllowedOrigins for the WebSocket handshake. Empty means same-origin only.
 	AllowedOrigins []string
 }

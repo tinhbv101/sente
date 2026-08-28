@@ -149,6 +149,42 @@ Support** trong NPM. Kiểm tra nhanh từ máy ngoài:
 curl -si https://sente.example.com/v1/ws | head -1     # 401 là đúng: cần token, nhưng đã tới server
 ```
 
+### 6.1 Nếu domain đi qua Cloudflare
+
+Bật "orange cloud" là chèn thêm một proxy trước NPM. Hai hệ quả:
+
+**Rate limit tính sai.** NPM nối IP upstream vào `X-Forwarded-For`, nên phần tử ngoài cùng
+bên phải — cái server tin — là IP của **Cloudflare**, và mọi người dùng chia chung một bucket
+đăng ký 10/phút. Sửa bằng cách bảo server đọc header Cloudflare đặt riêng:
+
+```
+# deploy/.env
+SENTE_CLIENT_IP_HEADER=CF-Connecting-IP
+```
+
+**Header đó giả được nếu ai đó gọi thẳng vào origin**, bỏ qua Cloudflare. Chặn bằng cách chỉ
+cho 80/443 nhận từ dải IP của Cloudflare:
+
+```bash
+for ip in $(curl -s https://www.cloudflare.com/ips-v4) $(curl -s https://www.cloudflare.com/ips-v6); do
+  sudo ufw allow from "$ip" to any port 80,443 proto tcp
+done
+sudo ufw delete allow 80/tcp && sudo ufw delete allow 443/tcp
+```
+
+Dải IP này Cloudflare thỉnh thoảng đổi — cân nhắc đặt lệnh trên vào cron hằng tuần.
+
+WebSocket đi qua Cloudflare bình thường, kể cả gói miễn phí. Kiểm nhanh — phải thấy `101`:
+
+```bash
+curl -si --http1.1 -H "Connection: Upgrade" -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: $(openssl rand -base64 16)" \
+  "https://sente.example.com/v1/ws?pv=1&game_id=<id>&token=<token>" | head -1
+```
+
+Lưu ý `--http1.1`: curl mặc định đàm phán HTTP/2 với Cloudflare, và bắt tay WebSocket không
+đi qua HTTP/2 — không có cờ đó sẽ thấy `426`, trông như lỗi nhưng không phải.
+
 ## 7. Vận hành hằng ngày
 
 ```bash
@@ -249,6 +285,7 @@ và `proxy_read_timeout` đủ dài. NPM làm việc này bằng nút **Websocke
 | `SENTE_ALLOWED_ORIGINS` | | rỗng | Origin cho WebSocket; rỗng = chỉ same-origin |
 | `SENTE_PUBLIC_URL` | | rỗng | Gốc để dựng link mời `…/j/<code>`; rỗng thì không trả `share_url` |
 | `SENTE_TRUST_PROXY` | | `false` | Tin `X-Forwarded-For` để tính rate limit theo IP thật. **Chỉ** bật khi đứng sau proxy — bật sai là ai cũng giả được IP |
+| `SENTE_CLIENT_IP_HEADER` | | rỗng | Header chứa IP thật khi có CDN trước proxy, ví dụ `CF-Connecting-IP`. Xem [§6.1](#61-nếu-domain-đi-qua-cloudflare) |
 | `SENTE_MIGRATE` | | `true` | Đặt `false` nếu chạy migration riêng |
 
 Hai biến sau **không** phải của server mà của `docker-compose.prod.yml`, đọc từ `deploy/.env`:
