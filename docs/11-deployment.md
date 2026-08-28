@@ -10,7 +10,7 @@
 | | |
 |---|---|
 | VPS | Ubuntu 22.04 hoặc 24.04, tối thiểu **2 vCPU / 2 GB RAM / 20 GB đĩa** |
-| Reverse proxy | Đã có sẵn trên VPS và chạy trong Docker — hướng dẫn này viết cho **Nginx Proxy Manager**. Nó lo TLS; server không mở cổng nào ra ngoài |
+| Reverse proxy | Đã có sẵn trên VPS — hướng dẫn này viết cho **Nginx Proxy Manager**. Nó lo TLS; server chỉ nghe trên loopback |
 | Tên miền | Bản ghi A trỏ về VPS, chứng chỉ xin qua proxy |
 
 **Vì sao 2 GB RAM:** Postgres ~256 MB, Redis ~64 MB, server ~200 MB lúc rỗi. 1 GB chạy được
@@ -54,9 +54,10 @@ ufw status
 ```
 
 > **Cảnh báo:** Docker tự thêm luật vào `iptables` và **đi vòng qua `ufw`**. Vì vậy
-> `docker-compose.prod.yml` cố ý **không publish cổng nào** — proxy tới `sente` qua
-> network Docker chung, còn `postgres` và `redis` chỉ `sente` thấy được. Nếu bạn thêm
-> `ports:` cho bất kỳ service nào, nó sẽ lộ ra Internet bất kể `ufw` nói gì.
+> `docker-compose.prod.yml` chỉ publish `sente` trên **`127.0.0.1`** — proxy trên cùng
+> host thấy được, Internet thì không — còn `postgres` và `redis` không publish gì. Đổi
+> `SENTE_BIND` thành `0.0.0.0`, hay thêm `ports:` cho service khác, là lộ thẳng ra Internet
+> bất kể `ufw` nói gì.
 
 ## 4. Lấy mã nguồn và cấu hình
 
@@ -76,21 +77,20 @@ print("POSTGRES_PASSWORD=" + secrets.token_hex(16))
 PY
 ```
 
-Tìm network Docker mà Nginx Proxy Manager đang chạy trên đó — `sente` phải nằm cùng network
-thì NPM mới gọi tới được theo tên:
+Kiểm tra cổng `8080` trên host còn trống — nếu không, đặt `SENTE_PORT` khác:
 
 ```bash
-docker inspect <tên-container-npm> --format '{{range $k,$_ := .NetworkSettings.Networks}}{{$k}} {{end}}'
+sudo ss -ltnp | grep ':8080 ' || echo "8080 trống"
 ```
 
 Dán vào `.env`:
 
 ```
 SENTE_DOMAIN=sente.example.com
-PROXY_NETWORK=<network vừa tìm được>
 SENTE_JWT_SECRET=<64 ký tự hex>
 POSTGRES_PASSWORD=<32 ký tự hex>
 SENTE_VERSION=v0.1.0
+# SENTE_PORT=8080          # đổi nếu 8080 đã có người dùng
 ```
 
 `chmod 600 .env`. File này **không bao giờ** được commit.
@@ -114,8 +114,8 @@ Trong NPM → **Proxy Hosts → Add**:
 |---|---|
 | Domain Names | `sente.example.com` |
 | Scheme | `http` |
-| Forward Hostname | `sente` |
-| Forward Port | `8080` |
+| Forward Hostname | `127.0.0.1` nếu NPM chạy `network_mode: host`; nếu NPM ở network Docker riêng thì dùng IP gateway của host trong Docker (`172.17.0.1` với bridge mặc định) |
+| Forward Port | `8080` (hoặc `SENTE_PORT` bạn đã đặt) |
 | **Websockets Support** | **Bật** — thiếu cái này kết nối ván không bao giờ nâng cấp được |
 | Block Common Exploits | Bật |
 | Tab SSL | Request a new certificate · Force SSL · HTTP/2 |
@@ -250,6 +250,13 @@ và `proxy_read_timeout` đủ dài. NPM làm việc này bằng nút **Websocke
 | `SENTE_PUBLIC_URL` | | rỗng | Gốc để dựng link mời `…/j/<code>`; rỗng thì không trả `share_url` |
 | `SENTE_TRUST_PROXY` | | `false` | Tin `X-Forwarded-For` để tính rate limit theo IP thật. **Chỉ** bật khi đứng sau proxy — bật sai là ai cũng giả được IP |
 | `SENTE_MIGRATE` | | `true` | Đặt `false` nếu chạy migration riêng |
+
+Hai biến sau **không** phải của server mà của `docker-compose.prod.yml`, đọc từ `deploy/.env`:
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `SENTE_BIND` | `127.0.0.1` | Địa chỉ host để publish. **Không bao giờ** đặt `0.0.0.0` |
+| `SENTE_PORT` | `8080` | Cổng host cho proxy trỏ vào |
 
 Thiếu biến bắt buộc thì server **thoát ngay lúc khởi động** kèm thông báo rõ, thay vì chết ở
 request đầu tiên cần đến nó.

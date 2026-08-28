@@ -1,9 +1,9 @@
 # One-VPS deployment behind an existing reverse proxy (Nginx Proxy Manager or
 # similar): one server node, PostgreSQL and Redis.
 #
-# Nothing here publishes a port. The proxy reaches `sente` by name because both
-# sit on the proxy's Docker network; the database and Redis are reachable only
-# from `sente` (docs/08 §10).
+# Only `sente` is published, and only on the loopback interface: the proxy on the
+# same host reaches it at 127.0.0.1:8080, the Internet cannot. The database and
+# Redis publish nothing and are reachable only from `sente` (docs/08 §10).
 
 name: sente
 
@@ -27,9 +27,10 @@ services:
       # on a node reachable without the proxy.
       SENTE_TRUST_PROXY: "true"
       SENTE_MIGRATE: "true"
-    networks:
-      - default
-      - proxy
+    # Loopback only. Widening SENTE_BIND to 0.0.0.0 exposes the server directly,
+    # bypassing the proxy, its TLS, and ufw (Docker writes its own iptables rules).
+    ports:
+      - "${SENTE_BIND:-127.0.0.1}:${SENTE_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,14 +72,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-
-networks:
-  default:
-  # The reverse proxy's own network, created by its compose project. Find it with
-  # `docker network ls`; it is usually <npm-project>_default.
-  proxy:
-    external: true
-    name: ${PROXY_NETWORK:?set PROXY_NETWORK in .env to the reverse proxy's docker network}
 
 volumes:
   postgres-data:
