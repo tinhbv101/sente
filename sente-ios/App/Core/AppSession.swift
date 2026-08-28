@@ -113,6 +113,9 @@ struct Settings: Equatable {
     var serverURL: URL
     var showCoordinates: Bool
     var colourBlindSymbols: Bool
+    /// Place the stone above the fingertip instead of under it. Off by default;
+    /// useful on 19×19 where a finger hides the intersection.
+    var offsetPlacement: Bool
 
     static let defaultServer = URL(string: "https://sente.devlord.net")!
 
@@ -121,7 +124,8 @@ struct Settings: Equatable {
         return Settings(
             serverURL: defaults.string(forKey: "serverURL").flatMap(URL.init) ?? defaultServer,
             showCoordinates: defaults.object(forKey: "showCoordinates") as? Bool ?? true,
-            colourBlindSymbols: defaults.bool(forKey: "colourBlindSymbols"))
+            colourBlindSymbols: defaults.bool(forKey: "colourBlindSymbols"),
+            offsetPlacement: defaults.bool(forKey: "offsetPlacement"))
     }
 
     func save() {
@@ -129,5 +133,6 @@ struct Settings: Equatable {
         defaults.set(serverURL.absoluteString, forKey: "serverURL")
         defaults.set(showCoordinates, forKey: "showCoordinates")
         defaults.set(colourBlindSymbols, forKey: "colourBlindSymbols")
+        defaults.set(offsetPlacement, forKey: "offsetPlacement")
     }
 }

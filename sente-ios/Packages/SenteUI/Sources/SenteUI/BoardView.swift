@@ -32,6 +32,11 @@ public struct BoardView: View {
     public var onPlace: (Point) -> Void
     public var onTapChain: ((Point) -> Void)?
     public var ghostPlayer: StonePlayer
+    /// How far above the finger the target intersection sits. Zero means the
+    /// stone lands exactly where you touch. Off by default: on a 9×9 board a cell
+    /// is about 40pt, so any offset moves a plain tap onto the next row, and the
+    /// bottom row can only be reached by touching below the board.
+    public var fingerOffset: CGFloat
 
     @State private var drag: DragState?
     @Environment(\.colorScheme) private var colorScheme
@@ -44,16 +49,18 @@ public struct BoardView: View {
 
     public init(snapshot: BoardSnapshot, ghostPlayer: StonePlayer = .black, interactive: Bool = true,
                 showsCoordinates: Bool = true, colourBlindSymbols: Bool = false,
+                fingerOffset: CGFloat = 0,
                 legality: @escaping (Point) -> String? = { _ in nil },
                 onPlace: @escaping (Point) -> Void = { _ in },
                 onTapChain: ((Point) -> Void)? = nil) {
         self.snapshot = snapshot; self.ghostPlayer = ghostPlayer; self.interactive = interactive
         self.showsCoordinates = showsCoordinates; self.colourBlindSymbols = colourBlindSymbols
+        self.fingerOffset = fingerOffset
         self.legality = legality; self.onPlace = onPlace; self.onTapChain = onTapChain
     }
 
-    /// The ghost sits this far above the finger so the target is not hidden by it.
-    static let fingerOffset: CGFloat = 44
+    /// The offset used when the player opts in: enough to clear a fingertip.
+    public static let defaultFingerOffset: CGFloat = 44
 
     public var body: some View {
         GeometryReader { proxy in
@@ -85,7 +92,7 @@ public struct BoardView: View {
     private func placementGesture(_ geometry: BoardGeometry) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
-                let raw = CGPoint(x: value.location.x, y: value.location.y - Self.fingerOffset)
+                let raw = CGPoint(x: value.location.x, y: value.location.y - fingerOffset)
                 let target = geometry.point(at: raw).flatMap { snapshot.board.isEmpty($0) ? $0 : nil }
                 let next = DragState(target: target, reason: target.flatMap(legality))
                 if next != drag {

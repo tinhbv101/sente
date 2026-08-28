@@ -302,9 +302,11 @@ cho lớp tĩnh (rasterize một lần).
 4. Kéo ra ngoài bàn cờ rồi nhả → hủy, không đặt gì
 ```
 
-**Con trỏ lệch.** Trên bàn 19×19, ngón tay che mất giao điểm. Quân ma và kính lúp được vẽ
-lệch lên trên ~44pt so với điểm chạm. Người dùng bật/tắt được trong Cài đặt (người chơi bàn
-9×9 thường không cần).
+**Con trỏ lệch — mặc định tắt.** Trên bàn 19×19, ngón tay che mất giao điểm, nên có tùy
+chọn vẽ quân ma lệch lên ~44pt so với điểm chạm. Nhưng nó là **tùy chọn bật trong Cài đặt**,
+không phải mặc định: một ô 9×9 chỉ ~40pt nên bất kỳ độ lệch nào cũng đẩy cú chạm sang hàng
+trên, và hàng 1 chỉ đặt được bằng cách kéo ra ngoài mép bàn. Bản đầu để mặc định bật và
+người dùng phát hiện ngay: *chạm A1 thành A2*.
 
 **Hit testing.** Giao điểm gần nhất theo khoảng cách Euclid, nhưng chỉ chấp nhận nếu khoảng
 cách < 0.7 × khoảng cách lưới — tránh đặt quân khi chạm hụt ra ngoài mép bàn.
@@ -520,7 +522,7 @@ kèm âm thầm vào báo cáo chẩn đoán để đối chiếu với log serv
 |------|---------|---------|----------|
 | Unit — GoKit | Toàn bộ luật + conformance vectors | XCTest | **95% dòng, 90% nhánh** |
 | Property-based | Sinh ván ngẫu nhiên, bất biến: replay = state hiện tại; apply rồi rollback = state cũ | XCTest tự viết generator | — |
-| Unit — Store | Hòa giải optimistic/confirmed, xử lý sự kiện lệch thứ tự | XCTest với `GameConnection` giả | 85% |
+| Unit — Store | Hòa giải optimistic/confirmed, xử lý sự kiện lệch thứ tự | XCTest với `FakeTransport` (protocol `GameTransport`; `GameConnection` là bản thật) | 85% |
 | Snapshot | `BoardView` ở các cỡ bàn × sáng/tối × Dynamic Type | swift-snapshot-testing (chỉ target test) | Các thế cờ chuẩn |
 | Integration | `GameConnection` với server WS giả (local) | XCTest | Reconnect, resume, outbox |
 | UI (XCUITest) | 5 luồng: tạo lời mời, chấp nhận, chơi trọn ván 9×9, đếm điểm, khôi phục sau khi kill app | XCUITest | Chạy trên CI mỗi PR |

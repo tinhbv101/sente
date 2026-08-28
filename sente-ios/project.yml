@@ -54,10 +54,29 @@ targets:
         INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
         TARGETED_DEVICE_FAMILY: "1"
         ENABLE_PREVIEWS: YES
+  SenteTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/SenteTests
+    dependencies:
+      - target: Sente
+      - package: GoKit
+      - package: SenteNet
+      - package: SenteUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.sente.go.tests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   Sente:
     build:
       targets:
         Sente: all
+        SenteTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - SenteTests

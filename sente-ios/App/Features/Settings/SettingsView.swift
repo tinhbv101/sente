@@ -16,9 +16,12 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(Tokens.inkSecondary)
                 }
             }
-            Section("Bàn cờ") {
+            Section {
                 Toggle("Hiện tọa độ", isOn: $draft.showCoordinates)
                 Toggle("Ký hiệu cho người mù màu", isOn: $draft.colourBlindSymbols)
+                Toggle("Đặt quân phía trên ngón tay", isOn: $draft.offsetPlacement)
+            } header: { Text("Bàn cờ") } footer: {
+                Text("Tắt: quân rơi đúng chỗ bạn chạm. Bật: quân ma hiện cao hơn ngón tay một chút để không bị che — hữu ích trên bàn 19×19, kéo xuống dưới mép bàn để đặt hàng cuối.")
             }
             Section {
                 TextField("https://…", text: $serverText)

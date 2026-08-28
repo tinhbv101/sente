@@ -13,7 +13,7 @@ help:
 	@echo "run           run the server locally against db-up"
 	@echo "image         build the production container image"
 	@echo "smoke         check a deployed instance end to end: make smoke URL=https://..."
-	@echo "app           build the iOS app for the simulator (needs xcodegen)"
+	@echo "app           build the iOS app on the simulator and run its unit tests (needs xcodegen)"
 	@echo "perf          run the Swift suite in release, where the timings mean something"
 
 spec:
@@ -46,12 +46,14 @@ test-ios:
 	cd sente-ios/Packages/SenteNet && swift test
 	cd sente-ios/Packages/SenteUI && swift test
 
-# Regenerates the Xcode project and builds the app for the simulator. Signed
-# ad hoc: an unsigned build has no entitlements and the Keychain refuses it.
+# Regenerates the Xcode project, builds the app for the simulator and runs its unit
+# tests (GameStore). Signed ad hoc: an unsigned build has no entitlements and the
+# Keychain refuses it.
 app:
-	cd sente-ios && xcodegen generate && xcodebuild -project Sente.xcodeproj -scheme Sente \
+	cd sente-ios && xcodegen generate && xcodebuild test -project Sente.xcodeproj -scheme Sente \
 	  -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath .build/derived \
-	  CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO build 2>&1 | grep -E "error:|BUILD"
+	  CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO -only-testing:SenteTests 2>&1 \
+	  | grep -E "error:|Executed [0-9]+ tests|TEST (SUCCEEDED|FAILED)|BUILD FAILED"
 
 cover:
 	python3 scripts/coverage_gate.py all

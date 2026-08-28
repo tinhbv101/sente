@@ -63,11 +63,11 @@ jobs:
         working-directory: sente-ios/Packages/SenteUI
       - name: Coverage gate
         run: python3 scripts/coverage_gate.py swift
-      - name: Build the app for the simulator
+      - name: App build and GameStore tests
         run: |
           brew install xcodegen
           xcodegen generate
-          xcodebuild -project Sente.xcodeproj -scheme Sente -quiet \
+          xcodebuild test -project Sente.xcodeproj -scheme Sente -quiet \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
-            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO build
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO -only-testing:SenteTests
         working-directory: sente-ios

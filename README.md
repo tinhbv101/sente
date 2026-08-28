@@ -24,8 +24,8 @@ Cờ vây online trên iOS. Thiết kế đầy đủ ở [`docs/`](docs/README.
 | CI (`make ci`) — drift, parity, test, coverage gate | **Xong** |
 | `sente-ios/Packages/SenteNet` — REST + WebSocket client, reconnect, outbox | **Xong · 12/12 xanh** |
 | `sente-ios/Packages/SenteUI` — bàn cờ Canvas, cử chỉ đặt quân, đồng hồ | **Xong · 6/6 xanh** |
-| `sente-ios/App` — Home, mời/nhận lời mời, màn hình ván, đếm điểm, cài đặt | **Chạy được trên simulator**, đã chụp màn hình đối chiếu thiết kế |
-| Còn lại (Sign in with Apple, push, landing page, test cho GameStore, TestFlight) | Chưa bắt đầu |
+| `sente-ios/App` — Home, mời/nhận lời mời, màn hình ván, đếm điểm, cài đặt | **Chạy được trên simulator** · `GameStore` **23/23 test** (optimistic/rollback, thứ tự sự kiện, canary hash) |
+| Còn lại (Sign in with Apple, push, landing page, XCUITest, TestFlight) | Chưa bắt đầu |
 
 Hai engine luật độc lập, cùng chạy một bộ vector và một file parity — ràng buộc quan trọng
 nhất của toàn hệ thống ([ADR-002](docs/03-solution-design.md#adr-002--nơi-đặt-engine-luật-cờ)).
@@ -67,7 +67,7 @@ scripts/        cổng chất lượng chạy được cả local lẫn CI
 
 ```bash
 make ci           # đúng những gì một pull request phải qua (cần Docker)
-make app          # build app iOS cho simulator (cần xcodegen: brew install xcodegen)
+make app          # build app iOS trên simulator + chạy test GameStore (cần xcodegen)
 make test-fast    # như trên, bỏ phần cần Docker
 make db-up        # dựng Postgres + Redis để chạy tay
 make run          # chạy server ở local

@@ -40,7 +40,7 @@ final class GameStore {
     private var confirmed: GameEngine?
     private var optimistic: GameEngine?
     private var pending: (id: String, point: Point?)?
-    private var connectionActor: GameConnection?
+    private var transport: (any GameTransport)?
     private var eventTask: Task<Void, Never>?
     private var statusTask: Task<Void, Never>?
 
@@ -92,21 +92,24 @@ final class GameStore {
 
     func connect(api: APIClient, token: String) async {
         let baseURL = await api.baseURL
-        let actor = GameConnection(baseURL: baseURL, gameID: gameID, token: token)
-        connectionActor = actor
+        await connect(transport: GameConnection(baseURL: baseURL, gameID: gameID, token: token))
+    }
+
+    func connect(transport: any GameTransport) async {
+        self.transport = transport
         eventTask = Task { [weak self] in
-            for await event in actor.events { await self?.handle(event) }
+            for await event in transport.events { await self?.handle(event) }
         }
         statusTask = Task { [weak self] in
-            for await status in actor.status { await self?.handle(status: status) }
+            for await status in transport.status { await self?.handle(status: status) }
         }
-        await actor.connect()
+        await transport.connect()
     }
 
     func disconnect() async {
         eventTask?.cancel(); statusTask?.cancel()
-        await connectionActor?.close()
-        connectionActor = nil
+        await transport?.close()
+        transport = nil
     }
 
     // MARK: - Intents (docs/03 ADR-007)
@@ -144,13 +147,13 @@ final class GameStore {
     func dismissToast() { toast = nil }
 
     private func send(_ command: ClientCommand) {
-        guard let connectionActor else { return }
-        Task { await connectionActor.send(command) }
+        guard let transport else { return }
+        Task { await transport.send(command) }
     }
 
     // MARK: - Events from the server
 
-    private func handle(status: ConnectionStatus) {
+    func handle(status: ConnectionStatus) {
         connection = status
         switch status {
         case .reconnecting: if reconnectingSince == nil { reconnectingSince = Date() }
@@ -159,12 +162,12 @@ final class GameStore {
         }
     }
 
-    private func handle(_ event: ServerEvent) async {
+    func handle(_ event: ServerEvent) async {
         switch event {
         case .hello:
             break
         case .pong:
-            if let connectionActor { clockOffset = await connectionActor.clockOffset }
+            if let transport { clockOffset = await transport.clockOffset }
         case .gameState(let state):
             apply(state)
         case .moveMade(let made):

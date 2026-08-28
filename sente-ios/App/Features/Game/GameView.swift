@@ -57,6 +57,7 @@ struct GameView: View {
             interactive: store.isMyTurn,
             showsCoordinates: session.settings.showCoordinates,
             colourBlindSymbols: session.settings.colourBlindSymbols,
+            fingerOffset: session.settings.offsetPlacement ? BoardView.defaultFingerOffset : 0,
             legality: { store.legality($0) },
             onPlace: { store.place($0) },
             onTapChain: store.phase == .scoring ? { store.toggleDead($0) } : nil)

@@ -39,13 +39,24 @@ public enum ClientCommand: Sendable {
     }
 }
 
+/// What a game store needs from its connection. `GameConnection` is the real one;
+/// tests substitute a fake that records commands and injects events.
+public protocol GameTransport: Sendable {
+    var events: AsyncStream<ServerEvent> { get }
+    var status: AsyncStream<ConnectionStatus> { get }
+    var clockOffset: TimeInterval { get async }
+    func connect() async
+    func close() async
+    func send(_ command: ClientCommand) async
+}
+
 /// One WebSocket to one game. Owns reconnection, the heartbeat, and a queue of
 /// commands sent while offline (docs/07 §5).
 ///
 /// Queued moves carry their idempotency key, so a resend after a reconnect can
 /// never create a second move: the server answers the duplicate with the original
 /// result (docs/03 ADR-007).
-public actor GameConnection {
+public actor GameConnection: GameTransport {
     public nonisolated let events: AsyncStream<ServerEvent>
     public nonisolated let status: AsyncStream<ConnectionStatus>
 
