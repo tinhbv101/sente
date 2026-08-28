@@ -10,8 +10,8 @@
 | | |
 |---|---|
 | VPS | Ubuntu 22.04 hoặc 24.04, tối thiểu **2 vCPU / 2 GB RAM / 20 GB đĩa** |
-| Tên miền | Bản ghi A đã trỏ về IP của VPS **trước khi** khởi động lần đầu — Caddy xin chứng chỉ ngay lúc đó |
-| Cổng mở | 80 và 443 vào từ Internet. Không mở gì khác |
+| Reverse proxy | Đã có sẵn trên VPS và chạy trong Docker — hướng dẫn này viết cho **Nginx Proxy Manager**. Nó lo TLS; server không mở cổng nào ra ngoài |
+| Tên miền | Bản ghi A trỏ về VPS, chứng chỉ xin qua proxy |
 
 **Vì sao 2 GB RAM:** Postgres ~256 MB, Redis ~64 MB, server ~200 MB lúc rỗi. 1 GB chạy được
 nhưng không còn chỗ cho `docker build`, nên hãy build ở máy khác nếu chỉ có 1 GB.
@@ -54,9 +54,9 @@ ufw status
 ```
 
 > **Cảnh báo:** Docker tự thêm luật vào `iptables` và **đi vòng qua `ufw`**. Vì vậy
-> `docker-compose.prod.yml` cố ý **không publish cổng nào** cho `sente`, `postgres` và
-> `redis` — chỉ Caddy mở 80/443. Nếu bạn thêm `ports:` cho một service khác, nó sẽ lộ ra
-> Internet bất kể `ufw` nói gì.
+> `docker-compose.prod.yml` cố ý **không publish cổng nào** — proxy tới `sente` qua
+> network Docker chung, còn `postgres` và `redis` chỉ `sente` thấy được. Nếu bạn thêm
+> `ports:` cho bất kỳ service nào, nó sẽ lộ ra Internet bất kể `ufw` nói gì.
 
 ## 4. Lấy mã nguồn và cấu hình
 
@@ -76,10 +76,18 @@ print("POSTGRES_PASSWORD=" + secrets.token_hex(16))
 PY
 ```
 
-Dán vào `.env` cùng tên miền:
+Tìm network Docker mà Nginx Proxy Manager đang chạy trên đó — `sente` phải nằm cùng network
+thì NPM mới gọi tới được theo tên:
+
+```bash
+docker inspect <tên-container-npm> --format '{{range $k,$_ := .NetworkSettings.Networks}}{{$k}} {{end}}'
+```
+
+Dán vào `.env`:
 
 ```
 SENTE_DOMAIN=sente.example.com
+PROXY_NETWORK=<network vừa tìm được>
 SENTE_JWT_SECRET=<64 ký tự hex>
 POSTGRES_PASSWORD=<32 ký tự hex>
 SENTE_VERSION=v0.1.0
@@ -94,9 +102,35 @@ docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml ps
 ```
 
-Lần đầu mất 2–4 phút để build. Kết quả mong đợi: cả bốn service `healthy`.
+Lần đầu mất 2–4 phút để build. Kết quả mong đợi: cả ba service `healthy`.
 
 Migration chạy tự động lúc khởi động (`SENTE_MIGRATE=true`), nên không cần bước riêng.
+
+### Trỏ Nginx Proxy Manager vào server
+
+Trong NPM → **Proxy Hosts → Add**:
+
+| Trường | Giá trị |
+|---|---|
+| Domain Names | `sente.example.com` |
+| Scheme | `http` |
+| Forward Hostname | `sente` |
+| Forward Port | `8080` |
+| **Websockets Support** | **Bật** — thiếu cái này kết nối ván không bao giờ nâng cấp được |
+| Block Common Exploits | Bật |
+| Tab SSL | Request a new certificate · Force SSL · HTTP/2 |
+
+Tab **Advanced**, thêm:
+
+```nginx
+# Heartbeat mỗi 20 giây giữ kết nối sống; timeout mặc định 60 giây của nginx
+# quá sát — một lần mạng di động chập chờn là đứt ván.
+proxy_read_timeout 300s;
+proxy_send_timeout 300s;
+```
+
+NPM tự đặt `X-Forwarded-For`, nên `SENTE_TRUST_PROXY=true` trong compose là đúng — rate limit
+đăng ký tính theo IP thật của người dùng, không phải IP của proxy.
 
 ## 6. Kiểm tra
 
@@ -104,12 +138,16 @@ Migration chạy tự động lúc khởi động (`SENTE_MIGRATE=true`), nên k
 cd ~/sente && ./scripts/smoke.sh https://sente.example.com
 ```
 
-Script này không chỉ ping — nó đăng ký tài khoản khách, tạo một ván, đọc lại, và kiểm tra
-endpoint có chặn khi thiếu token. Nếu nó xanh thì database, Redis, lease, actor và engine
-luật đều đang hoạt động.
+Script này không chỉ ping — nó đăng ký tài khoản khách, tạo một ván, tạo và nhận lời mời qua
+link, và kiểm tra endpoint có chặn khi thiếu token. Nếu nó xanh thì proxy, database, Redis,
+lease, actor và engine luật đều đang hoạt động.
 
-Chứng chỉ TLS: Caddy tự xin từ Let's Encrypt. Nếu lỗi, gần như luôn là bản ghi DNS chưa trỏ
-đúng — kiểm tra bằng `dig +short sente.example.com`.
+Nếu `readyz` qua mà bước WebSocket sau đó hỏng ở app, gần như luôn là quên bật **Websockets
+Support** trong NPM. Kiểm tra nhanh từ máy ngoài:
+
+```bash
+curl -si https://sente.example.com/v1/ws | head -1     # 401 là đúng: cần token, nhưng đã tới server
+```
 
 ## 7. Vận hành hằng ngày
 
@@ -195,9 +233,9 @@ RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 WantedBy=multi-user.target
 ```
 
-Vẫn cần một reverse proxy phía trước cho TLS (Caddy hoặc nginx), và WebSocket phải được
-proxy đúng cách — với nginx nghĩa là `proxy_set_header Upgrade`/`Connection` và
-`proxy_read_timeout` đủ dài.
+Vẫn cần reverse proxy phía trước cho TLS, và WebSocket phải được proxy đúng cách — với nginx
+thuần nghĩa là `proxy_set_header Upgrade $http_upgrade; proxy_set_header Connection "upgrade";`
+và `proxy_read_timeout` đủ dài. NPM làm việc này bằng nút **Websockets Support**.
 
 ## 9. Biến môi trường
 
@@ -229,7 +267,8 @@ sente-2:
     SENTE_NODE_ID: node-2
 ```
 
-Rồi cho Caddy cân bằng tải giữa hai upstream. **Không** cần sticky session — hai người chơi
+Rồi thêm upstream thứ hai vào proxy host trong NPM (tab Advanced, khối `upstream`) hoặc
+dùng một load balancer riêng. **Không** cần sticky session — hai người chơi
 rơi vào hai node khác nhau vẫn chơi chung một ván, lệnh được chuyển tiếp qua Redis
 ([04 §4.1](04-architecture.md#41-đi-một-nước-ván-live-hai-người-ở-hai-node)).
 

@@ -20,7 +20,7 @@ Cờ vây online trên iOS. Thiết kế đầy đủ ở [`docs/`](docs/README.
 | `sente-server/internal/auth` — tài khoản khách + JWT | **Xong · 6/6 xanh** (chưa có Apple, chưa có refresh) |
 | `sente-server/internal/httpapi` — REST + WebSocket gateway + **lời mời qua link** | **Xong · 25/25 xanh (đầu-cuối)** |
 | `sente-server/internal/ratelimit` — token bucket trong Redis | **Xong · 8/8 xanh** |
-| `cmd/server` + Docker + Caddy — **deploy được** | **Xong** — xem [docs/11](docs/11-deployment.md) |
+| `cmd/server` + Docker, chạy sau reverse proxy có sẵn — **deploy được** | **Xong** — xem [docs/11](docs/11-deployment.md) |
 | CI (`make ci`) — drift, parity, test, coverage gate | **Xong** |
 | Còn lại (Sign in with Apple, push, landing page, **app iOS**) | Chưa bắt đầu |
 
@@ -53,7 +53,7 @@ sente-server/   backend Go
   internal/httpapi      REST + WebSocket gateway + lời mời
   internal/ratelimit    token bucket dùng chung giữa các node
   cmd/server            binary chạy một node
-deploy/         docker-compose cho Postgres + Redis khi dev
+deploy/         compose dev (Postgres + Redis) và compose production sau proxy
 scripts/        cổng chất lượng chạy được cả local lẫn CI
 ```
 

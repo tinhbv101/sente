@@ -1,27 +1,13 @@
-# One-VPS deployment: Caddy for TLS, one server node, PostgreSQL and Redis.
+# One-VPS deployment behind an existing reverse proxy (Nginx Proxy Manager or
+# similar): one server node, PostgreSQL and Redis.
 #
-# Only Caddy is exposed to the internet. The server, the database and Redis talk
-# over the internal network and publish no ports (docs/08 §10).
+# Nothing here publishes a port. The proxy reaches `sente` by name because both
+# sit on the proxy's Docker network; the database and Redis are reachable only
+# from `sente` (docs/08 §10).
 
 name: sente
 
 services:
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      SENTE_DOMAIN: ${SENTE_DOMAIN:?set SENTE_DOMAIN in .env}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    depends_on:
-      sente:
-        condition: service_healthy
-
   sente:
     build:
       context: ../sente-server
@@ -34,13 +20,16 @@ services:
       SENTE_DATABASE_URL: postgres://sente:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/sente?sslmode=disable
       SENTE_REDIS_URL: redis://redis:6379
       SENTE_JWT_SECRET: ${SENTE_JWT_SECRET:?set SENTE_JWT_SECRET in .env}
-      SENTE_ALLOWED_ORIGINS: ${SENTE_DOMAIN}
+      SENTE_ALLOWED_ORIGINS: ${SENTE_DOMAIN:?set SENTE_DOMAIN in .env}
       # Invitation links are built from this.
       SENTE_PUBLIC_URL: https://${SENTE_DOMAIN}
-      # Caddy sits in front and rewrites X-Forwarded-For, so it can be believed.
-      # Never set this on a node reachable without the proxy.
+      # The proxy rewrites X-Forwarded-For, so it can be believed. Never set this
+      # on a node reachable without the proxy.
       SENTE_TRUST_PROXY: "true"
       SENTE_MIGRATE: "true"
+    networks:
+      - default
+      - proxy
     depends_on:
       postgres:
         condition: service_healthy
@@ -83,7 +72,13 @@ services:
       timeout: 3s
       retries: 10
 
+networks:
+  default:
+  # The reverse proxy's own network, created by its compose project. Find it with
+  # `docker network ls`; it is usually <npm-project>_default.
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:?set PROXY_NETWORK in .env to the reverse proxy's docker network}
+
 volumes:
   postgres-data:
-  caddy-data:
-  caddy-config:

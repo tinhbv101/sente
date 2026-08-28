@@ -9,6 +9,13 @@ set -euo pipefail
 BASE="${1:-http://localhost:8080}"
 PASS=0
 
+# SMOKE_INSECURE=1 accepts a self-signed certificate, for a local or staging box
+# whose proxy has no real one yet. Never needed against a real domain, so never
+# the default.
+curl() { command curl ${SMOKE_INSECURE:+-k} "$@"; }
+# The checks run inside `bash -c`, which does not inherit functions unless told to.
+export -f curl
+
 # Padding is done in code points rather than with printf's %-Ns, which counts
 # bytes and so mis-aligns every accented label.
 pad() { python3 -c "import sys; t=sys.argv[1]; print(t + ' ' * max(1, 38 - len(t)), end='')" "$1"; }
