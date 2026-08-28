@@ -528,6 +528,24 @@ kèm âm thầm vào báo cáo chẩn đoán để đối chiếu với log serv
 
 Chi tiết chiến lược ở [09-testing-strategy.md](09-testing-strategy.md).
 
+## 12.1 Ghi chú khi cài đặt bản đầu
+
+Ba điều lộ ra ngay ở lần chạy đầu trên simulator, đều đã sửa:
+
+- **`game_state` không nói người xem là màu gì** — nó mô tả ván, không mô tả người xem.
+  `GameStore` nhận `myColor` từ danh sách ván (`GET /v1/games`), không suy từ socket. Bản
+  đầu mặc định Đen nên hai hàng người chơi hiển thị đảo.
+- **Thiếu `last_move` trong `game_state` phía server** dù §3.4 của tài liệu 06 có. Không có
+  nó, chấm son nước cuối chỉ hiện từ nước tiếp theo. Đã bổ sung server.
+- **Build simulator với `CODE_SIGNING_ALLOWED=NO` làm Keychain từ chối ghi** — app không
+  có entitlement nào. Hậu quả: mỗi lần mở app là một tài khoản khách mới, ván cũ mất hết.
+  Ký ad-hoc (`CODE_SIGN_IDENTITY="-"`) là đủ. `TokenStore.save` giờ trả về `Bool` và
+  `AppSession` coi thất bại là lỗi, không nuốt.
+
+Hai launch argument phục vụ kiểm thử và script: `-openGame <id>` và `-inviteCode <code>`.
+Deep link `sente://g/<id>` và `sente://j/<code>` hoạt động nhưng iOS hỏi xác nhận khi mở từ
+ngoài app — không tự động được trong XCUITest, nên dùng launch argument.
+
 ## 13. Những chỗ dễ sai đã biết
 
 Ghi ra để review PR có thứ để đối chiếu:

@@ -82,6 +82,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/auth/guest", s.limit(ratelimit.SignUp, s.handleGuest))
 
 	s.mux.HandleFunc("POST /v1/games", s.authed(ratelimit.CreateGame, s.handleCreateGame))
+	s.mux.HandleFunc("GET /v1/games", s.authed(ratelimit.Read, s.handleListGames))
 	s.mux.HandleFunc("GET /v1/games/{id}", s.authed(ratelimit.Read, s.handleGetGame))
 
 	// The preview needs no token: a link has to be readable before signing up.
@@ -342,3 +343,44 @@ func (s *Server) handleGetGame(w http.ResponseWriter, r *http.Request) {
 }
 
 func hexHash(hash uint64) string { return fmt.Sprintf("0x%016x", hash) }
+
+type gameSummaryJSON struct {
+	GameID       string      `json:"game_id"`
+	BoardSize    int         `json:"board_size"`
+	Rules        string      `json:"rules"`
+	Phase        string      `json:"phase"`
+	ToPlay       string      `json:"to_play,omitempty"`
+	MyColor      string      `json:"my_color"`
+	YourTurn     bool        `json:"your_turn"`
+	OpponentName string      `json:"opponent_name"`
+	MoveNumber   int         `json:"move_no"`
+	MoveDeadline *time.Time  `json:"move_deadline,omitempty"`
+	LastActivity time.Time   `json:"last_activity_at"`
+	Result       *resultJSON `json:"result,omitempty"`
+}
+
+// handleListGames backs the home screen: every game the caller is in, active
+// ones first (docs/06 §2.5).
+func (s *Server) handleListGames(w http.ResponseWriter, r *http.Request) {
+	claims := userFrom(r.Context())
+	list, err := s.games.ListForUser(r.Context(), claims.UserID, 50)
+	if err != nil {
+		s.config.Logger.Error("listing games", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal", "Không đọc được danh sách ván.")
+		return
+	}
+	items := make([]gameSummaryJSON, 0, len(list))
+	for _, g := range list {
+		item := gameSummaryJSON{
+			GameID: g.ID, BoardSize: g.BoardSize, Rules: string(g.Rules), Phase: string(g.Phase),
+			MyColor: g.MyColor.String(), OpponentName: g.OpponentName, MoveNumber: g.MoveNumber,
+			MoveDeadline: g.MoveDeadline, LastActivity: g.LastActivity, Result: resultOf(g.Result),
+		}
+		if g.Phase == rules.Playing {
+			item.ToPlay = g.ToPlay.String()
+			item.YourTurn = g.ToPlay == g.MyColor
+		}
+		items = append(items, item)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}

@@ -572,3 +572,55 @@ func TestSuggestedStonesAreStoredAlongsideTheMarking(t *testing.T) {
 		t.Error("an untouched marking should not read as edited after a reload")
 	}
 }
+
+func TestListingAPlayersGames(t *testing.T) {
+	games := newGames(t)
+	ctx := context.Background()
+	me, them := seedUser(t), seedUser(t)
+
+	// One game where I am black and it is my move, one where I am white and it
+	// is theirs, one finished, and one that is not mine at all.
+	mine1, _ := games.Create(ctx, CreateParams{Config: blitzConfig(), BlackUserID: me, WhiteUserID: them, StartedAt: epoch})
+	mine2, _ := games.Create(ctx, CreateParams{Config: blitzConfig(), BlackUserID: them, WhiteUserID: me, StartedAt: epoch})
+	done, _ := games.Create(ctx, CreateParams{Config: blitzConfig(), BlackUserID: me, WhiteUserID: them, StartedAt: epoch})
+	_, _ = games.Create(ctx, CreateParams{Config: blitzConfig(), BlackUserID: them, StartedAt: epoch})
+
+	session, _ := game.NewSession(blitzConfig(), epoch)
+	session, _, _ = session.Apply(game.PlayCommand{By: rules.Black, Move: rules.Resign}, epoch)
+	if err := games.Finish(ctx, done, session, epoch); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := games.ListForUser(ctx, me, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 3 {
+		t.Fatalf("want my three games, got %d", len(list))
+	}
+	byID := map[string]GameSummary{}
+	for _, s := range list {
+		byID[s.ID] = s
+	}
+	if s := byID[mine1]; s.MyColor != rules.Black || s.ToPlay != rules.Black || s.OpponentID != them {
+		t.Errorf("mine1: %+v", s)
+	}
+	if s := byID[mine2]; s.MyColor != rules.White || s.ToPlay != rules.Black || s.OpponentName == "" {
+		t.Errorf("mine2 should show me as white with a named opponent: %+v", s)
+	}
+	if s := byID[done]; s.Phase != rules.Finished || s.Result == nil || s.Result.Reason != rules.ReasonResignation {
+		t.Errorf("finished game lost its result: %+v", s)
+	}
+	// Active games lead, so the home screen can show "your move" first.
+	if list[len(list)-1].ID != done {
+		t.Errorf("the finished game should sort last, got %v", list[len(list)-1].ID)
+	}
+	if _, err := games.ListForUser(context.Background(), them, 0); err != nil {
+		t.Fatal(err)
+	}
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, err := games.ListForUser(cancelled, me, 0); err == nil {
+		t.Error("ListForUser must report a failed read")
+	}
+}

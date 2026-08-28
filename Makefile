@@ -1,5 +1,5 @@
 .PHONY: help spec drift parity test test-ios test-server test-fast cover ci db-up db-down \
-        run image smoke perf clean
+        run image smoke app perf clean
 
 help:
 	@echo "ci            everything a pull request must pass, run locally"
@@ -13,6 +13,7 @@ help:
 	@echo "run           run the server locally against db-up"
 	@echo "image         build the production container image"
 	@echo "smoke         check a deployed instance end to end: make smoke URL=https://..."
+	@echo "app           build the iOS app for the simulator (needs xcodegen)"
 	@echo "perf          run the Swift suite in release, where the timings mean something"
 
 spec:
@@ -37,10 +38,20 @@ test-server:
 
 test-fast:
 	cd sente-server && go test ./... -short
-	cd sente-ios/Packages/GoKit && swift test
+	$(MAKE) test-ios
 
+# Every Swift package; the app itself needs a simulator and is built by `app`.
 test-ios:
 	cd sente-ios/Packages/GoKit && swift test
+	cd sente-ios/Packages/SenteNet && swift test
+	cd sente-ios/Packages/SenteUI && swift test
+
+# Regenerates the Xcode project and builds the app for the simulator. Signed
+# ad hoc: an unsigned build has no entitlements and the Keychain refuses it.
+app:
+	cd sente-ios && xcodegen generate && xcodebuild -project Sente.xcodeproj -scheme Sente \
+	  -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath .build/derived \
+	  CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO build 2>&1 | grep -E "error:|BUILD"
 
 cover:
 	python3 scripts/coverage_gate.py all
@@ -74,5 +85,5 @@ perf:
 	cd sente-ios/Packages/GoKit && swift test -c release 2>&1 | grep "per move"
 
 clean:
-	cd sente-ios/Packages/GoKit && rm -rf .build
+	cd sente-ios && rm -rf .build Packages/*/.build Sente.xcodeproj
 	rm -f sente-server/.coverage.out

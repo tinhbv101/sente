@@ -379,3 +379,40 @@ func TestForwardedForIsIgnoredUnlessTrusted(t *testing.T) {
 	}
 	_ = server
 }
+
+func TestListingMyGamesLeadsWithMyMove(t *testing.T) {
+	server := newTestServer(t)
+	an, binh := signUp(t, server), signUp(t, server)
+	invite := createInvite(t, server, an, inviteBody)
+	response, payload := do(t, server, http.MethodPost, "/v1/challenges/"+invite.Code+"/accept", binh.token, "")
+	if response.StatusCode != http.StatusCreated {
+		t.Fatalf("accept: %d %s", response.StatusCode, payload)
+	}
+
+	_, payload = do(t, server, http.MethodGet, "/v1/games", an.token, "")
+	var list struct {
+		Items []gameSummaryJSON `json:"items"`
+	}
+	if err := json.Unmarshal(payload, &list); err != nil {
+		t.Fatal(err)
+	}
+	if len(list.Items) != 1 {
+		t.Fatalf("want one game, got %d", len(list.Items))
+	}
+	g := list.Items[0]
+	if g.MyColor != "black" || !g.YourTurn || g.OpponentName == "" || g.Phase != "playing" {
+		t.Errorf("An is black and on move: %+v", g)
+	}
+	if g.MoveDeadline == nil {
+		t.Error("an active game needs a deadline for the home screen clock")
+	}
+
+	// Binh sees the same game from the other side.
+	_, payload = do(t, server, http.MethodGet, "/v1/games", binh.token, "")
+	if err := json.Unmarshal(payload, &list); err != nil {
+		t.Fatal(err)
+	}
+	if len(list.Items) != 1 || list.Items[0].MyColor != "white" || list.Items[0].YourTurn {
+		t.Errorf("Binh is white and waiting: %+v", list.Items)
+	}
+}

@@ -56,23 +56,26 @@ type clockPayload struct {
 }
 
 type gameStatePayload struct {
-	GameID       string       `json:"game_id"`
-	Phase        string       `json:"phase"`
-	Rules        string       `json:"rules"`
-	RulesVersion string       `json:"rules_version"`
-	BoardSize    int          `json:"board_size"`
-	Komi         float64      `json:"komi"`
-	Handicap     int          `json:"handicap"`
-	Board        string       `json:"board"`
-	BoardHash    string       `json:"board_hash"`
-	ToPlay       string       `json:"to_play"`
-	MoveNumber   int          `json:"move_no"`
-	KoPoint      *string      `json:"ko_point"`
-	Captures     capturesJSON `json:"captures"`
-	Passes       int          `json:"consecutive_passes"`
-	Clock        clockPayload `json:"clock"`
-	Result       *resultJSON  `json:"result,omitempty"`
-	ServerTime   time.Time    `json:"server_time"`
+	GameID       string  `json:"game_id"`
+	Phase        string  `json:"phase"`
+	Rules        string  `json:"rules"`
+	RulesVersion string  `json:"rules_version"`
+	BoardSize    int     `json:"board_size"`
+	Komi         float64 `json:"komi"`
+	Handicap     int     `json:"handicap"`
+	Board        string  `json:"board"`
+	BoardHash    string  `json:"board_hash"`
+	ToPlay       string  `json:"to_play"`
+	MoveNumber   int     `json:"move_no"`
+	// LastMove is the point of the most recent play, or nil after a pass or at
+	// the start. The client draws its marker from this on first load.
+	LastMove   *string      `json:"last_move"`
+	KoPoint    *string      `json:"ko_point"`
+	Captures   capturesJSON `json:"captures"`
+	Passes     int          `json:"consecutive_passes"`
+	Clock      clockPayload `json:"clock"`
+	Result     *resultJSON  `json:"result,omitempty"`
+	ServerTime time.Time    `json:"server_time"`
 }
 
 type capturesJSON struct {
@@ -218,6 +221,10 @@ func gameStateOf(gameID, rulesVersion string, session game.GameSession) gameStat
 	if state.KoPoint != nil {
 		ko := rules.CoordinateText(*state.KoPoint, size)
 		payload.KoPoint = &ko
+	}
+	if last := session.Moves; len(last) > 0 && last[len(last)-1].Move.Kind == rules.KindPlay {
+		text := rules.CoordinateText(last[len(last)-1].Move.Point, size)
+		payload.LastMove = &text
 	}
 	return payload
 }

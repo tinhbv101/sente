@@ -22,7 +22,10 @@ Cờ vây online trên iOS. Thiết kế đầy đủ ở [`docs/`](docs/README.
 | `sente-server/internal/ratelimit` — token bucket trong Redis | **Xong · 8/8 xanh** |
 | `cmd/server` + Docker, chạy sau reverse proxy có sẵn — **deploy được** | **Xong** — xem [docs/11](docs/11-deployment.md) |
 | CI (`make ci`) — drift, parity, test, coverage gate | **Xong** |
-| Còn lại (Sign in with Apple, push, landing page, **app iOS**) | Chưa bắt đầu |
+| `sente-ios/Packages/SenteNet` — REST + WebSocket client, reconnect, outbox | **Xong · 12/12 xanh** |
+| `sente-ios/Packages/SenteUI` — bàn cờ Canvas, cử chỉ đặt quân, đồng hồ | **Xong · 6/6 xanh** |
+| `sente-ios/App` — Home, mời/nhận lời mời, màn hình ván, đếm điểm, cài đặt | **Chạy được trên simulator**, đã chụp màn hình đối chiếu thiết kế |
+| Còn lại (Sign in with Apple, push, landing page, test cho GameStore, TestFlight) | Chưa bắt đầu |
 
 Hai engine luật độc lập, cùng chạy một bộ vector và một file parity — ràng buộc quan trọng
 nhất của toàn hệ thống ([ADR-002](docs/03-solution-design.md#adr-002--nơi-đặt-engine-luật-cờ)).
@@ -38,8 +41,11 @@ rules-spec/     hợp đồng dùng chung giữa hai engine luật
     positions.json      36 thế cờ + hash, chống hồi quy
     games.json          24 ván ghi từng nước, differential giữa hai engine
   tools/                script sinh bảng Zobrist và vector
-sente-ios/      app iOS
+sente-ios/      app iOS — project.yml (xcodegen) sinh ra Sente.xcodeproj
   Packages/GoKit        engine luật, Swift thuần, không dependency
+  Packages/SenteNet     REST + WebSocket, Keychain, backoff
+  Packages/SenteUI      BoardView (Canvas), tokens, đồng hồ, banner
+  App/                  màn hình; GameStore giữ cặp confirmed/optimistic
 sente-server/   backend Go
   internal/rules        engine luật, gói thuần, không I/O
   internal/game         đồng hồ (4 thể thức), đàm phán quân chết,
@@ -61,6 +67,7 @@ scripts/        cổng chất lượng chạy được cả local lẫn CI
 
 ```bash
 make ci           # đúng những gì một pull request phải qua (cần Docker)
+make app          # build app iOS cho simulator (cần xcodegen: brew install xcodegen)
 make test-fast    # như trên, bỏ phần cần Docker
 make db-up        # dựng Postgres + Redis để chạy tay
 make run          # chạy server ở local

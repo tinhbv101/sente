@@ -520,3 +520,79 @@ func (g *Games) ClaimSeat(ctx context.Context, gameID, userID string) (rules.Col
 	}
 	return colourFromString(seat), nil
 }
+
+// GameSummary is one row of a player's game list -- enough to draw the home
+// screen without loading any moves.
+type GameSummary struct {
+	ID           string
+	BoardSize    int
+	Rules        rules.RuleSet
+	Phase        rules.Phase
+	ToPlay       rules.Color
+	MyColor      rules.Color
+	OpponentID   string
+	OpponentName string
+	MoveNumber   int
+	MoveDeadline *time.Time
+	LastActivity time.Time
+	Result       *rules.Result
+}
+
+// ListForUser returns a player's games, most recently active first. Active games
+// (playing, scoring) come before finished ones so the home screen can lead with
+// "your move" without a second query.
+func (g *Games) ListForUser(ctx context.Context, userID string, limit int) ([]GameSummary, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+	rows, err := g.pool.Query(ctx, `
+		SELECT g.id, g.board_size, g.rules, g.phase, g.to_play, g.current_move_no,
+		       g.move_deadline, g.last_activity_at, g.result,
+		       g.black_user_id, g.white_user_id,
+		       coalesce(b.display_name, ''), coalesce(w.display_name, '')
+		  FROM games g
+		  LEFT JOIN users b ON b.id = g.black_user_id
+		  LEFT JOIN users w ON w.id = g.white_user_id
+		 WHERE g.black_user_id = $1 OR g.white_user_id = $1
+		 ORDER BY (g.phase IN ('playing', 'scoring')) DESC, g.last_activity_at DESC
+		 LIMIT $2`, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("store: listing games: %w", err)
+	}
+	defer rows.Close()
+
+	var out []GameSummary
+	for rows.Next() {
+		var (
+			summary              GameSummary
+			ruleSet, phase       string
+			toPlay               *string
+			resultJSON           []byte
+			black, white         *string
+			blackName, whiteName string
+		)
+		if err := rows.Scan(&summary.ID, &summary.BoardSize, &ruleSet, &phase, &toPlay,
+			&summary.MoveNumber, &summary.MoveDeadline, &summary.LastActivity, &resultJSON,
+			&black, &white, &blackName, &whiteName); err != nil {
+			return nil, err
+		}
+		summary.Rules = rules.RuleSet(ruleSet)
+		summary.Phase = rules.Phase(phase)
+		if toPlay != nil {
+			summary.ToPlay = colourFromString(*toPlay)
+		}
+		if deref(black) == userID {
+			summary.MyColor, summary.OpponentID, summary.OpponentName = rules.Black, deref(white), whiteName
+		} else {
+			summary.MyColor, summary.OpponentID, summary.OpponentName = rules.White, deref(black), blackName
+		}
+		if len(resultJSON) > 0 {
+			summary.Result = &rules.Result{}
+			if err := json.Unmarshal(resultJSON, summary.Result); err != nil {
+				return nil, fmt.Errorf("store: decoding result: %w", err)
+			}
+		}
+		out = append(out, summary)
+	}
+	return out, rows.Err()
+}

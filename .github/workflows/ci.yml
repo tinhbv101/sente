@@ -48,12 +48,26 @@ jobs:
         working-directory: sente-server
 
   swift:
-    name: Swift engine
+    name: Swift packages and app
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Build and test
+      - name: Rules engine
         run: swift test
         working-directory: sente-ios/Packages/GoKit
+      - name: Networking
+        run: swift test
+        working-directory: sente-ios/Packages/SenteNet
+      - name: UI
+        run: swift test
+        working-directory: sente-ios/Packages/SenteUI
       - name: Coverage gate
         run: python3 scripts/coverage_gate.py swift
+      - name: Build the app for the simulator
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild -project Sente.xcodeproj -scheme Sente -quiet \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO build
+        working-directory: sente-ios

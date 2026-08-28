@@ -327,6 +327,23 @@ func TestTwoPlayersPlayOverWebSocket(t *testing.T) {
 	if second := readMoveMade(t, blackConn, 2); second.Color != "white" {
 		t.Errorf("black saw the wrong reply: %+v", second)
 	}
+
+	// A client joining now must be told where the last stone went, or it cannot
+	// draw the marker until the next move.
+	request, _ := http.NewRequest(http.MethodGet, server.URL+"/v1/games/"+gameID, nil)
+	request.Header.Set("Authorization", "Bearer "+black.token)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	var fetched gameStatePayload
+	if err := json.NewDecoder(response.Body).Decode(&fetched); err != nil {
+		t.Fatal(err)
+	}
+	if fetched.LastMove == nil || *fetched.LastMove != "E7" {
+		t.Errorf("want last_move E7, got %v", fetched.LastMove)
+	}
 }
 
 // A connection is bound to one colour, so a client cannot move for its opponent
