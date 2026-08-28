@@ -1,0 +1,14 @@
+{
+  "id": "starting-position-is-in-the-history",
+  "description": "The empty board counts as a seen position, so a move that recreated it would be refused. Guards against engines that only start recording after the first move.",
+  "rules": "chinese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "expect": {
+    "history_contains_start": true
+  }
+}

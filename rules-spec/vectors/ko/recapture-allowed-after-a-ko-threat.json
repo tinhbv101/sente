@@ -1,0 +1,36 @@
+{
+  "id": "recapture-allowed-after-a-ko-threat",
+  "description": "A threat and its answer clear the ko point.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "c5",
+      "d6",
+      "d4",
+      "e5"
+    ],
+    "white": [
+      "e6",
+      "e4",
+      "f5"
+    ]
+  },
+  "to_play": "white",
+  "moves": [
+    "W:d5",
+    "B:a1",
+    "W:a2"
+  ],
+  "move": "e5",
+  "expect": {
+    "legal": true,
+    "captured": [
+      "d5"
+    ],
+    "captures_after": {
+      "black": 1,
+      "white": 1
+    }
+  }
+}

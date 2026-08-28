@@ -1,0 +1,62 @@
+{
+  "id": "chinese-area-on-the-same-position",
+  "description": "Area counting on the identical position: stones on the board plus surrounded points, prisoners ignored. The totals differ from the Japanese result, which is the point of the vector.",
+  "rules": "chinese",
+  "board_size": 9,
+  "komi": 7.5,
+  "setup": {
+    "black": [
+      "d9",
+      "d8",
+      "d7",
+      "e6",
+      "e5",
+      "d4",
+      "d3",
+      "d2",
+      "d1",
+      "b7",
+      "b4",
+      "c2"
+    ],
+    "white": [
+      "e9",
+      "e8",
+      "e7",
+      "f6",
+      "f5",
+      "e4",
+      "e3",
+      "e2",
+      "e1",
+      "g7",
+      "h5",
+      "g3",
+      "b2",
+      "b1"
+    ]
+  },
+  "dead_stones": [
+    "b2",
+    "b1"
+  ],
+  "captures": {
+    "black": 12,
+    "white": 3
+  },
+  "expect": {
+    "territory": {
+      "black": 26,
+      "white": 31
+    },
+    "area": {
+      "black": 38,
+      "white": 43
+    },
+    "score": {
+      "black": 38,
+      "white": 50.5
+    },
+    "winner": "white"
+  }
+}

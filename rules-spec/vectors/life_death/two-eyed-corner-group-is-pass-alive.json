@@ -1,0 +1,31 @@
+{
+  "id": "two-eyed-corner-group-is-pass-alive",
+  "description": "Eyes at a9 and c9 make the chain unconditionally alive.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "b9",
+      "d9",
+      "a8",
+      "b8",
+      "c8",
+      "d8"
+    ],
+    "white": []
+  },
+  "to_play": "black",
+  "expect": {
+    "pass_alive": {
+      "black": [
+        "b9",
+        "d9",
+        "a8",
+        "b8",
+        "c8",
+        "d8"
+      ],
+      "white": []
+    }
+  }
+}

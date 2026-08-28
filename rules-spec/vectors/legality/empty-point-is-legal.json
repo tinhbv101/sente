@@ -1,0 +1,16 @@
+{
+  "id": "empty-point-is-legal",
+  "description": "Any empty intersection on an empty board is playable.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "move": "e5",
+  "expect": {
+    "legal": true,
+    "captured": []
+  }
+}

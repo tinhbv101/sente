@@ -1,0 +1,16 @@
+{
+  "id": "pass-is-always-legal-while-playing",
+  "description": "Passing needs no board conditions.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "move": "pass",
+  "expect": {
+    "legal": true,
+    "phase": "playing"
+  }
+}

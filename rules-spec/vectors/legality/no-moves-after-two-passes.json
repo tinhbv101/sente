@@ -1,0 +1,20 @@
+{
+  "id": "no-moves-after-two-passes",
+  "description": "Once scoring has started, plays are rejected.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "moves": [
+    "B:pass",
+    "W:pass"
+  ],
+  "move": "e5",
+  "expect": {
+    "legal": false,
+    "reason": "game_not_playing"
+  }
+}

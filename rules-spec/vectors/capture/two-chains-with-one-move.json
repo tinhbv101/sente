@@ -1,0 +1,33 @@
+{
+  "id": "two-chains-with-one-move",
+  "description": "e5 removes the liberty shared by two separate white stones.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "c5",
+      "d6",
+      "d4",
+      "g5",
+      "f6",
+      "f4"
+    ],
+    "white": [
+      "d5",
+      "f5"
+    ]
+  },
+  "to_play": "black",
+  "move": "e5",
+  "expect": {
+    "legal": true,
+    "captured": [
+      "d5",
+      "f5"
+    ],
+    "captures_after": {
+      "black": 2,
+      "white": 0
+    }
+  }
+}

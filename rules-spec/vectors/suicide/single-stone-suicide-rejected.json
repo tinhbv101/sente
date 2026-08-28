@@ -1,0 +1,21 @@
+{
+  "id": "single-stone-suicide-rejected",
+  "description": "e5 would have no liberties and captures nothing.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": [
+      "d5",
+      "f5",
+      "e6",
+      "e4"
+    ]
+  },
+  "to_play": "black",
+  "move": "e5",
+  "expect": {
+    "legal": false,
+    "reason": "suicide"
+  }
+}

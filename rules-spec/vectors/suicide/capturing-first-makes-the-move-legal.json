@@ -1,0 +1,31 @@
+{
+  "id": "capturing-first-makes-the-move-legal",
+  "description": "The classic case: e5 looks like suicide, but it takes d5 and the freed point becomes its liberty. Checking suicide before removing captures is the most common engine bug.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "c5",
+      "d6",
+      "d4"
+    ],
+    "white": [
+      "d5",
+      "e6",
+      "e4",
+      "f5"
+    ]
+  },
+  "to_play": "black",
+  "move": "e5",
+  "expect": {
+    "legal": true,
+    "captured": [
+      "d5"
+    ],
+    "captures_after": {
+      "black": 1,
+      "white": 0
+    }
+  }
+}

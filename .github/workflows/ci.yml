@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The three jobs below mirror `make ci`. Anything that gates a merge must be
+# runnable locally too, or people stop believing the pipeline.
+jobs:
+  spec:
+    name: Shared rules spec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generated files match their generators
+        run: python3 rules-spec/tools/check_drift.py
+      - name: Zobrist tables are identical in both engines
+        run: python3 scripts/check_zobrist_parity.py
+
+  go:
+    name: Go engine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: sente-server/go.sum
+      - run: gofmt -l . | tee /dev/stderr | (! read)
+        working-directory: sente-server
+      - run: go vet ./...
+        working-directory: sente-server
+      - run: go test ./... -race
+        working-directory: sente-server
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Coverage gate
+        run: python3 scripts/coverage_gate.py go
+      - name: Vulnerability scan
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+        working-directory: sente-server
+
+  swift:
+    name: Swift engine
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: swift test
+        working-directory: sente-ios/Packages/GoKit
+      - name: Coverage gate
+        run: python3 scripts/coverage_gate.py swift

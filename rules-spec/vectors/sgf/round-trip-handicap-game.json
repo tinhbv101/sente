@@ -1,0 +1,19 @@
+{
+  "id": "round-trip-handicap-game",
+  "description": "Handicap stones ride in AB and must survive the round trip.",
+  "rules": "chinese",
+  "board_size": 9,
+  "handicap": 4,
+  "moves": [
+    "W:e5"
+  ],
+  "expect": {
+    "sgf_contains": [
+      "HA[4]",
+      "AB[",
+      "RU[Chinese]",
+      ";W[ee]"
+    ],
+    "round_trip": true
+  }
+}

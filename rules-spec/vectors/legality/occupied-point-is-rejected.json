@@ -1,0 +1,18 @@
+{
+  "id": "occupied-point-is-rejected",
+  "description": "A stone already sits on e5.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "e5"
+    ],
+    "white": []
+  },
+  "to_play": "white",
+  "move": "e5",
+  "expect": {
+    "legal": false,
+    "reason": "occupied"
+  }
+}

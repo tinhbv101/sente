@@ -1,0 +1,26 @@
+{
+  "id": "single-stone-in-the-corner",
+  "description": "A corner stone has only two liberties.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "a2"
+    ],
+    "white": [
+      "a1"
+    ]
+  },
+  "to_play": "black",
+  "move": "b1",
+  "expect": {
+    "legal": true,
+    "captured": [
+      "a1"
+    ],
+    "captures_after": {
+      "black": 1,
+      "white": 0
+    }
+  }
+}

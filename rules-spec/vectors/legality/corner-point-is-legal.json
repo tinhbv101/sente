@@ -1,0 +1,16 @@
+{
+  "id": "corner-point-is-legal",
+  "description": "Corners have two liberties, which is enough.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "move": "a1",
+  "expect": {
+    "legal": true,
+    "captured": []
+  }
+}

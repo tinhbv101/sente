@@ -1,0 +1,28 @@
+{
+  "id": "no-ko-point-when-several-stones-are-taken",
+  "description": "Ko only arises from a single-stone recapture shape.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "c5",
+      "g5",
+      "d6",
+      "e6",
+      "f6",
+      "d4",
+      "e4"
+    ],
+    "white": [
+      "d5",
+      "e5",
+      "f5"
+    ]
+  },
+  "to_play": "black",
+  "move": "f4",
+  "expect": {
+    "legal": true,
+    "ko_point_absent": true
+  }
+}

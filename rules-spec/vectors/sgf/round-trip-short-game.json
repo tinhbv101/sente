@@ -1,0 +1,24 @@
+{
+  "id": "round-trip-short-game",
+  "description": "Encoding then decoding must preserve size, komi, rules and moves.",
+  "rules": "japanese",
+  "board_size": 19,
+  "komi": 6.5,
+  "moves": [
+    "B:q16",
+    "W:d4",
+    "B:pass",
+    "W:pass"
+  ],
+  "expect": {
+    "sgf_contains": [
+      "SZ[19]",
+      "KM[6.5]",
+      "RU[Japanese]",
+      ";B[pd]",
+      ";W[dp]",
+      ";B[]"
+    ],
+    "round_trip": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "coordinates-use-the-sgf-origin",
+  "description": "SGF counts rows from the top; display coordinates count from the bottom. q16 on 19x19 is pd, and d4 is dp.",
+  "rules": "japanese",
+  "board_size": 19,
+  "moves": [
+    "B:q16",
+    "W:d4"
+  ],
+  "expect": {
+    "sgf_contains": [
+      ";B[pd]",
+      ";W[dp]"
+    ],
+    "round_trip": true
+  }
+}

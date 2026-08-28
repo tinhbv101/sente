@@ -1,0 +1,18 @@
+{
+  "id": "handicap-4-on-9x9",
+  "description": "4 stones on 9x9; White moves first and komi drops to 0.5.",
+  "rules": "japanese",
+  "board_size": 9,
+  "handicap": 4,
+  "expect": {
+    "handicap_stones": [
+      "g7",
+      "c3",
+      "g3",
+      "c7"
+    ],
+    "to_play": "white",
+    "komi": 0.5,
+    "move_number": 0
+  }
+}

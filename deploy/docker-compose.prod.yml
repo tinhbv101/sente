@@ -1,0 +1,89 @@
+# One-VPS deployment: Caddy for TLS, one server node, PostgreSQL and Redis.
+#
+# Only Caddy is exposed to the internet. The server, the database and Redis talk
+# over the internal network and publish no ports (docs/08 §10).
+
+name: sente
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SENTE_DOMAIN: ${SENTE_DOMAIN:?set SENTE_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      sente:
+        condition: service_healthy
+
+  sente:
+    build:
+      context: ../sente-server
+      args:
+        VERSION: ${SENTE_VERSION:-dev}
+    image: sente-server:${SENTE_VERSION:-dev}
+    restart: unless-stopped
+    environment:
+      SENTE_ADDR: ":8080"
+      SENTE_DATABASE_URL: postgres://sente:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/sente?sslmode=disable
+      SENTE_REDIS_URL: redis://redis:6379
+      SENTE_JWT_SECRET: ${SENTE_JWT_SECRET:?set SENTE_JWT_SECRET in .env}
+      SENTE_ALLOWED_ORIGINS: ${SENTE_DOMAIN}
+      # Invitation links are built from this.
+      SENTE_PUBLIC_URL: https://${SENTE_DOMAIN}
+      # Caddy sits in front and rewrites X-Forwarded-For, so it can be believed.
+      # Never set this on a node reachable without the proxy.
+      SENTE_TRUST_PROXY: "true"
+      SENTE_MIGRATE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Distroless has no shell and no curl, so the binary answers for itself.
+      test: ["CMD", "/sente-server", "-healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    # SIGTERM starts the drain: games are handed over before the process exits,
+    # so give it room to finish (docs/04 §5.2).
+    stop_grace_period: 45s
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sente
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: sente
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sente -d sente"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Leases and routing are all recoverable, so persistence buys nothing here.
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

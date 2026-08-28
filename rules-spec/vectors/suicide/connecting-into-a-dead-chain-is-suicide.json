@@ -1,0 +1,25 @@
+{
+  "id": "connecting-into-a-dead-chain-is-suicide",
+  "description": "Joining d5 leaves the two-stone chain without liberties.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "d5"
+    ],
+    "white": [
+      "c5",
+      "d6",
+      "d4",
+      "e6",
+      "e4",
+      "f5"
+    ]
+  },
+  "to_play": "black",
+  "move": "e5",
+  "expect": {
+    "legal": false,
+    "reason": "suicide"
+  }
+}

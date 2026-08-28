@@ -1,0 +1,59 @@
+{
+  "id": "japanese-half-point-game",
+  "description": "Black owns the left, White the right. The two dead white stones in Black's corner become prisoners and their points become territory. White wins by half a point.",
+  "rules": "japanese",
+  "board_size": 9,
+  "komi": 6.5,
+  "setup": {
+    "black": [
+      "d9",
+      "d8",
+      "d7",
+      "e6",
+      "e5",
+      "d4",
+      "d3",
+      "d2",
+      "d1",
+      "b7",
+      "b4",
+      "c2"
+    ],
+    "white": [
+      "e9",
+      "e8",
+      "e7",
+      "f6",
+      "f5",
+      "e4",
+      "e3",
+      "e2",
+      "e1",
+      "g7",
+      "h5",
+      "g3",
+      "b2",
+      "b1"
+    ]
+  },
+  "dead_stones": [
+    "b2",
+    "b1"
+  ],
+  "captures": {
+    "black": 12,
+    "white": 3
+  },
+  "expect": {
+    "territory": {
+      "black": 26,
+      "white": 31
+    },
+    "score": {
+      "black": 40,
+      "white": 40.5
+    },
+    "winner": "white",
+    "margin": 0.5
+  }
+}

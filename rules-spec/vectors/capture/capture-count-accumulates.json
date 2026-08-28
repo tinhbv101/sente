@@ -1,0 +1,32 @@
+{
+  "id": "capture-count-accumulates",
+  "description": "Prisoners add to the count already held.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "e6",
+      "e4",
+      "d5"
+    ],
+    "white": [
+      "e5"
+    ]
+  },
+  "to_play": "black",
+  "captures": {
+    "black": 4,
+    "white": 2
+  },
+  "move": "f5",
+  "expect": {
+    "legal": true,
+    "captured": [
+      "e5"
+    ],
+    "captures_after": {
+      "black": 5,
+      "white": 2
+    }
+  }
+}

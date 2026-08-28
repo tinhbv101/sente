@@ -1,0 +1,28 @@
+{
+  "id": "immediate-recapture-is-forbidden",
+  "description": "White takes the ko at d5; Black may not take it straight back.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "c5",
+      "d6",
+      "d4",
+      "e5"
+    ],
+    "white": [
+      "e6",
+      "e4",
+      "f5"
+    ]
+  },
+  "to_play": "white",
+  "moves": [
+    "W:d5"
+  ],
+  "move": "e5",
+  "expect": {
+    "legal": false,
+    "reason": "ko"
+  }
+}

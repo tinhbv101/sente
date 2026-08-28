@@ -1,0 +1,32 @@
+{
+  "id": "the-ko-capture-itself-is-legal",
+  "description": "White d5 captures exactly one stone and sets the ko point.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "c5",
+      "d6",
+      "d4",
+      "e5"
+    ],
+    "white": [
+      "e6",
+      "e4",
+      "f5"
+    ]
+  },
+  "to_play": "white",
+  "move": "d5",
+  "expect": {
+    "legal": true,
+    "captured": [
+      "e5"
+    ],
+    "ko_point": "e5",
+    "captures_after": {
+      "black": 0,
+      "white": 1
+    }
+  }
+}

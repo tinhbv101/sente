@@ -1,0 +1,22 @@
+{
+  "id": "empty-board-scores-only-komi",
+  "description": "No stones means no territory: the whole board is neutral.",
+  "rules": "japanese",
+  "board_size": 9,
+  "komi": 6.5,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "expect": {
+    "territory": {
+      "black": 0,
+      "white": 0
+    },
+    "neutral": 81,
+    "score": {
+      "black": 0,
+      "white": 6.5
+    }
+  }
+}

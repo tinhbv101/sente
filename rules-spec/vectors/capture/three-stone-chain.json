@@ -1,0 +1,36 @@
+{
+  "id": "three-stone-chain",
+  "description": "A whole chain dies at once when its last liberty is filled.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "c5",
+      "g5",
+      "d6",
+      "e6",
+      "f6",
+      "d4",
+      "e4"
+    ],
+    "white": [
+      "d5",
+      "e5",
+      "f5"
+    ]
+  },
+  "to_play": "black",
+  "move": "f4",
+  "expect": {
+    "legal": true,
+    "captured": [
+      "d5",
+      "e5",
+      "f5"
+    ],
+    "captures_after": {
+      "black": 3,
+      "white": 0
+    }
+  }
+}

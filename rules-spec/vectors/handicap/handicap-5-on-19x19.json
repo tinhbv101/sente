@@ -1,0 +1,19 @@
+{
+  "id": "handicap-5-on-19x19",
+  "description": "5 stones on 19x19; White moves first and komi drops to 0.5.",
+  "rules": "japanese",
+  "board_size": 19,
+  "handicap": 5,
+  "expect": {
+    "handicap_stones": [
+      "q16",
+      "d4",
+      "q4",
+      "d16",
+      "k10"
+    ],
+    "to_play": "white",
+    "komi": 0.5,
+    "move_number": 0
+  }
+}

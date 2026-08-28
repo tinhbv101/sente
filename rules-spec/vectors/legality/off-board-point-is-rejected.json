@@ -1,0 +1,16 @@
+{
+  "id": "off-board-point-is-rejected",
+  "description": "Row 10 does not exist on a 9x9 board.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "move": "e10",
+  "expect": {
+    "legal": false,
+    "reason": "out_of_bounds"
+  }
+}

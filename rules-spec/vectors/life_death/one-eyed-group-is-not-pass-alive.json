@@ -1,0 +1,25 @@
+{
+  "id": "one-eyed-group-is-not-pass-alive",
+  "description": "Filling c9 leaves a single eye, which Benson rejects.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "b9",
+      "c9",
+      "d9",
+      "a8",
+      "b8",
+      "c8",
+      "d8"
+    ],
+    "white": []
+  },
+  "to_play": "black",
+  "expect": {
+    "pass_alive": {
+      "black": [],
+      "white": []
+    }
+  }
+}

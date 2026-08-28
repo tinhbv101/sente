@@ -1,0 +1,19 @@
+{
+  "id": "passing-does-not-record-a-position",
+  "description": "A pass leaves the board unchanged and must not grow the history.",
+  "rules": "chinese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "e5"
+    ],
+    "white": []
+  },
+  "to_play": "white",
+  "moves": [
+    "W:pass"
+  ],
+  "expect": {
+    "history_size": 1
+  }
+}

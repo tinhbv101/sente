@@ -1,0 +1,14 @@
+# Secrets -- never committed. deploy/.env.example is the template.
+.env
+deploy/.env
+
+# Build output
+sente-ios/Packages/GoKit/.build/
+sente-server/.coverage.out
+*.xcuserstate
+xcuserdata/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store

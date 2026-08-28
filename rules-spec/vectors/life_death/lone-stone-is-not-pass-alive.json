@@ -1,0 +1,19 @@
+{
+  "id": "lone-stone-is-not-pass-alive",
+  "description": "A single stone on an open board can always be captured.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "e5"
+    ],
+    "white": []
+  },
+  "to_play": "black",
+  "expect": {
+    "pass_alive": {
+      "black": [],
+      "white": []
+    }
+  }
+}

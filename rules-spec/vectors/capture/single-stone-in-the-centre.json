@@ -1,0 +1,28 @@
+{
+  "id": "single-stone-in-the-centre",
+  "description": "White e5 loses its last liberty when Black plays f5.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [
+      "e6",
+      "e4",
+      "d5"
+    ],
+    "white": [
+      "e5"
+    ]
+  },
+  "to_play": "black",
+  "move": "f5",
+  "expect": {
+    "legal": true,
+    "captured": [
+      "e5"
+    ],
+    "captures_after": {
+      "black": 1,
+      "white": 0
+    }
+  }
+}

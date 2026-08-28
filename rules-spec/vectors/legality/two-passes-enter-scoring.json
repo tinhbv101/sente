@@ -1,0 +1,19 @@
+{
+  "id": "two-passes-enter-scoring",
+  "description": "Two consecutive passes end play and open the scoring phase.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "moves": [
+    "B:pass"
+  ],
+  "move": "pass",
+  "expect": {
+    "legal": true,
+    "phase": "scoring"
+  }
+}

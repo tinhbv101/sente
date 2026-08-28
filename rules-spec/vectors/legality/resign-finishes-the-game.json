@@ -1,0 +1,20 @@
+{
+  "id": "resign-finishes-the-game",
+  "description": "Black resigns; White wins without counting.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "move": "resign",
+  "expect": {
+    "legal": true,
+    "phase": "finished",
+    "result": {
+      "winner": "white",
+      "reason": "resignation"
+    }
+  }
+}

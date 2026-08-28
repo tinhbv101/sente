@@ -1,0 +1,17 @@
+{
+  "id": "playing-out-of-turn-is-rejected",
+  "description": "Black is to play; White may not move.",
+  "rules": "japanese",
+  "board_size": 9,
+  "setup": {
+    "black": [],
+    "white": []
+  },
+  "to_play": "black",
+  "move": "e5",
+  "move_by": "white",
+  "expect": {
+    "legal": false,
+    "reason": "not_your_turn"
+  }
+}
