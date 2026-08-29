@@ -24,7 +24,7 @@ Cờ vây online trên iOS. Thiết kế đầy đủ ở [`docs/`](docs/README.
 | CI (`make ci`) — drift, parity, test, coverage gate | **Xong** |
 | `sente-ios/Packages/SenteNet` — REST + WebSocket client, reconnect, outbox | **Xong · 12/12 xanh** |
 | `sente-ios/Packages/SenteUI` — bàn cờ Canvas, cử chỉ đặt quân, đồng hồ | **Xong · 6/6 xanh** |
-| `sente-ios/App` — Home, mời/nhận lời mời, màn hình ván, đếm điểm, cài đặt | **Chạy được trên simulator** · `GameStore` **23/23 test** (optimistic/rollback, thứ tự sự kiện, canary hash) |
+| `sente-ios/App` — Home, mời/nhận lời mời, màn hình ván, đếm điểm, cài đặt (sáng/tối/hệ thống), icon | **Chạy được trên simulator** · `GameStore` **23/23 test** (optimistic/rollback, thứ tự sự kiện, canary hash) |
 | Còn lại (Sign in with Apple, push, landing page, XCUITest, TestFlight) | Chưa bắt đầu |
 
 Hai engine luật độc lập, cùng chạy một bộ vector và một file parity — ràng buộc quan trọng
@@ -46,6 +46,7 @@ sente-ios/      app iOS — project.yml (xcodegen) sinh ra Sente.xcodeproj
   Packages/SenteNet     REST + WebSocket, Keychain, backoff
   Packages/SenteUI      BoardView (Canvas), tokens, đồng hồ, banner
   App/                  màn hình; GameStore giữ cặp confirmed/optimistic
+  scripts/render-icon.swift   vẽ icon bằng CoreGraphics, hai biến thể sáng/tối
 sente-server/   backend Go
   internal/rules        engine luật, gói thuần, không I/O
   internal/game         đồng hồ (4 thể thức), đàm phán quân chết,

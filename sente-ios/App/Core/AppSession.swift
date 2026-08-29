@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import SenteNet
+import SwiftUI
 
 /// Everything the app knows outside a game: who I am, where the server is, and
 /// which games and invitations I have. Guest sign-up happens silently on first
@@ -116,6 +117,19 @@ struct Settings: Equatable {
     /// Place the stone above the fingertip instead of under it. Off by default;
     /// useful on 19×19 where a finger hides the intersection.
     var offsetPlacement: Bool
+    var appearance: Appearance
+
+    enum Appearance: String, CaseIterable, Identifiable {
+        case system, light, dark
+        var id: String { rawValue }
+        var title: String {
+            switch self { case .system: "Theo hệ thống"; case .light: "Sáng"; case .dark: "Tối" }
+        }
+        /// nil defers to the system setting.
+        var colorScheme: ColorScheme? {
+            switch self { case .system: nil; case .light: .light; case .dark: .dark }
+        }
+    }
 
     static let defaultServer = URL(string: "https://sente.devlord.net")!
 
@@ -125,7 +139,8 @@ struct Settings: Equatable {
             serverURL: defaults.string(forKey: "serverURL").flatMap(URL.init) ?? defaultServer,
             showCoordinates: defaults.object(forKey: "showCoordinates") as? Bool ?? true,
             colourBlindSymbols: defaults.bool(forKey: "colourBlindSymbols"),
-            offsetPlacement: defaults.bool(forKey: "offsetPlacement"))
+            offsetPlacement: defaults.bool(forKey: "offsetPlacement"),
+            appearance: Appearance(rawValue: defaults.string(forKey: "appearance") ?? "") ?? .system)
     }
 
     func save() {
@@ -134,5 +149,6 @@ struct Settings: Equatable {
         defaults.set(showCoordinates, forKey: "showCoordinates")
         defaults.set(colourBlindSymbols, forKey: "colourBlindSymbols")
         defaults.set(offsetPlacement, forKey: "offsetPlacement")
+        defaults.set(appearance.rawValue, forKey: "appearance")
     }
 }

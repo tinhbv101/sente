@@ -77,7 +77,7 @@ public struct ConnectionBanner: View {
         switch kind {
         case .reconnecting: Color(red: 0.62, green: 0.46, blue: 0.10)
         case .offline: Color(red: 0.55, green: 0.20, blue: 0.16)
-        case .syncing: Tokens.indigo
+        case .syncing: Color(red: 0.153, green: 0.290, blue: 0.451)
         }
     }
 }

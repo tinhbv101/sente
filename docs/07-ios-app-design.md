@@ -486,6 +486,13 @@ Trường hợp phải xử lý đúng:
 
 - Bàn cờ **giữ nguyên tông gỗ ở dark mode** (chỉ tối đi), không đảo màu — người chơi cờ
   nhận diện bàn qua màu gỗ.
+- Mọi màu chrome là **token thích ứng** (`Tokens.adaptive(light:dark:)` bọc `UIColor` động),
+  không phải hằng số. Bản đầu để `paper`/`ink` là màu sáng cố định nên bật dark mode chỉ đổi
+  chrome hệ thống, nền vẫn kem. Người dùng chọn Hệ thống / Sáng / Tối trong Cài đặt;
+  `preferredColorScheme(nil)` là theo hệ thống.
+- **Icon** vẽ bằng CoreGraphics (`sente-ios/scripts/render-icon.swift`): quân đen có vệt
+  sáng lệch trên nền gỗ với lưới và chấm son — đúng mô tả thương hiệu. Sinh lại được ở
+  mọi kích cỡ, hai biến thể sáng/tối, không cần công cụ thiết kế.
 - Typography: SF Pro, dùng text style chuẩn để Dynamic Type hoạt động; chỉ tọa độ bàn cờ dùng
   cỡ cố định (scale theo cỡ bàn, không theo Dynamic Type).
 - Âm thanh: tiếng đặt quân (3 biến thể ngẫu nhiên tránh lặp máy móc), tiếng bắt quân, tiếng
@@ -545,6 +552,10 @@ Ba điều lộ ra ngay ở lần chạy đầu trên simulator, đều đã s�
   `AppSession` coi thất bại là lỗi, không nuốt.
 
 Hai launch argument phục vụ kiểm thử và script: `-openGame <id>` và `-inviteCode <code>`.
+Cả hai được tiêu thụ trong `onAppear` của Home, không chỉ `onChange` — giá trị đã có sẵn
+trước khi Home xuất hiện nên `onChange` không bao giờ bắt được (đã sập bẫy này hai lần).
+Chuỗi hiển thị thời gian **không** dùng relative formatter của hệ thống: nó theo locale máy
+và cho ra "Hết hạn next week" trên simulator tiếng Anh.
 Deep link `sente://g/<id>` và `sente://j/<code>` hoạt động nhưng iOS hỏi xác nhận khi mở từ
 ngoài app — không tự động được trong XCUITest, nên dùng launch argument.
 

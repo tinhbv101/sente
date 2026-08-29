@@ -18,6 +18,7 @@ struct HomeView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(Tokens.paper.ignoresSafeArea())
+            .foregroundStyle(Tokens.ink)
             .navigationTitle("Sente")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -41,13 +42,14 @@ struct HomeView: View {
                     path.append(game)
                 }
             }
-            .onChange(of: session.pendingInviteCode) { _, code in
-                if let code { joinCode = code; session.pendingInviteCode = nil }
-            }
+            .onChange(of: session.pendingInviteCode) { _, code in openPendingInvite(code) }
             // The id may already be set when this view first appears (a launch
             // argument, or a link opened while the app was starting), and onChange
             // only fires for later changes.
-            .onAppear { openPendingGame(session.pendingGameID) }
+            .onAppear {
+                openPendingGame(session.pendingGameID)
+                openPendingInvite(session.pendingInviteCode)
+            }
             .onChange(of: session.pendingGameID) { _, id in openPendingGame(id) }
             .onChange(of: session.games) { _, _ in openPendingGame(session.pendingGameID) }
             .task(id: path.count) { if path.isEmpty { await session.refreshQuietly() } }
@@ -92,6 +94,12 @@ struct HomeView: View {
             }
             .listRowBackground(Color.clear)
         }
+    }
+
+    private func openPendingInvite(_ code: String?) {
+        guard let code else { return }
+        session.pendingInviteCode = nil
+        joinCode = code
     }
 
     /// Navigates once the game is known; if the list has not loaded yet the
@@ -168,7 +176,6 @@ struct HomeView: View {
                 Image(systemName: "chevron.right").font(.caption).foregroundStyle(Tokens.inkTertiary)
             }
         }
-        .foregroundStyle(Tokens.ink)
     }
 }
 

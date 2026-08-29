@@ -8,6 +8,8 @@ struct SenteApp: App {
         WindowGroup {
             RootView()
                 .environment(session)
+                // nil follows the system; a choice in Settings overrides it.
+                .preferredColorScheme(session.settings.appearance.colorScheme)
                 .task { await session.start() }
                 // sente://j/<code> from a shared link, or the universal-link path once
                 // the AASA file is in place.

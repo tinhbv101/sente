@@ -113,7 +113,7 @@ struct ShareInviteView: View {
             Text(invite.code)
                 .font(.system(size: 34, weight: .medium, design: .monospaced)).tracking(4)
                 .padding(.vertical, 8).padding(.horizontal, 20)
-                .background(Tokens.paper, in: RoundedRectangle(cornerRadius: 12))
+                .background(Tokens.sheetSecondary, in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityLabel("Mã lời mời \(invite.code.map(String.init).joined(separator: " "))")
             Text("\(invite.config.boardSize)×\(invite.config.boardSize) · \(invite.config.timeControl.summary) · hết hạn sau 7 ngày")
                 .font(.footnote).foregroundStyle(Tokens.inkSecondary)
@@ -122,5 +122,7 @@ struct ShareInviteView: View {
             Button("Xong") { onDone() }.buttonStyle(SecondaryButton())
         }
         .padding(24)
+        .foregroundStyle(Tokens.ink)
+        .presentationBackground(Tokens.sheet)
     }
 }

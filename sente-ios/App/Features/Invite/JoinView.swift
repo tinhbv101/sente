@@ -31,6 +31,7 @@ struct JoinView: View {
                 Spacer()
             }
             .padding(20)
+            .foregroundStyle(Tokens.ink)
             .background(Tokens.paper.ignoresSafeArea())
             .navigationTitle(preview == nil ? "Nhập mã lời mời" : "Lời mời")
             .navigationBarTitleDisplayMode(.inline)
@@ -51,7 +52,7 @@ struct JoinView: View {
                 }
                 .onSubmit { Task { await lookUp() } }
                 .padding(.vertical, 12)
-                .background(.white, in: RoundedRectangle(cornerRadius: 14))
+                .background(Tokens.sheet, in: RoundedRectangle(cornerRadius: 14))
             Text("Mã gồm 8 chữ, không có I, O, 0 hay 1.").font(.caption).foregroundStyle(Tokens.inkTertiary)
             Button { Task { await lookUp() } } label: {
                 if busy { ProgressView().tint(.white) } else { Text("Xem lời mời") }
@@ -65,7 +66,7 @@ struct JoinView: View {
             VStack(spacing: 6) {
                 Text("\(invite.creatorName ?? "Ai đó") mời bạn\nmột ván cờ vây")
                     .font(.system(size: 28, design: .serif)).multilineTextAlignment(.center)
-                Text(invite.status == "pending" ? "Hết hạn \(invite.expiresAt.formatted(.relative(presentation: .named)))" : "Lời mời này không còn hiệu lực")
+                Text(invite.status == "pending" ? expiry(invite.expiresAt) : "Lời mời này không còn hiệu lực")
                     .font(.footnote).foregroundStyle(invite.status == "pending" ? Tokens.inkSecondary : .red)
             }
             VStack(spacing: 0) {
@@ -79,7 +80,7 @@ struct JoinView: View {
                 Divider()
                 detail("Màu của bạn", yourColour(invite))
             }
-            .padding(.horizontal, 14).background(.white, in: RoundedRectangle(cornerRadius: 16))
+            .padding(.horizontal, 14).background(Tokens.sheet, in: RoundedRectangle(cornerRadius: 16))
 
             if invite.isMine {
                 Text("Đây là lời mời của bạn — gửi mã cho một người bạn.").font(.footnote).foregroundStyle(Tokens.inkSecondary)
@@ -91,6 +92,17 @@ struct JoinView: View {
                 Button("Từ chối") { Task { await decline(invite) } }.buttonStyle(SecondaryButton())
             }
         }
+    }
+
+    /// Spelled out rather than through a relative date formatter, which follows the
+    /// device locale and produced "Hết hạn next week" on an English phone.
+    private func expiry(_ date: Date) -> String {
+        let seconds = date.timeIntervalSinceNow
+        guard seconds > 0 else { return "Đã hết hạn" }
+        let hours = Int(seconds / 3600)
+        if hours < 1 { return "Hết hạn trong chưa đầy một giờ" }
+        if hours < 48 { return "Hết hạn sau \(hours) giờ" }
+        return "Hết hạn sau \(hours / 24) ngày"
     }
 
     private func detail(_ label: String, _ value: String) -> some View {

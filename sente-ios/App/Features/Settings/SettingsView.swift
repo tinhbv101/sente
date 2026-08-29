@@ -16,6 +16,12 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(Tokens.inkSecondary)
                 }
             }
+            Section("Giao diện") {
+                Picker("Chế độ màu", selection: $draft.appearance) {
+                    ForEach(Settings.Appearance.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+            }
             Section {
                 Toggle("Hiện tọa độ", isOn: $draft.showCoordinates)
                 Toggle("Ký hiệu cho người mù màu", isOn: $draft.colourBlindSymbols)

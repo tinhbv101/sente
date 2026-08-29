@@ -82,7 +82,7 @@ struct GameView: View {
                     .overlay(Circle().stroke(.black.opacity(0.12)))
                 Text(String(name.prefix(1)).lowercased())
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(player == .black ? .white : Tokens.ink)
+                    .foregroundStyle(player == .black ? .white : Color(red: 0.11, green: 0.11, blue: 0.13))
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(name).font(.callout.weight(.semibold))
@@ -100,7 +100,7 @@ struct GameView: View {
                        active: active, offset: store.clockOffset)
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
-        .background(active ? Tokens.seal.opacity(0.10) : .clear, in: RoundedRectangle(cornerRadius: 14))
+        .background(active ? Tokens.sealSoft : .clear, in: RoundedRectangle(cornerRadius: 14))
         .overlay(alignment: .leading) {
             if active { RoundedRectangle(cornerRadius: 2).fill(Tokens.seal).frame(width: 3).padding(.vertical, 12) }
         }
@@ -165,7 +165,7 @@ struct GameView: View {
                 .font(.footnote.weight(.medium))
                 .padding(.horizontal, 14).padding(.vertical, 10)
                 .background(Tokens.ink.opacity(0.9), in: Capsule())
-                .foregroundStyle(.white)
+                .foregroundStyle(Tokens.paper)
                 .padding(.bottom, 8)
                 .onTapGesture { store.dismissToast() }
                 .task { try? await Task.sleep(for: .seconds(3)); store.dismissToast() }
@@ -185,6 +185,7 @@ struct ScoringControls: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12).background(Tokens.indigoSoft, in: RoundedRectangle(cornerRadius: 12))
+            .foregroundStyle(Tokens.ink)
 
             if let score = store.score {
                 HStack {
@@ -217,7 +218,7 @@ struct ResultView: View {
         VStack(spacing: 14) {
             Text(reasonLabel).font(.caption.weight(.bold)).textCase(.uppercase)
                 .padding(.horizontal, 11).padding(.vertical, 5)
-                .background(Tokens.paper, in: Capsule()).foregroundStyle(Tokens.inkSecondary)
+                .background(Tokens.sheetSecondary, in: Capsule()).foregroundStyle(Tokens.inkSecondary)
             Text(title).font(.system(size: 36, weight: .regular, design: .serif))
             if let score = store.result?.score {
                 Text("\(score.margin.formatted()) điểm").font(.system(.body, design: .monospaced)).foregroundStyle(Tokens.inkSecondary)
@@ -231,6 +232,8 @@ struct ResultView: View {
             Button("Đóng") { onClose() }.buttonStyle(PrimaryButton())
         }
         .padding(24)
+        .foregroundStyle(Tokens.ink)
+        .presentationBackground(Tokens.sheet)
     }
 
     private var title: String {
@@ -256,7 +259,7 @@ struct PrimaryButton: ButtonStyle {
             .font(.callout.weight(.semibold))
             .frame(maxWidth: .infinity).frame(height: 50)
             .background(Tokens.indigo.opacity(configuration.isPressed ? 0.8 : 1), in: RoundedRectangle(cornerRadius: 15))
-            .foregroundStyle(.white)
+            .foregroundStyle(Tokens.onIndigo)
     }
 }
 
