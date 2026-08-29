@@ -1,23 +1,44 @@
+import AuthenticationServices
+import CryptoKit
 import SwiftUI
 import SenteNet
 import SenteUI
 
 struct SettingsView: View {
     @Environment(AppSession.self) private var session
+    @Environment(\.colorScheme) private var colorScheme
     @State private var draft = Settings.load()
     @State private var serverText = Settings.load().serverURL.absoluteString
     @State private var confirmDelete = false
     @State private var deleteError: String?
+    @State private var appleError: String?
+    // Fresh per screen; Apple echoes its hash back inside the identity token so
+    // the server can tell this sign-in from a replayed one.
+    @State private var rawNonce = SettingsView.freshNonce()
+    @State private var pushStatus: PushRegistrar.Status?
 
     var body: some View {
         Form {
             if let user = session.user {
-                Section("Tài khoản") {
+                Section {
                     LabeledContent("Tên", value: user.displayName)
                     LabeledContent("Mã bạn bè", value: user.friendCode)
-                    Text("Tài khoản khách gắn với máy này. Đăng nhập Apple sẽ có ở bản sau.")
-                        .font(.caption).foregroundStyle(Tokens.inkSecondary)
+                    if user.isGuest {
+                        SignInWithAppleButton(.continue, onRequest: prepareAppleRequest, onCompletion: handleApple)
+                            .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+                            .frame(height: 44)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        if let appleError { Text(appleError).font(.footnote).foregroundStyle(.red) }
+                    } else {
+                        Label("Đã liên kết với Apple ID", systemImage: "checkmark.seal.fill")
+                            .foregroundStyle(Tokens.inkSecondary)
+                    }
+                } header: { Text("Tài khoản") } footer: {
+                    if user.isGuest {
+                        Text("Tài khoản khách gắn với máy này. Đăng nhập Apple để giữ ván cờ và mã bạn bè khi đổi máy.")
+                    }
                 }
+                notificationsSection
             }
             Section("Giao diện") {
                 Picker("Chế độ màu", selection: $draft.appearance) {
@@ -65,6 +86,58 @@ struct SettingsView: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Đổi máy chủ") { applyServer() } }
             }
         }
+    }
+
+    @ViewBuilder private var notificationsSection: some View {
+        Section {
+            switch pushStatus {
+            case .granted:
+                Label("Đã bật", systemImage: "bell.badge.fill").foregroundStyle(Tokens.inkSecondary)
+            case .denied:
+                Button("Mở Cài đặt để bật thông báo") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                }
+            case .notAsked:
+                Button("Bật thông báo") {
+                    Task { _ = await session.enablePush(); pushStatus = await PushRegistrar.status() }
+                }
+            case nil:
+                ProgressView()
+            }
+        } header: { Text("Thông báo") } footer: {
+            Text("Báo khi đến lượt bạn trong ván chậm, khi ván kết thúc, và khi bạn nhận lời mời.")
+        }
+        .task { pushStatus = await PushRegistrar.status() }
+    }
+
+    private func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
+        request.requestedScopes = [.fullName]
+        request.nonce = Self.sha256(rawNonce)
+    }
+
+    private func handleApple(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else { return }
+            let nonce = rawNonce
+            rawNonce = Self.freshNonce()
+            Task {
+                do { try await session.signInWithApple(credential: credential, rawNonce: nonce) }
+                catch let error as APIError { appleError = error.userMessage }
+                catch { appleError = error.localizedDescription }
+            }
+        case .failure(let error):
+            // Dismissing the sheet is not an error worth showing.
+            if (error as? ASAuthorizationError)?.code != .canceled { appleError = error.localizedDescription }
+        }
+    }
+
+    static func freshNonce() -> String {
+        (0..<32).map { _ in String(format: "%02x", UInt8.random(in: .min ... .max)) }.joined()
+    }
+
+    static func sha256(_ input: String) -> String {
+        SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     private func applyServer() {

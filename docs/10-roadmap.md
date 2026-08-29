@@ -198,6 +198,7 @@ là ngoại lệ hiếm hoi mà làm trùng lặp là đúng — nó chính là 
 |-----------|--------|----------|
 | 5.1.1(v) | Không có xóa tài khoản trong app → từ chối chắc chắn | Đã làm ở P4 |
 | 1.2 | Có chat mà không có report/block/lọc → từ chối | Đã làm ở P4 |
+| 4.8 | Có đăng nhập bên thứ ba mà không có Sign in with Apple → từ chối | Đã làm (2026-08-29), cùng push APNs: đến lượt (thư tín), kết thúc, lời mời được nhận. Còn thiếu push "sắp hết giờ" và `PATCH /v1/devices` |
 | 4.0 | Giao diện "không phải native" | SwiftUI thuần, không vấn đề |
 | 2.1 | Reviewer không biết chơi cờ vây, không test được ván online | **Cung cấp tài khoản demo + hướng dẫn từng bước + video demo trong ghi chú review**; cân nhắc chế độ "chơi thử với bot đơn giản" chỉ để reviewer test được |
 | 5.1.2 | Privacy Label khai không khớp | Rà lại ở tuần 21 |

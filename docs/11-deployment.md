@@ -95,6 +95,38 @@ SENTE_VERSION=v0.1.0
 
 `chmod 600 .env`. File này **không bao giờ** được commit.
 
+### 4.1 Khóa Apple (push và Sign in with Apple)
+
+Cần tài khoản Apple Developer Program. Ở *Certificates, Identifiers & Profiles*:
+
+1. **Membership details** → chép **Team ID**.
+2. **Identifiers → App IDs** → `app.sente.go` với Push Notifications, Sign in with Apple,
+   Associated Domains. Trong Sign in with Apple → *Server-to-Server Notification Endpoint*:
+   `https://<SENTE_DOMAIN>/v1/auth/apple/notifications`.
+3. **Keys** → một khóa **Apple Push Notifications service**, một khóa **Sign in with Apple**.
+   Mỗi khóa tải được **một lần** duy nhất: `AuthKey_<KEY_ID>.p8`.
+
+Đưa hai file `.p8` vào thư mục bí mật, giữ nguyên tên:
+
+```bash
+mkdir -p ~/sente/deploy/secrets && chmod 700 ~/sente/deploy/secrets
+# scp AuthKey_*.p8 vào đó, rồi:
+chmod 644 ~/sente/deploy/secrets/*.p8    # container chạy non-root nên cần đọc được
+```
+
+Thêm vào `.env`:
+
+```
+SENTE_APPLE_TEAM_ID=<Team ID>
+SENTE_APNS_KEY_ID=<Key ID của khóa APNs>
+SENTE_SIWA_KEY_ID=<Key ID của khóa Sign in with Apple>
+```
+
+Server tự tìm `/run/secrets/AuthKey_<KEY_ID>.p8`; thư mục được mount chỉ-đọc và nằm trong
+`.gitignore` (`deploy/secrets/`, `*.p8`). Bỏ trống `SENTE_APNS_KEY_ID` là tắt push; bỏ trống
+`SENTE_APPLE_TEAM_ID` là tắt Sign in with Apple và AASA. Sau khi lên, `GET /v1/config` phải có
+`"apple_sign_in": true, "push": true`.
+
 ## 5. Khởi động
 
 ```bash
@@ -287,7 +319,12 @@ và `proxy_read_timeout` đủ dài. NPM làm việc này bằng nút **Websocke
 | `SENTE_TRUST_PROXY` | | `false` | Tin `X-Forwarded-For` để tính rate limit theo IP thật. **Chỉ** bật khi đứng sau proxy — bật sai là ai cũng giả được IP |
 | `SENTE_CLIENT_IP_HEADER` | | rỗng | Header chứa IP thật khi có CDN trước proxy, ví dụ `CF-Connecting-IP`. Xem [§6.1](#61-nếu-domain-đi-qua-cloudflare) |
 | `SENTE_MIGRATE` | | `true` | Đặt `false` nếu chạy migration riêng |
-| `SENTE_APPLE_TEAM_ID` | | rỗng | Bật file AASA cho universal link. Lấy từ Apple Developer → Membership |
+| `SENTE_APPLE_TEAM_ID` | | rỗng | Bật Sign in with Apple và file AASA cho universal link. Lấy từ Apple Developer → Membership |
+| `SENTE_APPLE_BUNDLE_ID` | | `app.sente.go` | `aud` của identity token và `apns-topic` |
+| `SENTE_APNS_KEY_ID` | | rỗng | Bật push. Cần `SENTE_APPLE_TEAM_ID` |
+| `SENTE_SIWA_KEY_ID` | | rỗng | Khóa Sign in with Apple; chỉ kiểm tra đọc được lúc khởi động |
+| `SENTE_SECRETS_DIR` | | `/run/secrets` | Nơi tìm `AuthKey_<KEY_ID>.p8` |
+| `SENTE_APNS_KEY_FILE`, `SENTE_SIWA_KEY_FILE` | | theo Key ID | Chỉ khi file không mang tên Apple đặt |
 | `SENTE_APP_STORE_URL` | | rỗng | Nút "Tải trên App Store" ở landing page `/j/<code>` |
 
 **`/metrics`** (Prometheus) không có xác thực — nó dành cho mạng nội bộ. Trong NPM, thêm một
@@ -299,6 +336,7 @@ Hai biến sau **không** phải của server mà của `docker-compose.prod.yml
 |---|---|---|
 | `SENTE_BIND` | `127.0.0.1` | Địa chỉ host để publish. **Không bao giờ** đặt `0.0.0.0` |
 | `SENTE_PORT` | `8080` | Cổng host cho proxy trỏ vào |
+| `SENTE_SECRETS_DIR` | `./secrets` | Thư mục host chứa `.p8`, mount vào `/run/secrets` |
 
 Thiếu biến bắt buộc thì server **thoát ngay lúc khởi động** kèm thông báo rõ, thay vì chết ở
 request đầu tiên cần đến nó.
@@ -330,16 +368,18 @@ Nói rõ để không ai tưởng đã xong:
 
 | Thiếu | Hệ quả |
 |---|---|
-| Sign in with Apple | Tài khoản gắn với máy; mất máy là mất tài khoản. Refresh token 30 ngày đã có, nên **không** còn mất tài khoản sau 15 phút |
-| Push (APNs) | Ván thư tín không báo được cho ai — phải mở app mới thấy tới lượt |
+| Push "sắp hết giờ" | Chỉ có "đến lượt bạn" (ván thư tín), "ván kết thúc", "bạn nhận lời mời" |
+| Tắt từng loại thông báo | Cột `push_prefs` có, endpoint `PATCH /v1/devices` chưa |
 | Tracing | Có `/metrics` Prometheus (bốn series của ADR-015); chưa có trace |
 
-**Đã có:** lời mời qua link với landing page cho người chưa cài app, refresh token xoay vòng,
+**Đã có:** Sign in with Apple (liên kết tài khoản khách, webhook thu hồi), push qua APNs
+với token key ([§4.1](#41-khóa-apple-push-và-sign-in-with-apple)),
+lời mời qua link với landing page cho người chưa cài app, refresh token xoay vòng,
 xóa tài khoản trong app, báo cáo/chặn (App Store 1.2 và 5.1.1(v)), xuất SGF, ván thư tín được
 xử hết giờ bởi sweeper, rate limit theo IP cho đăng ký / theo người dùng cho mọi thứ khác
 ([06 §1.3](06-api-and-realtime-protocol.md#13-rate-limit)).
 Ghế trống trong ván tạo trực tiếp qua `POST /v1/games` vẫn là "ai vào trước lấy" — đó là
 đường thử nghiệm; ván thật đi qua lời mời.
 
-Nói cách khác: **đủ để mở cho một nhóm nhỏ quen biết. Chưa đủ để công khai** — thiếu
-đăng nhập bền và thiếu giám sát, nghĩa là chưa biết được khi nào nó hỏng.
+Nói cách khác: **đủ để mở cho một nhóm nhỏ quen biết.** Để công khai còn thiếu giám sát
+có cảnh báo — hiện chưa biết được khi nào nó hỏng.

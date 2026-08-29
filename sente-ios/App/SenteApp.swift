@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct SenteApp: App {
     @State private var session = AppSession()
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
         WindowGroup {
@@ -10,7 +11,11 @@ struct SenteApp: App {
                 .environment(session)
                 // nil follows the system; a choice in Settings overrides it.
                 .preferredColorScheme(session.settings.appearance.colorScheme)
-                .task { await session.start() }
+                .task {
+                    AppDelegate.onDeviceToken = { [session] in session.deviceTokenReceived($0) }
+                    AppDelegate.onOpenGame = { [session] in session.pendingGameID = $0 }
+                    await session.start()
+                }
                 // sente://j/<code> from a shared link, or the universal-link path once
                 // the AASA file is in place.
                 .onOpenURL { url in session.handle(url: url) }

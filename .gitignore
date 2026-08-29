@@ -1,6 +1,9 @@
 # Secrets -- never committed. deploy/.env.example is the template.
 .env
 deploy/.env
+deploy/secrets/
+deploy/secret/
+*.p8
 
 # Build output
 sente-ios/.build/

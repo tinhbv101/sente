@@ -96,5 +96,15 @@ check "landing page /j/<code> là HTML" \
 check "có header rate limit" \
   bash -c "curl -sfI '$BASE/v1/config' | grep -qi 'x-ratelimit-limit'"
 
+check "đăng ký thiết bị push có bảo vệ token" \
+  bash -c "test \$(curl -s -o /dev/null -w '%{http_code}' -X POST '$BASE/v1/devices') -eq 401"
+
+# 401 when Sign in with Apple is on (a bad token is refused), 404 when it is off:
+# either way the route is wired. A 5xx or a 200 for garbage would be the bug.
+check "route đăng nhập Apple trả lời đúng" \
+  bash -c "code=\$(curl -s -o /dev/null -w '%{http_code}' -X POST '$BASE/v1/auth/apple' -H 'Content-Type: application/json' -d '{\"identity_token\":\"x\"}'); test \$code -eq 401 -o \$code -eq 404"
+
+FLAGS=$(curl -sf "$BASE/v1/config" | json "', '.join(k for k, v in sorted(d['feature_flags'].items()) if v)")
+
 echo
-echo "$PASS/$PASS đạt · rules_version $RULES"
+echo "$PASS/$PASS đạt · rules_version $RULES · bật: $FLAGS"

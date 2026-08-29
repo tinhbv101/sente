@@ -94,6 +94,30 @@ public actor APIClient {
         return result
     }
 
+    /// Exchanges an Apple identity token for a session. With a token on hand the
+    /// Apple ID is linked to the current guest account, so its games survive.
+    public func signInWithApple(identityToken: String, nonce: String, fullName: String?) async throws -> GuestSignUp {
+        struct Body: Encodable { let identityToken: String; let nonce: String; let fullName: String? }
+        let signUp: GuestSignUp = try await request("POST", "/v1/auth/apple",
+                                                    body: Body(identityToken: identityToken, nonce: nonce, fullName: fullName),
+                                                    authenticated: accessToken != nil)
+        accessToken = signUp.accessToken
+        refreshToken = signUp.refreshToken
+        onTokens?(signUp.accessToken, signUp.refreshToken)
+        return signUp
+    }
+
+    public func registerDevice(token: String, environment: String, appVersion: String?) async throws {
+        struct Body: Encodable { let apnsToken: String; let environment: String; let appVersion: String? }
+        _ = try await perform("POST", "/v1/devices",
+                              body: Body(apnsToken: token, environment: environment, appVersion: appVersion),
+                              authenticated: true)
+    }
+
+    public func unregisterDevice(token: String) async throws {
+        try await requestNoContent("DELETE", "/v1/devices/\(token)")
+    }
+
     public func me() async throws -> GuestSignUp.User {
         try await request("GET", "/v1/me")
     }

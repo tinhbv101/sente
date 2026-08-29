@@ -645,3 +645,36 @@ func (g *Games) Unpark(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+// Participants is the little the notifier needs to know about a game: who plays
+// and whether it is slow enough that a "your turn" push makes sense.
+type Participants struct {
+	BlackUserID, WhiteUserID string
+	BlackName, WhiteName     string
+	IsCorrespondence         bool
+}
+
+func (g *Games) Participants(ctx context.Context, id string) (Participants, error) {
+	var p Participants
+	var black, white *string
+	err := g.pool.QueryRow(ctx, `
+		SELECT g.black_user_id, g.white_user_id, g.is_correspondence,
+		       coalesce(b.display_name, ''), coalesce(w.display_name, '')
+		  FROM games g
+		  LEFT JOIN users b ON b.id = g.black_user_id
+		  LEFT JOIN users w ON w.id = g.white_user_id
+		 WHERE g.id = $1`, id).Scan(&black, &white, &p.IsCorrespondence, &p.BlackName, &p.WhiteName)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Participants{}, ErrNotFound
+	}
+	if err != nil {
+		return Participants{}, fmt.Errorf("store: loading participants: %w", err)
+	}
+	if black != nil {
+		p.BlackUserID = *black
+	}
+	if white != nil {
+		p.WhiteUserID = *white
+	}
+	return p, nil
+}

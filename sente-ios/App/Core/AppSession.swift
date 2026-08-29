@@ -21,6 +21,10 @@ final class AppSession {
     var pendingGameID: String?
     private(set) var keychainUnavailable = false
     var settings = Settings.load()
+    /// Push permission is asked for once per launch, and only once there is a
+    /// game worth being told about (docs/07 §3.1).
+    var pushAttempted = false
+    var deviceToken: String?
 
     private(set) var api: APIClient
     private let tokens = TokenStore()
@@ -77,7 +81,12 @@ final class AppSession {
     }
 
     private func becomeNewGuest() async throws {
-        let signUp = try await api.signUpGuest()
+        adopt(try await api.signUpGuest())
+    }
+
+    /// Takes over a session the server just issued: a fresh guest, or a guest
+    /// promoted by Sign in with Apple.
+    func adopt(_ signUp: GuestSignUp) {
         if !tokens.save(signUp.accessToken) {
             // Without the token the next launch becomes a new guest, and this
             // account's games vanish with it. Loud in debug, visible in logs.
@@ -107,6 +116,7 @@ final class AppSession {
         async let invitations = api.myChallenges()
         self.games = try await games
         self.invitations = try await invitations
+        await registerForPushIfUseful()
     }
 
     func refreshQuietly() async { try? await refresh() }

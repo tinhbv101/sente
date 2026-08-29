@@ -319,6 +319,13 @@ Nâng cấp
 - (−) Cần luồng gộp tài khoản (merge) nếu người dùng đăng nhập Apple trên thiết bị mới trong
   khi đã có tài khoản khách ở đó → giải quyết bằng hỏi người dùng chọn giữ tài khoản nào.
 
+> **Sửa lại khi cài đặt (2026-08-29).** Đã làm phần Sign in with Apple; xem
+> [06 §2.1](06-api-and-realtime-protocol.md#21-xác-thực) cho quy tắc chọn tài khoản. Hai chỗ
+> khác với bản trên: (1) **không hỏi** người dùng khi Apple ID đã thuộc tài khoản khác — trả
+> luôn tài khoản đó, khách bị bỏ lại; (2) tài khoản khách **không** có keypair Ed25519 hay
+> DeviceCheck — chỉ có refresh token 30 ngày trong Keychain. Đủ cho nhóm quen biết; làm khi
+> có dấu hiệu tạo tài khoản hàng loạt.
+
 ---
 
 ## ADR-009 — Xác định quân chết: Benson + Monte Carlo, người quyết định cuối
@@ -423,6 +430,14 @@ Worker riêng đọc từ hàng đợi, không gửi trực tiếp từ đườn
 - Thất bại `410 Unregistered` ⇒ xóa device token khỏi DB.
 
 **Hệ quả.** Việc gửi push không nằm trên đường nóng ⇒ APNs chậm hay lỗi không làm chậm nước đi.
+
+> **Sửa lại khi cài đặt (2026-08-29).** `internal/push` (client APNs, JWT ES256 dùng lại trong
+> 50 phút) và `internal/notify` (hàng đợi trong tiến trình, một worker, đầy thì **bỏ** chứ không
+> chặn actor). `notify.Broadcast` được nối sau `hub.Broadcast` trong `main.go`. Gửi: "đến lượt
+> bạn" chỉ cho ván thư tín (`apns-priority 5`), "ván kết thúc" cho cả hai, "bạn nhận lời mời"
+> cho người tạo. Chưa có "sắp hết giờ" — cần timer riêng trong actor. Chưa kiểm tra người nhận
+> có đang mở ván hay không (cần presence xuyên node); app tự giữ lại push của ván đang xem.
+> Hai môi trường APNs chạy song song vì bản debug và bản TestFlight có thể cùng đăng nhập.
 
 ---
 

@@ -23,12 +23,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	"sente.app/server/internal/apple"
 	"sente.app/server/internal/auth"
 	"sente.app/server/internal/cluster"
 	"sente.app/server/internal/game"
 	"sente.app/server/internal/httpapi"
 	"sente.app/server/internal/hub"
 	"sente.app/server/internal/node"
+	"sente.app/server/internal/notify"
+	"sente.app/server/internal/push"
 	"sente.app/server/internal/ratelimit"
 	"sente.app/server/internal/store"
 	"sente.app/server/internal/sweep"
@@ -52,6 +55,11 @@ type config struct {
 	clientIPHeader string
 	appleTeamID    string
 	appStoreURL    string
+	appleBundleID  string
+	apnsKeyID      string
+	apnsKeyFile    string
+	siwaKeyID      string
+	siwaKeyFile    string
 }
 
 func loadConfig() (config, error) {
@@ -68,7 +76,15 @@ func loadConfig() (config, error) {
 		clientIPHeader: os.Getenv("SENTE_CLIENT_IP_HEADER"),
 		appleTeamID:    os.Getenv("SENTE_APPLE_TEAM_ID"),
 		appStoreURL:    os.Getenv("SENTE_APP_STORE_URL"),
+		appleBundleID:  envOr("SENTE_APPLE_BUNDLE_ID", "app.sente.go"),
+		apnsKeyID:      os.Getenv("SENTE_APNS_KEY_ID"),
+		siwaKeyID:      os.Getenv("SENTE_SIWA_KEY_ID"),
 	}
+	// Apple names the download AuthKey_<KEY_ID>.p8; default to that so the file
+	// can be dropped in as is.
+	secretsDir := envOr("SENTE_SECRETS_DIR", "/run/secrets")
+	c.apnsKeyFile = envOr("SENTE_APNS_KEY_FILE", secretsDir+"/AuthKey_"+c.apnsKeyID+".p8")
+	c.siwaKeyFile = envOr("SENTE_SIWA_KEY_FILE", secretsDir+"/AuthKey_"+c.siwaKeyID+".p8")
 	if origins := os.Getenv("SENTE_ALLOWED_ORIGINS"); origins != "" {
 		c.allowedOrigins = strings.Split(origins, ",")
 	}
@@ -83,6 +99,9 @@ func loadConfig() (config, error) {
 	}
 	if len(missing) > 0 {
 		return config{}, fmt.Errorf("missing required configuration: %s", strings.Join(missing, ", "))
+	}
+	if c.apnsKeyID != "" && c.appleTeamID == "" {
+		return config{}, errors.New("SENTE_APNS_KEY_ID needs SENTE_APPLE_TEAM_ID")
 	}
 	if c.nodeID == "" {
 		return config{}, errors.New("SENTE_NODE_ID is empty and the hostname is unavailable")
@@ -193,6 +212,15 @@ func run(logger *slog.Logger) error {
 		return err
 	}
 
+	notifier, err := buildNotifier(config, pool, logger)
+	if err != nil {
+		return err
+	}
+	verifier, err := buildAppleVerifier(config, logger)
+	if err != nil {
+		return err
+	}
+
 	leases := cluster.New(redisClient, config.nodeID)
 	var messageHub *hub.Hub
 	registry := node.New(node.Config{
@@ -200,7 +228,10 @@ func run(logger *slog.Logger) error {
 		Games:     store.NewGames(pool),
 		Time:      game.SystemTime{},
 		IdleAfter: 5 * time.Minute,
-		Broadcast: func(gameID string, events []game.Event) { messageHub.Broadcast(gameID, events) },
+		Broadcast: func(gameID string, events []game.Event) {
+			messageHub.Broadcast(gameID, events)
+			notifier.Broadcast(gameID, events)
+		},
 	})
 	messageHub = hub.New(hub.Config{
 		Registry: registry, Leases: leases, Redis: redisClient, NodeID: config.nodeID,
@@ -209,6 +240,9 @@ func run(logger *slog.Logger) error {
 	background, stopBackground := context.WithCancel(context.Background())
 	go registry.Run(background)     // heartbeat, lease renewal, reaping
 	go messageHub.Serve(background) // commands forwarded from other nodes
+	if notifier.Enabled() {
+		go notifier.Run(background)
+	}
 
 	api := httpapi.New(httpapi.Config{
 		Pool: pool, Redis: redisClient, Hub: messageHub, Registry: registry,
@@ -217,6 +251,7 @@ func run(logger *slog.Logger) error {
 		PublicBaseURL:  config.publicBaseURL, TrustProxyHeaders: config.trustProxy,
 		ClientIPHeader: config.clientIPHeader,
 		AppleTeamID:    config.appleTeamID, AppStoreURL: config.appStoreURL,
+		Apple: verifier, Notifier: notifier,
 	})
 
 	// Games whose clock ran out while no node was running them -- correspondence
@@ -298,4 +333,52 @@ func waitForPostgres(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logge
 		case <-time.After(time.Second):
 		}
 	}
+}
+
+// buildNotifier is nil-safe to use when push is not configured.
+func buildNotifier(config config, pool *pgxpool.Pool, logger *slog.Logger) (*notify.Notifier, error) {
+	if config.apnsKeyID == "" {
+		logger.Info("push disabled: SENTE_APNS_KEY_ID not set")
+		return nil, nil
+	}
+	pemBytes, err := os.ReadFile(config.apnsKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("reading APNs key: %w", err)
+	}
+	key, err := push.ParseKey(pemBytes)
+	if err != nil {
+		return nil, err
+	}
+	// Both environments are served: a TestFlight build and a debug build may be
+	// signed into the same account at once.
+	notifier := notify.New(notify.Config{
+		Games:      store.NewGames(pool),
+		Devices:    store.NewDevices(pool),
+		Sandbox:    push.New(push.SandboxHost, config.appleBundleID, config.appleTeamID, config.apnsKeyID, key),
+		Production: push.New(push.ProductionHost, config.appleBundleID, config.appleTeamID, config.apnsKeyID, key),
+		Logger:     logger,
+	})
+	logger.Info("push enabled", "key_id", config.apnsKeyID, "topic", config.appleBundleID)
+	return notifier, nil
+}
+
+// buildAppleVerifier enables Sign in with Apple once there is a team to sign in
+// to. The key is only checked for readability here; verifying identity tokens
+// needs Apple's public keys, not ours.
+func buildAppleVerifier(config config, logger *slog.Logger) (*apple.Verifier, error) {
+	if config.appleTeamID == "" {
+		logger.Info("sign in with apple disabled: SENTE_APPLE_TEAM_ID not set")
+		return nil, nil
+	}
+	if config.siwaKeyID != "" {
+		pemBytes, err := os.ReadFile(config.siwaKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("reading Sign in with Apple key: %w", err)
+		}
+		if _, err := apple.ParseKey(pemBytes); err != nil {
+			return nil, err
+		}
+	}
+	logger.Info("sign in with apple enabled", "audience", config.appleBundleID)
+	return apple.NewVerifier(apple.JWKSURL, config.appleBundleID), nil
 }

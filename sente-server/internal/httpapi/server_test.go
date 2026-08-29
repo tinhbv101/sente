@@ -86,7 +86,9 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func newTestServer(t *testing.T) *httptest.Server {
+// newTestServer stands up a full node on the shared containers. Options adjust
+// the Config before the node is built, e.g. to attach a fake Apple or APNs.
+func newTestServer(t *testing.T, opts ...func(*Config)) *httptest.Server {
 	t.Helper()
 	if testing.Short() {
 		t.Skip("integration test: needs Docker")
@@ -95,24 +97,35 @@ func newTestServer(t *testing.T) *httptest.Server {
 	if err != nil {
 		t.Fatal(err)
 	}
+	config := Config{Pool: testPool, Redis: testRedis, Issuer: issuer,
+		// Each test server gets its own buckets; otherwise the sign-up limit one
+		// test exhausts starves every test after it.
+		Limiter:       ratelimit.New(testRedis).WithPrefix(t.Name() + ":"),
+		PublicBaseURL: "https://sente.test"}
+	for _, opt := range opts {
+		opt(&config)
+	}
+
 	leases := cluster.New(testRedis, t.Name())
 	var messageHub *hub.Hub
 	registry := node.New(node.Config{
 		Leases: leases, Games: store.NewGames(testPool), IdleAfter: time.Hour,
-		Broadcast: func(id string, events []game.Event) { messageHub.Broadcast(id, events) },
+		Broadcast: func(id string, events []game.Event) {
+			messageHub.Broadcast(id, events)
+			config.Notifier.Broadcast(id, events)
+		},
 	})
 	messageHub = hub.New(hub.Config{
 		Registry: registry, Leases: leases, Redis: testRedis, NodeID: t.Name()})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go messageHub.Serve(ctx)
+	if config.Notifier != nil {
+		go config.Notifier.Run(ctx)
+	}
 
-	api := New(Config{Pool: testPool, Redis: testRedis, Hub: messageHub,
-		Registry: registry, Issuer: issuer,
-		// Each test server gets its own buckets; otherwise the sign-up limit one
-		// test exhausts starves every test after it.
-		Limiter:       ratelimit.New(testRedis).WithPrefix(t.Name() + ":"),
-		PublicBaseURL: "https://sente.test"})
+	config.Hub, config.Registry = messageHub, registry
+	api := New(config)
 	server := httptest.NewServer(api.Handler())
 	t.Cleanup(func() {
 		cancel()

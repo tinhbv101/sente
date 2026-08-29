@@ -15,10 +15,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	"sente.app/server/internal/apple"
 	"sente.app/server/internal/auth"
 	"sente.app/server/internal/game"
 	"sente.app/server/internal/hub"
 	"sente.app/server/internal/node"
+	"sente.app/server/internal/notify"
 	"sente.app/server/internal/ratelimit"
 	"sente.app/server/internal/rules"
 	"sente.app/server/internal/store"
@@ -48,6 +50,10 @@ type Config struct {
 	AppStoreURL string
 	// AllowedOrigins for the WebSocket handshake. Empty means same-origin only.
 	AllowedOrigins []string
+	// Apple verifies Sign in with Apple tokens. Nil disables the endpoints.
+	Apple *apple.Verifier
+	// Notifier sends pushes. Nil, or one without APNs clients, sends nothing.
+	Notifier *notify.Notifier
 }
 
 type Server struct {
@@ -57,6 +63,8 @@ type Server struct {
 	challenges *store.Challenges
 	refresh    *store.RefreshTokens
 	moderation *store.Moderation
+	devices    *store.Devices
+	identities *store.Identities
 	mux        *http.ServeMux
 }
 
@@ -71,6 +79,8 @@ func New(config Config) *Server {
 		challenges: store.NewChallenges(config.Pool),
 		refresh:    store.NewRefreshTokens(config.Pool),
 		moderation: store.NewModeration(config.Pool),
+		devices:    store.NewDevices(config.Pool),
+		identities: store.NewIdentities(config.Pool),
 		mux:        http.NewServeMux(),
 	}
 	s.routes()
@@ -90,12 +100,17 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/auth/guest", s.limit(ratelimit.SignUp, s.handleGuest))
 	s.mux.HandleFunc("POST /v1/auth/refresh", s.limit(ratelimit.SignUp, s.handleRefresh))
 	s.mux.HandleFunc("POST /v1/auth/logout", s.limit(ratelimit.Read, s.handleLogout))
+	s.mux.HandleFunc("POST /v1/auth/apple", s.limit(ratelimit.SignUp, s.handleAppleSignIn))
+	// Apple calls this one, not the app.
+	s.mux.HandleFunc("POST /v1/auth/apple/notifications", s.limit(ratelimit.SignUp, s.handleAppleNotification))
 
 	s.mux.HandleFunc("GET /v1/me", s.authed(ratelimit.Read, s.handleMe))
 	s.mux.HandleFunc("DELETE /v1/me", s.authed(ratelimit.Read, s.handleDeleteAccount))
 	s.mux.HandleFunc("POST /v1/reports", s.authed(ratelimit.CreateInvite, s.handleReport))
 	s.mux.HandleFunc("POST /v1/blocks", s.authed(ratelimit.Read, s.handleBlock))
 	s.mux.HandleFunc("DELETE /v1/blocks/{id}", s.authed(ratelimit.Read, s.handleUnblock))
+	s.mux.HandleFunc("POST /v1/devices", s.authed(ratelimit.Read, s.handleRegisterDevice))
+	s.mux.HandleFunc("DELETE /v1/devices/{token}", s.authed(ratelimit.Read, s.handleUnregisterDevice))
 
 	s.mux.HandleFunc("POST /v1/games", s.authed(ratelimit.CreateGame, s.handleCreateGame))
 	s.mux.HandleFunc("GET /v1/games", s.authed(ratelimit.Read, s.handleListGames))
@@ -238,7 +253,8 @@ func (s *Server) handleConfig(w http.ResponseWriter, _ *http.Request) {
 		"board_sizes":       rules.SupportedSizes,
 		"feature_flags": map[string]bool{
 			"matchmaking": false, "ai_opponent": false, "ranked": false,
-			"apple_sign_in": false, "invite_links": true, "refresh_tokens": true,
+			"apple_sign_in": s.config.Apple != nil, "push": s.config.Notifier.Enabled(),
+			"invite_links": true, "refresh_tokens": true,
 		},
 	})
 }

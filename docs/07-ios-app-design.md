@@ -472,6 +472,16 @@ Trường hợp phải xử lý đúng:
 - **Push khi đang ở trong chính ván đó** → không điều hướng, chỉ cập nhật (WS đã lo).
 - **Push cho ván đã kết thúc** → mở màn hình kết quả, không mở bàn cờ.
 
+> **Sửa lại khi cài đặt (2026-08-29).** SwiftUI không có chỗ nhận device token, nên có một
+> `AppDelegate` nhỏ (`Core/PushRegistrar.swift`) qua `@UIApplicationDelegateAdaptor`; nó chỉ
+> chuyển token hex cho `AppSession.deviceTokenReceived` (→ `POST /v1/devices`, gọi lại mỗi lần
+> mở app) và chuyển `game_id` của push được chạm vào `pendingGameID` — đúng đường đi của deep
+> link, nên cold start và foreground giống nhau. `PushRegistrar.visibleGameID` do `GameView`
+> đặt; push của ván đang mở bị giữ lại trong `willPresent`. Xin quyền **sau khi có ván đầu**
+> (`registerForPushIfUseful` trong `refresh()`), không hỏi ở lần mở app đầu; bị từ chối thì
+> Cài đặt chỉ còn nút mở Cài đặt hệ thống. Môi trường APNs lấy từ `#if DEBUG` (sandbox) —
+> TestFlight và App Store là production.
+
 ## 10. Design system (`SenteUI`)
 
 | Token | Sáng | Tối |
@@ -558,6 +568,13 @@ Chuỗi hiển thị thời gian **không** dùng relative formatter của hệ 
 và cho ra "Hết hạn next week" trên simulator tiếng Anh.
 Deep link `sente://g/<id>` và `sente://j/<code>` hoạt động nhưng iOS hỏi xác nhận khi mở từ
 ngoài app — không tự động được trong XCUITest, nên dùng launch argument.
+
+**Sign in with Apple** nằm trong Cài đặt → Tài khoản (`SignInWithAppleButton`), chỉ hiện khi
+`is_guest`. Nonce sinh mới mỗi lần vào màn hình, gửi Apple dạng SHA-256 và gửi server dạng
+gốc. Tên đầy đủ chỉ có ở lần đầu nên đưa lên server ngay. Sau khi liên kết `AppSession.adopt`
+nhận cặp token mới — cùng hàm với đăng ký khách. Hủy sheet không phải lỗi, không hiện gì.
+Entitlements (`App/Resources/Sente.entitlements`): `aps-environment`, `applesignin`,
+`applinks:sente.devlord.net`; `DEVELOPMENT_TEAM` nằm trong `project.yml`.
 
 ## 13. Những chỗ dễ sai đã biết
 

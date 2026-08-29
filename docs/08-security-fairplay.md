@@ -85,6 +85,15 @@ trong Keychain**, tồn tại qua việc gỡ/cài lại app.
 - Xử lý webhook thu hồi của Apple (`server-to-server notifications`): người dùng gỡ liên kết
   app ở cài đặt Apple ID ⇒ hạ tài khoản về trạng thái khách, không xóa dữ liệu.
 
+> **Sửa lại khi cài đặt (2026-08-29).** Đã làm đúng như trên, trong `internal/apple`:
+> JWKS cache 24 giờ và tự lấy lại **một lần** khi gặp `kid` lạ (Apple xoay khóa), chỉ nhận
+> `RS256`, từ chối `alg=none`. Nonce: app gửi giá trị gốc, server so với SHA-256 trong token.
+> Webhook nhận ở `POST /v1/auth/apple/notifications`, cũng verify chữ ký Apple; khi thu hồi
+> thì gỡ liên kết **và thu hồi mọi refresh token** của tài khoản — access token còn sống tối đa
+> 15 phút. Khóa `.p8` của Sign in with Apple chỉ cần cho việc gọi token endpoint của Apple
+> (`apple.ClientSecret`), chưa dùng ở đường xử lý nào; verify đăng nhập không cần khóa riêng.
+> Chưa làm: DeviceCheck/App Attest khi tạo khách (§2.3).
+
 ### 2.5 Phân quyền
 
 Nguyên tắc: **mọi endpoint đều kiểm tra quan hệ với tài nguyên**, không chỉ kiểm tra đã đăng nhập.

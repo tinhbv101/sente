@@ -109,12 +109,32 @@ Content-Type: application/json
 POST /v1/auth/apple
 Authorization: Bearer <access_token khách, nếu đang nâng cấp tài khoản>
 
-{ "identity_token": "eyJraWQiOi...", "authorization_code": "c8f2...", "full_name": "Bùi Văn Tính" }
+{ "identity_token": "eyJraWQiOi...", "nonce": "<nonce gốc app đã sinh>", "full_name": "Bùi Văn Tính" }
 ```
 
-Nếu có `Authorization` của tài khoản khách và Apple `sub` chưa gắn với user nào → **liên kết
-vào user hiện tại** (giữ lịch sử ván). Nếu `sub` đã thuộc user khác → `409 account_conflict`
-kèm thông tin cả hai tài khoản để client hỏi người dùng chọn.
+Trả về cùng hình dạng với `POST /v1/auth/guest` (`user` + cặp token mới). `nonce` là giá trị
+**gốc** app sinh ra; Apple để SHA-256 của nó trong token và server so khớp. `full_name` chỉ
+có ở lần đăng nhập đầu — Apple không trả lại lần sau — nên server dùng ngay để đặt tên.
+
+Quy tắc chọn tài khoản:
+- Có `Authorization` của khách và `sub` chưa gắn với ai → **liên kết vào khách hiện tại**,
+  `is_guest` thành `false`, giữ nguyên ván và mã bạn bè.
+- `sub` đã thuộc một tài khoản → **trả về tài khoản đó**, dù đang là khách khác. Người bấm
+  nút rõ ràng muốn tài khoản của họ; tài khoản khách bị bỏ lại. *(Sửa lại khi cài đặt: bản
+  thiết kế định trả `409 account_conflict` để hỏi — bỏ, vì màn hình hỏi "giữ cái nào" làm
+  khó đúng người dùng đang cần nhất: người vừa đổi máy.)*
+- Không có gì cả → tạo tài khoản mới, không phải khách.
+- Server chưa cấu hình `SENTE_APPLE_TEAM_ID` → `404 not_available`; `feature_flags.apple_sign_in`
+  cho app biết trước để ẩn nút.
+
+```http
+POST /v1/auth/apple/notifications      ← Apple gọi, không phải app
+{ "payload": "<JWT ký bởi Apple, claim events chứa type + sub>" }
+```
+
+`consent-revoked` / `account-delete` ⇒ gỡ liên kết, thu hồi mọi refresh token của tài khoản,
+tài khoản trở lại là khách ([08 §2.4](08-security.md#24-sign-in-with-apple)). Đăng ký URL này
+trong App ID → Sign in with Apple → *Server-to-Server Notification Endpoint*.
 
 ### 2.2 Hồ sơ
 
@@ -227,9 +247,9 @@ Gửi lại cùng `client_move_id` trả về **đúng response cũ** với `200
 
 | Method | Path | Mô tả |
 |--------|------|-------|
-| `POST` | `/v1/devices` | Đăng ký APNs token |
-| `PATCH` | `/v1/devices/{id}` | Cập nhật `push_prefs` |
-| `DELETE` | `/v1/devices/{id}` | Hủy đăng ký |
+| `POST` | `/v1/devices` | Đăng ký APNs token: `{ "apns_token": "<hex>", "environment": "sandbox"\|"production", "app_version": "0.1.0" }` → `204`. Gọi lại mỗi lần mở app; token đổi chủ thì theo người mới |
+| `PATCH` | `/v1/devices/{id}` | Cập nhật `push_prefs` — **chưa làm**; cột `push_prefs` đã có, mặc định bật cả |
+| `DELETE` | `/v1/devices/{token}` | Hủy đăng ký, chỉ token của chính mình |
 | `POST` | `/v1/reports` | Báo cáo người chơi |
 | `GET` | `/v1/config` | **Không cần auth.** Cấu hình client |
 | `GET` | `/j/{code}` | **Không cần auth.** Landing page HTML cho người chưa cài app |
@@ -243,7 +263,8 @@ GET /v1/config
   "min_supported_app_version": "1.0.0",
   "recommended_app_version": "1.2.0",
   "protocol_versions": [1],
-  "feature_flags": { "matchmaking": false, "ai_opponent": false, "ranked": false },
+  "feature_flags": { "matchmaking": false, "ai_opponent": false, "ranked": false,
+                     "apple_sign_in": true, "push": true, "invite_links": true, "refresh_tokens": true },
   "server_time": "2026-08-28T09:14:03.221Z"
 }
 ```

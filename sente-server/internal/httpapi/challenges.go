@@ -126,6 +126,11 @@ func (s *Server) handleAcceptChallenge(w http.ResponseWriter, r *http.Request) {
 	if loaded.BlackUserID == claims.UserID {
 		colour = "black"
 	}
+	if s.config.Notifier.Enabled() {
+		if acceptor, err := s.users.Get(r.Context(), claims.UserID); err == nil {
+			s.config.Notifier.InvitationAccepted(accepted.CreatorID, acceptor.DisplayName, accepted.GameID)
+		}
+	}
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"game_id": accepted.GameID, "your_color": colour,
 	})

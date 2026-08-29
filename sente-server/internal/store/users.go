@@ -76,3 +76,19 @@ func (u *Users) Get(ctx context.Context, id string) (User, error) {
 	}
 	return user, nil
 }
+
+// SetDisplayName replaces the generated name, e.g. with the one Apple hands over
+// on first sign-in. Trimmed to the column's limit rather than rejected.
+func (u *Users) SetDisplayName(ctx context.Context, id, name string) error {
+	name = strings.TrimSpace(name)
+	if runes := []rune(name); len(runes) > 24 {
+		name = strings.TrimSpace(string(runes[:24]))
+	}
+	if len([]rune(name)) < 2 {
+		return nil
+	}
+	if _, err := u.pool.Exec(ctx, `UPDATE users SET display_name = $2, updated_at = now() WHERE id = $1`, id, name); err != nil {
+		return fmt.Errorf("store: renaming user: %w", err)
+	}
+	return nil
+}

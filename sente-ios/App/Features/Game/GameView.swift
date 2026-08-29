@@ -30,6 +30,8 @@ struct GameView: View {
         .padding(.horizontal, 12)
         .background(Tokens.paper.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        // Pushes about the game on screen are held back (PushRegistrar).
+        .onAppear { PushRegistrar.visibleGameID = summary.gameId }
         .overlay(alignment: .top) { banner }
         .overlay(alignment: .bottom) { toastView }
         .sheet(isPresented: Binding(get: { store.phase == .finished && store.result != nil }, set: { _ in })) {
@@ -60,7 +62,10 @@ struct GameView: View {
             let token = await session.api.token ?? ""
             await store.connect(api: session.api, token: token)
         }
-        .onDisappear { Task { await store.disconnect(); await session.refreshQuietly() } }
+        .onDisappear {
+            if PushRegistrar.visibleGameID == summary.gameId { PushRegistrar.visibleGameID = nil }
+            Task { await store.disconnect(); await session.refreshQuietly() }
+        }
     }
 
     private func report(_ category: String) async {
