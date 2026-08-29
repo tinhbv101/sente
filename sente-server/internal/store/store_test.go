@@ -2,9 +2,11 @@ package store
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -734,5 +736,52 @@ func TestPlayingOnFromScoringRewindsTheStoredGame(t *testing.T) {
 	_, applied := playAndStore(t, games, id, reloaded.Session, rules.White, rules.Play(coord(t, "C3")), NewID(), at.Add(2*time.Second))
 	if !applied {
 		t.Error("the next move was not stored")
+	}
+}
+
+// Seen in the field: sign in with Apple, delete the account, sign in again ->
+// "could not link". The old row must not lock the person out.
+func TestAnAppleIDIsFreeAgainAfterItsAccountIsDeleted(t *testing.T) {
+	skipIfShort(t)
+	ctx := context.Background()
+	users, identities := NewUsers(testPool), NewIdentities(testPool)
+	first, err := users.CreateGuest(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	subject := "apple-" + NewID()
+	if err := identities.Link(ctx, first.ID, ProviderApple, subject, "a@b.c"); err != nil {
+		t.Fatal(err)
+	}
+
+	// A live owner keeps the identity.
+	second, _ := users.CreateGuest(ctx)
+	if err := identities.Link(ctx, second.ID, ProviderApple, subject, ""); !errors.Is(err, ErrIdentityTaken) {
+		t.Fatalf("a live account's identity must not be taken over, got %v", err)
+	}
+
+	if err := users.DeleteAccount(ctx, first.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := identities.UserFor(ctx, ProviderApple, subject); !errors.Is(err, ErrNotFound) {
+		t.Errorf("a deleted account's identity should not resolve, got %v", err)
+	}
+	if err := identities.Link(ctx, second.ID, ProviderApple, subject, ""); err != nil {
+		t.Fatalf("linking after deletion: %v", err)
+	}
+	owner, err := identities.UserFor(ctx, ProviderApple, subject)
+	if err != nil || owner != second.ID {
+		t.Errorf("identity should now open the new account: %s %v", owner, err)
+	}
+	if got, _ := users.Get(ctx, second.ID); got.IsGuest {
+		t.Error("the new owner should be promoted")
+	}
+
+	// Deleting also forgets the phone: no pushes to a person who left.
+	devices := NewDevices(testPool)
+	_ = devices.Register(ctx, second.ID, strings.Repeat("ab", 32), "production", "")
+	_ = users.DeleteAccount(ctx, second.ID)
+	if list, _ := devices.ForUser(ctx, second.ID, "turn"); len(list) != 0 {
+		t.Error("devices of a deleted account should be gone")
 	}
 }

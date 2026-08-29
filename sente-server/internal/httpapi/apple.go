@@ -57,6 +57,11 @@ func (s *Server) handleAppleSignIn(w http.ResponseWriter, r *http.Request) {
 			userID = user.ID
 		}
 		if err := s.identities.Link(r.Context(), userID, store.ProviderApple, identity.Subject, identity.Email); err != nil {
+			if errors.Is(err, store.ErrIdentityTaken) {
+				// Only reachable in a race with another sign-in of the same Apple ID.
+				writeError(w, http.StatusConflict, "identity_taken", "Apple ID này vừa được dùng ở nơi khác. Thử lại.")
+				return
+			}
 			s.config.Logger.Error("linking apple identity", "user_id", userID, "error", err)
 			writeError(w, http.StatusInternalServerError, "internal", "Không liên kết được tài khoản.")
 			return

@@ -87,6 +87,9 @@ func (u *Users) DeleteAccount(ctx context.Context, userID string) error {
 
 	statements := []string{
 		`DELETE FROM refresh_tokens WHERE user_id = $1`,
+		// The Apple ID must be free to sign in again as a new person (docs/05 §14).
+		`DELETE FROM user_identities WHERE user_id = $1`,
+		`DELETE FROM devices WHERE user_id = $1`,
 		`DELETE FROM blocks WHERE blocker_id = $1`,
 		`UPDATE challenges SET status = 'cancelled', resolved_at = now()
 		   WHERE creator_id = $1 AND status = 'pending'`,

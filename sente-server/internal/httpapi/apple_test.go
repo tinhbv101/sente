@@ -230,3 +230,34 @@ func TestRevocationNoticeUnlinksAndEndsSessions(t *testing.T) {
 		}
 	}
 }
+
+// Sign in, delete the account, sign in again: a fresh account, not an error.
+func TestSigningInAgainAfterDeletingTheAccountWorks(t *testing.T) {
+	f := newFakeApple(t)
+	server := newTestServer(t, withApple(f))
+	_, first := appleSignIn(t, server, "", f.identityToken(t, "sub-del", "n1"), "n1", "An")
+	if response, _ := do(t, server, http.MethodDelete, "/v1/me", first.AccessToken, ""); response.StatusCode != http.StatusNoContent {
+		t.Fatalf("delete: %d", response.StatusCode)
+	}
+
+	status, again := appleSignIn(t, server, "", f.identityToken(t, "sub-del", "n2"), "n2", "")
+	if status != http.StatusOK {
+		t.Fatalf("sign in after deletion: %d", status)
+	}
+	if again.User.ID == first.User.ID || again.User.IsGuest {
+		t.Errorf("want a fresh linked account, got %+v (old %s)", again.User, first.User.ID)
+	}
+	if id, guest := meOf(t, server, again.AccessToken); id != again.User.ID || guest {
+		t.Errorf("new session: %s guest=%v", id, guest)
+	}
+
+	// The same from a phone that already has a guest: the guest gets linked.
+	guest := signUp(t, server)
+	if response, _ := do(t, server, http.MethodDelete, "/v1/me", again.AccessToken, ""); response.StatusCode != http.StatusNoContent {
+		t.Fatal("second delete")
+	}
+	status, linked := appleSignIn(t, server, guest.token, f.identityToken(t, "sub-del", "n3"), "n3", "")
+	if status != http.StatusOK || linked.User.ID != guest.userID || linked.User.IsGuest {
+		t.Errorf("linking after deletion: %d %+v", status, linked)
+	}
+}

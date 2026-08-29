@@ -45,11 +45,17 @@ func (i *Identities) Link(ctx context.Context, userID, provider, subject, email 
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
+	// An identity still attached to a deleted account is free: the person left
+	// and came back, and must not be locked out by their own old row.
 	var owner string
-	err = tx.QueryRow(ctx, `SELECT user_id FROM user_identities WHERE provider = $1 AND provider_subject = $2`,
-		provider, subject).Scan(&owner)
+	var ownerDeleted bool
+	err = tx.QueryRow(ctx, `
+		SELECT ui.user_id, u.deleted_at IS NOT NULL
+		  FROM user_identities ui JOIN users u ON u.id = ui.user_id
+		 WHERE ui.provider = $1 AND ui.provider_subject = $2
+		 FOR UPDATE OF ui`, provider, subject).Scan(&owner, &ownerDeleted)
 	switch {
-	case err == nil && owner != userID:
+	case err == nil && owner != userID && !ownerDeleted:
 		return ErrIdentityTaken
 	case err != nil && !errors.Is(err, pgx.ErrNoRows):
 		return fmt.Errorf("store: linking identity: %w", err)
@@ -57,7 +63,8 @@ func (i *Identities) Link(ctx context.Context, userID, provider, subject, email 
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO user_identities (user_id, provider, provider_subject, email)
 		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (provider, provider_subject) DO UPDATE SET email = coalesce(EXCLUDED.email, user_identities.email)`,
+		ON CONFLICT (provider, provider_subject) DO UPDATE
+		   SET user_id = EXCLUDED.user_id, email = coalesce(EXCLUDED.email, user_identities.email)`,
 		userID, provider, subject, nullable(email)); err != nil {
 		return fmt.Errorf("store: linking identity: %w", err)
 	}

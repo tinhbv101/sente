@@ -268,6 +268,11 @@ thực thi ở [05 §14](05-data-model.md#14-vòng-đời-dữ-liệu-và-quyề
 - Xác nhận hai bước với cảnh báo rõ ràng điều gì bị mất.
 - Ván cờ **được giữ ở dạng ẩn danh** — vì ván có hai người, không thể xóa lịch sử của đối
   phương. Điều này phải được nói rõ trong màn hình xác nhận và trong privacy policy.
+- Apple ID được **gỡ liên kết ngay** khi xóa: đăng nhập lại bằng cùng Apple ID tạo tài khoản
+  mới, không có lịch sử. *(Sửa lại khi cài đặt 2026-08-29: `DeleteAccount` viết trước khi có
+  `user_identities`/`devices` nên bỏ quên hai bảng đó — đăng nhập lại báo "không thể liên kết".
+  Đã xóa cả hai khi xóa tài khoản; `Identities.Link` còn coi danh tính đang trỏ vào tài khoản
+  đã xóa là trống, để hàng cũ trong DB không khóa được ai.)*
 
 ## 8. Quản lý bí mật
 
