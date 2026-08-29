@@ -678,3 +678,61 @@ func TestAnAcceptedUndoRewindsTheStoredGame(t *testing.T) {
 		t.Errorf("after replaying: %v, move %d", err, final.Session.MoveNumber())
 	}
 }
+
+// "Play on" from scoring drops the passes and the negotiation. The stored game
+// must agree, or the next load lands back in scoring while the actor is playing.
+func TestPlayingOnFromScoringRewindsTheStoredGame(t *testing.T) {
+	games := newGames(t)
+	ctx := context.Background()
+	id, err := games.Create(ctx, CreateParams{Config: blitzConfig(), StartedAt: epoch})
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, _ := games.Load(ctx, id)
+	session := loaded.Session
+	at := epoch
+	for i, step := range []struct {
+		by   rules.Color
+		move rules.Move
+	}{
+		{rules.Black, rules.Play(coord(t, "E5"))}, {rules.White, rules.Play(coord(t, "E7"))},
+		{rules.Black, rules.Pass}, {rules.White, rules.Pass},
+	} {
+		at = epoch.Add(time.Duration(i+1) * time.Second)
+		session, _ = playAndStore(t, games, id, session, step.by, step.move, NewID(), at)
+	}
+	if session.Phase() != rules.ScoringP || session.Scoring == nil {
+		t.Fatalf("two passes should open scoring, got %v", session.Phase())
+	}
+	if err := games.SaveScoring(ctx, id, session); err != nil {
+		t.Fatal(err)
+	}
+
+	session, events, err := session.Apply(game.ResumePlayCommand{By: rules.White}, at.Add(time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := events[0].(game.PlayResumed); !ok {
+		t.Fatalf("unexpected events %+v", events)
+	}
+	if err := games.Rewind(ctx, id, session, at.Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+
+	reloaded, err := games.Load(ctx, id)
+	if err != nil {
+		t.Fatalf("reload after playing on: %v", err)
+	}
+	if reloaded.Session.Phase() != rules.Playing || reloaded.Session.Scoring != nil {
+		t.Errorf("reloaded game should be playing with no negotiation, got %v scoring=%v",
+			reloaded.Session.Phase(), reloaded.Session.Scoring != nil)
+	}
+	if reloaded.Session.MoveNumber() != 3 || reloaded.Session.ToPlay() != rules.White {
+		t.Errorf("want move 3, white to play; got %d, %v", reloaded.Session.MoveNumber(), reloaded.Session.ToPlay())
+	}
+	// And scoring can open again later on a clean slate.
+	_, applied := playAndStore(t, games, id, reloaded.Session, rules.White, rules.Play(coord(t, "C3")), NewID(), at.Add(2*time.Second))
+	if !applied {
+		t.Error("the next move was not stored")
+	}
+}

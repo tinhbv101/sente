@@ -69,8 +69,10 @@ CREATE INDEX idx_users_active ON users (id) WHERE deleted_at IS NULL;
 ```sql
 -- Một user có thể có nhiều cách đăng nhập: thiết bị khách, Apple, (sau này) email.
 -- Sửa lại khi cài đặt (2026-08-29): games có thêm undos_used SMALLINT (migration 0008);
--- một undo được chấp nhận XÓA hàng của nước đó khỏi moves (Games.Rewind) — ngoại lệ
--- duy nhất của quy tắc chỉ-ghi-thêm, vì replay phải khớp checksum của hàng games.
+-- một undo được chấp nhận XÓA hàng của nước đó khỏi moves, và "chơi tiếp" từ đếm điểm
+-- XÓA các hàng pass cùng hàng game_scoring (Games.Rewind) — ngoại lệ duy nhất của quy tắc
+-- chỉ-ghi-thêm: replay phải cho ra đúng pha và checksum của hàng games, nếu không ván
+-- load lại sẽ kẹt ở đếm điểm trong khi actor đang chơi (lỗi gặp thật 2026-08-29).
 
 CREATE TABLE user_identities (
     id              UUID PRIMARY KEY,

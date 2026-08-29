@@ -383,9 +383,11 @@ func (g *Games) Finish(ctx context.Context, id string, session game.GameSession,
 	return tx.Commit(ctx)
 }
 
-// Rewind persists an accepted undo: the log is append-only in spirit, but a move
-// both players agreed never happened must not be replayed on the next load, or
-// the rebuilt position disagrees with the row's checksum and the game is stuck.
+// Rewind persists a session whose move list got shorter: an accepted undo, or
+// "play on" from scoring, which drops the passes. The log is append-only in
+// spirit, but moves both players agreed never happened must not be replayed on
+// the next load, or the rebuilt position disagrees with the row and the game is
+// stuck -- in the wrong phase, or refused by the checksum.
 func (g *Games) Rewind(ctx context.Context, id string, session game.GameSession, at time.Time) error {
 	tx, err := g.pool.Begin(ctx)
 	if err != nil {
@@ -395,6 +397,12 @@ func (g *Games) Rewind(ctx context.Context, id string, session game.GameSession,
 	if _, err := tx.Exec(ctx, `DELETE FROM moves WHERE game_id = $1 AND move_no > $2`,
 		id, session.MoveNumber()); err != nil {
 		return fmt.Errorf("store: rewinding moves: %w", err)
+	}
+	if session.Scoring == nil {
+		// A stale negotiation would put the reloaded game back into scoring.
+		if _, err := tx.Exec(ctx, `DELETE FROM game_scoring WHERE game_id = $1`, id); err != nil {
+			return fmt.Errorf("store: clearing scoring: %w", err)
+		}
 	}
 	if err := updateGameRow(ctx, tx, id, session, at); err != nil {
 		return err

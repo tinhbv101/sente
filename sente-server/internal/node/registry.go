@@ -216,7 +216,12 @@ func (r *Registry) persist(ctx context.Context, gameID string, session game.Game
 					return err
 				}
 			}
-		case game.GameEnded, game.PlayResumed:
+		case game.PlayResumed:
+			// Playing on drops the passes and the negotiation with them.
+			if err := r.config.Games.Rewind(ctx, gameID, session, r.config.Time.Now()); err != nil {
+				return err
+			}
+		case game.GameEnded:
 			if err := r.config.Games.Finish(ctx, gameID, session, r.config.Time.Now()); err != nil {
 				return err
 			}

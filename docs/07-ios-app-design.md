@@ -575,7 +575,10 @@ không thể tự lùi (quân bị bắt không khôi phục được từ hash)
 (`awaitingState`) và giữ bàn cờ cũ cho tới `game_state` server gửi ngay sau. Cùng lúc phát hiện
 ba đường "đồng bộ lại" (hụt nước, sai hash, `resync_required`) chỉ xóa bàn cờ mà không xin
 lại — giờ có lệnh `resume`. Phía server còn nặng hơn: nước bị hoãn vẫn nằm trong `moves`, ván
-sẽ không load lại được sau 5 phút idle (lệch checksum) — đã sửa bằng `Games.Rewind`.
+sẽ không load lại được sau 5 phút idle (lệch checksum) — đã sửa bằng `Games.Rewind`. Cùng
+họ: **"chơi tiếp" từ đếm điểm** để lại các nước pass và hàng `game_scoring` trong DB, nên
+`game_state` gửi sau `resync_required` nói ván vẫn đang đếm điểm trong khi actor đã chơi —
+hai bên không làm được gì. `Rewind` giờ dùng cho cả `PlayResumed`.
 
 **Sign in with Apple** nằm trong Cài đặt → Tài khoản (`SignInWithAppleButton`), chỉ hiện khi
 `is_guest`. Nonce sinh mới mỗi lần vào màn hình, gửi Apple dạng SHA-256 và gửi server dạng

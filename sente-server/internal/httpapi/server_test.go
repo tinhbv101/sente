@@ -27,6 +27,7 @@ import (
 	"sente.app/server/internal/hub"
 	"sente.app/server/internal/node"
 	"sente.app/server/internal/ratelimit"
+	"sente.app/server/internal/rules"
 	"sente.app/server/internal/store"
 )
 
@@ -641,5 +642,51 @@ func TestAnAcceptedUndoRewindsBothClients(t *testing.T) {
 	_ = json.Unmarshal(readUntil(t, blackConn, "game_state").Payload, &asked)
 	if asked.MoveNo != 2 || asked.ToPlay != "black" {
 		t.Errorf("resume: %+v", asked)
+	}
+}
+
+// The bug seen in the field: both players passed, one tapped "play on", and
+// neither could do anything. The stored game had stayed in scoring, so the
+// position sent after resync_required disagreed with the actor.
+func TestPlayingOnFromScoringResyncsBothClientsIntoPlay(t *testing.T) {
+	server := newTestServer(t)
+	black, white := signUp(t, server), signUp(t, server)
+	gameID := createGame(t, server, black, blitz)
+	blackConn, whiteConn := connect(t, server, black, gameID), connect(t, server, white, gameID)
+	readUntil(t, blackConn, "game_state")
+	readUntil(t, whiteConn, "game_state")
+
+	send(t, blackConn, "move", incomingMove{Kind: "play", Point: "e5", ExpectedMoveNumber: 0})
+	readMoveMade(t, whiteConn, 1)
+	send(t, whiteConn, "move", incomingMove{Kind: "play", Point: "e7", ExpectedMoveNumber: 1})
+	readMoveMade(t, blackConn, 2)
+	send(t, blackConn, "move", incomingMove{Kind: "pass", ExpectedMoveNumber: 2})
+	readMoveMade(t, whiteConn, 3)
+	send(t, whiteConn, "move", incomingMove{Kind: "pass", ExpectedMoveNumber: 3})
+	readUntil(t, blackConn, "scoring_state")
+	readUntil(t, whiteConn, "scoring_state")
+
+	send(t, whiteConn, "scoring_resume", map[string]any{})
+	type position struct {
+		Phase  string `json:"phase"`
+		MoveNo int    `json:"move_no"`
+		ToPlay string `json:"to_play"`
+	}
+	for name, conn := range map[string]*websocket.Conn{"black": blackConn, "white": whiteConn} {
+		readUntil(t, conn, "resync_required")
+		var got position
+		_ = json.Unmarshal(readUntil(t, conn, "game_state").Payload, &got)
+		if got.Phase != "playing" || got.MoveNo != 3 || got.ToPlay != "white" {
+			t.Errorf("%s: after playing on want playing, move 3, white; got %+v", name, got)
+		}
+	}
+
+	send(t, whiteConn, "move", incomingMove{Kind: "play", Point: "c3", ExpectedMoveNumber: 3})
+	if made := readMoveMade(t, blackConn, 4); made.Color != "white" {
+		t.Errorf("play should continue: %+v", made)
+	}
+	loaded, err := store.NewGames(testPool).Load(context.Background(), gameID)
+	if err != nil || loaded.Session.Phase() != rules.Playing || loaded.Session.MoveNumber() != 4 {
+		t.Errorf("stored game: %v, phase %v, move %d", err, loaded.Session.Phase(), loaded.Session.MoveNumber())
 	}
 }
