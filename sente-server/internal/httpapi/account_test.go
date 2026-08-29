@@ -203,3 +203,46 @@ func TestMovesAndSGFExport(t *testing.T) {
 		}
 	}
 }
+
+func TestRenamingYourself(t *testing.T) {
+	server := newTestServer(t)
+	p := signUp(t, server)
+	name := func(token string) string {
+		_, raw := do(t, server, http.MethodGet, "/v1/me", token, "")
+		var me struct {
+			DisplayName string `json:"display_name"`
+		}
+		_ = json.Unmarshal(raw, &me)
+		return me.DisplayName
+	}
+
+	response, raw := do(t, server, http.MethodPatch, "/v1/me", p.token, `{"display_name":"  Bùi Văn Tính  "}`)
+	if response.StatusCode != http.StatusOK || !strings.Contains(string(raw), `"display_name":"Bùi Văn Tính"`) {
+		t.Fatalf("rename: %d %s", response.StatusCode, raw)
+	}
+	if got := name(p.token); got != "Bùi Văn Tính" {
+		t.Errorf("name after rename: %q", got)
+	}
+
+	for label, body := range map[string]string{
+		"too short": `{"display_name":"A"}`,
+		"blank":     `{"display_name":"   "}`,
+		"too long":  `{"display_name":"` + strings.Repeat("x", 25) + `"}`,
+		"not json":  `nope`,
+	} {
+		if response, _ := do(t, server, http.MethodPatch, "/v1/me", p.token, body); response.StatusCode != http.StatusBadRequest {
+			t.Errorf("%s: want 400, got %d", label, response.StatusCode)
+		}
+	}
+	if got := name(p.token); got != "Bùi Văn Tính" {
+		t.Errorf("a refused rename must not change the name: %q", got)
+	}
+	// 24 characters of Vietnamese is 24 runes, not bytes.
+	long := strings.Repeat("ế", 24)
+	if response, _ := do(t, server, http.MethodPatch, "/v1/me", p.token, `{"display_name":"`+long+`"}`); response.StatusCode != http.StatusOK {
+		t.Errorf("24 runes should be accepted, got %d", response.StatusCode)
+	}
+	if response, _ := do(t, server, http.MethodPatch, "/v1/me", "", `{"display_name":"ai đó"}`); response.StatusCode != http.StatusUnauthorized {
+		t.Errorf("anonymous: %d", response.StatusCode)
+	}
+}

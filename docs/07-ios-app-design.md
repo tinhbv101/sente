@@ -561,7 +561,8 @@ Ba điều lộ ra ngay ở lần chạy đầu trên simulator, đều đã s�
   Ký ad-hoc (`CODE_SIGN_IDENTITY="-"`) là đủ. `TokenStore.save` giờ trả về `Bool` và
   `AppSession` coi thất bại là lỗi, không nuốt.
 
-Hai launch argument phục vụ kiểm thử và script: `-openGame <id>` và `-inviteCode <code>`.
+Bốn launch argument phục vụ kiểm thử, script và chụp màn hình: `-openGame <id>`,
+`-inviteCode <code>`, `-createInvite 1` (mở sheet tạo lời mời), `-openSettings 1` (mở Cài đặt).
 Cả hai được tiêu thụ trong `onAppear` của Home, không chỉ `onChange` — giá trị đã có sẵn
 trước khi Home xuất hiện nên `onChange` không bao giờ bắt được (đã sập bẫy này hai lần).
 Chuỗi hiển thị thời gian **không** dùng relative formatter của hệ thống: nó theo locale máy
@@ -579,6 +580,13 @@ sẽ không load lại được sau 5 phút idle (lệch checksum) — đã sử
 họ: **"chơi tiếp" từ đếm điểm** để lại các nước pass và hàng `game_scoring` trong DB, nên
 `game_state` gửi sau `resync_required` nói ván vẫn đang đếm điểm trong khi actor đã chơi —
 hai bên không làm được gì. `Rewind` giờ dùng cho cả `PlayResumed`.
+
+**Tên từ Apple chỉ đến một lần.** Apple trả `fullName` duy nhất ở lần cấp quyền đầu cho app;
+mọi lần sau đều trống — kể cả sau khi xóa tài khoản Sente và đăng nhập lại (câu hỏi gặp thật:
+"sao tên không đổi theo Apple ID"). Muốn Apple gửi lại phải vào Cài đặt iOS → Apple Account →
+Đăng nhập & Bảo mật → Đăng nhập bằng Apple → Sente → Ngừng sử dụng. Vì vậy tên trong Cài đặt
+tự sửa được (`PATCH /v1/me`), và tên Apple gửi được ghép theo thứ tự Việt họ–đệm–tên
+(`AppleName`), formatter hệ thống đảo thành "Tính Bùi".
 
 **Sign in with Apple** nằm trong Cài đặt → Tài khoản (`SignInWithAppleButton`), chỉ hiện khi
 `is_guest`. Nonce sinh mới mỗi lần vào màn hình, gửi Apple dạng SHA-256 và gửi server dạng

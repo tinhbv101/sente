@@ -5,6 +5,7 @@ import SenteUI
 struct HomeView: View {
     @Environment(AppSession.self) private var session
     @State private var showCreate = false
+    @State private var showSettings = false
     @State private var joinCode: String?
     @State private var path = NavigationPath()
 
@@ -38,6 +39,7 @@ struct HomeView: View {
                 if game.isActive { GameView(summary: game) } else { ReplayView(summary: game) }
             }
             .sheet(isPresented: $showCreate) { CreateInviteView() }
+            .navigationDestination(isPresented: $showSettings) { SettingsView() }
             .sheet(item: joinBinding) { target in
                 JoinView(initialCode: target.code) { game in
                     joinCode = nil
@@ -52,6 +54,7 @@ struct HomeView: View {
                 // `-createInvite 1` opens the invitation sheet on launch, for screenshots
                 // and UI tests (docs/07 §12.2).
                 if UserDefaults.standard.bool(forKey: "createInvite") { showCreate = true }
+                if UserDefaults.standard.bool(forKey: "openSettings") { showSettings = true }
                 openPendingGame(session.pendingGameID)
                 openPendingInvite(session.pendingInviteCode)
             }

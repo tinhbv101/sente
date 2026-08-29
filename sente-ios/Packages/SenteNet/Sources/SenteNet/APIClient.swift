@@ -122,6 +122,11 @@ public actor APIClient {
         try await request("GET", "/v1/me")
     }
 
+    public func rename(_ displayName: String) async throws -> GuestSignUp.User {
+        struct Body: Encodable { let displayName: String }
+        return try await request("PATCH", "/v1/me", body: Body(displayName: displayName))
+    }
+
     public func deleteAccount() async throws {
         try await requestNoContent("DELETE", "/v1/me")
         accessToken = nil

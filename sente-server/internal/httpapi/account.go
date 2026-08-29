@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"sente.app/server/internal/rules"
 	"sente.app/server/internal/store"
@@ -95,6 +97,32 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 		"id": user.ID, "display_name": user.DisplayName,
 		"friend_code": user.FriendCode, "is_guest": user.IsGuest,
 	})
+}
+
+type updateMeRequest struct {
+	DisplayName string `json:"display_name"`
+}
+
+// handleUpdateMe lets a person name themselves. Apple hands over a name only on
+// the very first sign-in, so this is the reliable way to get one.
+func (s *Server) handleUpdateMe(w http.ResponseWriter, r *http.Request) {
+	var request updateMeRequest
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&request); err != nil {
+		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		return
+	}
+	name := strings.TrimSpace(request.DisplayName)
+	if length := utf8.RuneCountInString(name); length < 2 || length > 24 {
+		writeError(w, http.StatusBadRequest, "invalid_name", "Tên cần từ 2 đến 24 ký tự.")
+		return
+	}
+	claims := userFrom(r.Context())
+	if err := s.users.SetDisplayName(r.Context(), claims.UserID, name); err != nil {
+		s.config.Logger.Error("renaming user", "user_id", claims.UserID, "error", err)
+		writeError(w, http.StatusInternalServerError, "internal", "Không đổi được tên.")
+		return
+	}
+	s.handleMe(w, r)
 }
 
 // handleDeleteAccount is the in-app deletion App Store guideline 5.1.1(v) demands.

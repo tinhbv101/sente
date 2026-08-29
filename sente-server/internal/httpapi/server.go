@@ -105,6 +105,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /v1/auth/apple/notifications", s.limit(ratelimit.SignUp, s.handleAppleNotification))
 
 	s.mux.HandleFunc("GET /v1/me", s.authed(ratelimit.Read, s.handleMe))
+	s.mux.HandleFunc("PATCH /v1/me", s.authed(ratelimit.Read, s.handleUpdateMe))
 	s.mux.HandleFunc("DELETE /v1/me", s.authed(ratelimit.Read, s.handleDeleteAccount))
 	s.mux.HandleFunc("POST /v1/reports", s.authed(ratelimit.CreateInvite, s.handleReport))
 	s.mux.HandleFunc("POST /v1/blocks", s.authed(ratelimit.Read, s.handleBlock))

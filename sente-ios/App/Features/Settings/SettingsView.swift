@@ -12,6 +12,8 @@ struct SettingsView: View {
     @State private var confirmDelete = false
     @State private var deleteError: String?
     @State private var appleError: String?
+    @State private var nameDraft = ""
+    @State private var nameError: String?
     // Fresh per screen; Apple echoes its hash back inside the identity token so
     // the server can tell this sign-in from a replayed one.
     @State private var rawNonce = SettingsView.freshNonce()
@@ -21,7 +23,20 @@ struct SettingsView: View {
         Form {
             if let user = session.user {
                 Section {
-                    LabeledContent("Tên", value: user.displayName)
+                    HStack {
+                        Text("Tên")
+                        TextField("Tên hiển thị", text: $nameDraft)
+                            .multilineTextAlignment(.trailing)
+                            .submitLabel(.done)
+                            .onSubmit { saveName() }
+                        if nameDraft.trimmingCharacters(in: .whitespaces) != user.displayName {
+                            Button("Lưu") { saveName() }.buttonStyle(.borderless)
+                        } else {
+                            // A plain trailing value reads as a label; the pencil says "tap me".
+                            Image(systemName: "pencil").foregroundStyle(Tokens.inkSecondary)
+                        }
+                    }
+                    if let nameError { Text(nameError).font(.footnote).foregroundStyle(.red) }
                     LabeledContent("Mã bạn bè", value: user.friendCode)
                     if user.isGuest {
                         SignInWithAppleButton(.continue, onRequest: prepareAppleRequest, onCompletion: handleApple)
@@ -68,6 +83,8 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Cài đặt")
+        // The field follows the account: a fresh guest or a just-linked Apple ID.
+        .task(id: session.user?.displayName) { nameDraft = session.user?.displayName ?? "" }
         .confirmationDialog("Xóa tài khoản này?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Xóa vĩnh viễn", role: .destructive) {
                 Task {
@@ -108,6 +125,16 @@ struct SettingsView: View {
             Text("Báo khi đến lượt bạn trong ván chậm, khi ván kết thúc, và khi bạn nhận lời mời.")
         }
         .task { pushStatus = await PushRegistrar.status() }
+    }
+
+    private func saveName() {
+        let name = nameDraft.trimmingCharacters(in: .whitespaces)
+        guard name != session.user?.displayName else { return }
+        Task {
+            do { try await session.rename(name); nameError = nil }
+            catch let error as APIError { nameError = error.userMessage }
+            catch { nameError = error.localizedDescription }
+        }
     }
 
     private func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {

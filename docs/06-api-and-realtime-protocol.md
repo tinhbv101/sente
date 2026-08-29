@@ -141,7 +141,7 @@ trong App ID → Sign in with Apple → *Server-to-Server Notification Endpoint*
 | Method | Path | Mô tả |
 |--------|------|-------|
 | `GET` | `/v1/me` | Hồ sơ, cài đặt, số ván đang chờ mình đi |
-| `PATCH` | `/v1/me` | Đổi `display_name`, `locale`, `settings` |
+| `PATCH` | `/v1/me` | Đổi `display_name` (2–24 ký tự sau khi cắt khoảng trắng, sai → `400 invalid_name`); trả hồ sơ mới. `locale`, `settings` chưa làm |
 | `DELETE` | `/v1/me` | Xóa tài khoản ([FR-A5](01-requirements.md#41-tài-khoản--danh-tính)) — bất đồng bộ, phản hồi `202` |
 | `GET` | `/v1/users/by-code/{friend_code}` | Tra người chơi theo mã bạn bè |
 

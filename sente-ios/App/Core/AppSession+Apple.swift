@@ -16,8 +16,7 @@ extension AppSession {
             throw AppleSignInError.noIdentityToken
         }
         // Apple gives the name once, on the first sign-in, and never again.
-        let name = credential.fullName.map { PersonNameComponentsFormatter().string(from: $0) }
-            .flatMap { $0.isEmpty ? nil : $0 }
+        let name = credential.fullName.flatMap { AppleName.displayName($0) }
         let signUp = try await api.signInWithApple(identityToken: identityToken, nonce: rawNonce, fullName: name)
         adopt(signUp)
     }
@@ -43,5 +42,22 @@ extension AppSession {
         deviceToken = token
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
         Task { try? await api.registerDevice(token: token, environment: PushRegistrar.environment, appVersion: version) }
+    }
+}
+
+/// Vietnamese names read family–middle–given; the system formatter puts the
+/// given name first for Latin script. Other locales keep the system's order.
+enum AppleName {
+    static func displayName(_ components: PersonNameComponents, locale: Locale = .current) -> String? {
+        let text: String
+        if locale.language.languageCode?.identifier == "vi" {
+            text = [components.familyName, components.middleName, components.givenName]
+                .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+                .joined(separator: " ")
+        } else {
+            text = PersonNameComponentsFormatter().string(from: components)
+        }
+        return text.isEmpty ? nil : text
     }
 }

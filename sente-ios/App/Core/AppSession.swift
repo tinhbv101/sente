@@ -102,6 +102,10 @@ final class AppSession {
         if user == nil { user = try await api.me() }
     }
 
+    func rename(_ name: String) async throws {
+        user = try await api.rename(name)
+    }
+
     func deleteAccount() async throws {
         try await api.deleteAccount()
         tokens.clear(); refreshTokens.clear()
