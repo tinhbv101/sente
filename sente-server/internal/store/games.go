@@ -136,7 +136,7 @@ func (g *Games) Load(ctx context.Context, id string) (*LoadedGame, error) {
 	err := g.pool.QueryRow(ctx, `
 		SELECT board_size, rules, rules_version, komi, handicap, time_control,
 		       clock, result, board_hash, is_ranked, black_user_id, white_user_id,
-		       current_move_no, 0, last_activity_at, parked_at
+		       current_move_no, undos_used, last_activity_at, parked_at
 		  FROM games WHERE id = $1`, id).
 		Scan(&size, &ruleSet, &storedRulesVersion, &komi, &handicap, &timeControlJSON,
 			&clockJSON, &resultJSON, &boardHash, &isRanked, &black, &white,
@@ -183,6 +183,7 @@ func (g *Games) Load(ctx context.Context, id string) (*LoadedGame, error) {
 		Scoring:           scoring,
 		Result:            result,
 		AppliedMoveIDs:    appliedIDs,
+		UndosUsed:         undoUsed,
 		ExpectedBoardHash: uint64(boardHash),
 	})
 	if err != nil {
@@ -320,13 +321,13 @@ func updateGameRow(ctx context.Context, tx pgx.Tx, id string, session game.GameS
 			phase = $2, to_play = $3, current_move_no = $4, consecutive_passes = $5,
 			ko_point = $6, board_hash = $7, captures_black = $8, captures_white = $9,
 			clock = $10, move_deadline = $11, result = $12, ended_at = COALESCE($13, ended_at),
-			last_activity_at = $14
+			last_activity_at = $14, undos_used = $15
 		WHERE id = $1`,
 		id, string(session.Phase()), session.ToPlay().String(), session.MoveNumber(),
 		session.Engine.State.ConsecutivePasses, koPoint,
 		int64(session.Engine.State.BoardHash),
 		session.Engine.State.Captures.Black, session.Engine.State.Captures.White,
-		clock, deadline, resultJSON, endedAt, at)
+		clock, deadline, resultJSON, endedAt, at, session.UndosUsed())
 	if err != nil {
 		return fmt.Errorf("store: updating game: %w", err)
 	}
@@ -376,6 +377,25 @@ func (g *Games) Finish(ctx context.Context, id string, session game.GameSession,
 		return err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	if err := updateGameRow(ctx, tx, id, session, at); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+// Rewind persists an accepted undo: the log is append-only in spirit, but a move
+// both players agreed never happened must not be replayed on the next load, or
+// the rebuilt position disagrees with the row's checksum and the game is stuck.
+func (g *Games) Rewind(ctx context.Context, id string, session game.GameSession, at time.Time) error {
+	tx, err := g.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := tx.Exec(ctx, `DELETE FROM moves WHERE game_id = $1 AND move_no > $2`,
+		id, session.MoveNumber()); err != nil {
+		return fmt.Errorf("store: rewinding moves: %w", err)
+	}
 	if err := updateGameRow(ctx, tx, id, session, at); err != nil {
 		return err
 	}

@@ -320,7 +320,7 @@ Server trả `hello` ngay sau khi upgrade:
 |--------|---------|---------|
 | `subscribe` | `{ game_id }` | Bắt đầu nhận sự kiện của ván |
 | `unsubscribe` | `{ game_id }` | |
-| `resume` | `{ game_id, last_move_no, board_hash }` | Đồng bộ lại sau khi đứt kết nối |
+| `resume` | `{ game_id, last_move_no, board_hash }` | Đồng bộ lại sau khi đứt kết nối, hoặc khi client tự thấy lệch (hụt nước, sai hash). *Sửa lại khi cài đặt:* server luôn trả `game_state` đầy đủ, chưa có `sync_delta` |
 | `move` | `{ game_id, client_move_id, expected_move_no, kind, point? }` | `kind` ∈ `play` \| `pass` \| `resign` |
 | `mark_dead` | `{ game_id, point, dead }` | Bật/tắt trạng thái chết của **đám quân chứa** `point` |
 | `scoring_accept` | `{ game_id, accepted }` | `false` = rút lại đồng ý |
@@ -345,7 +345,8 @@ Server trả `hello` ngay sau khi upgrade:
 | `scoring_state` | `{ game_id, dead_points: [], suggested_points: [], score, black_accepted, white_accepted }` | Trong giai đoạn đếm điểm |
 | `game_over` | `{ game_id, result, final_board_hash }` | Ván kết thúc |
 | `undo_requested` | `{ game_id, by }` | |
-| `undo_result` | `{ game_id, accepted, new_move_no? }` | |
+| `undo_result` | `{ game_id, accepted, move_no }` | Nếu `accepted` thì **`game_state` đi ngay sau**: client không tự lùi được (quân bị bắt đã mất), nên khóa thao tác cho tới khi nhận bàn cờ mới |
+| `resync_required` | `{ game_id, move_no }` | Sau "chơi tiếp" từ đếm điểm; `game_state` đi ngay sau |
 | `chat` | `{ game_id, message_id, user_id, display_name, body, move_no, ts }` | |
 | `presence` | `{ game_id, user_id, online }` | Đối thủ vào/rời |
 | `error` | `{ code, message, re? }` | Lỗi cho một message cụ thể hoặc lỗi phiên |

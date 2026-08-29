@@ -68,6 +68,10 @@ CREATE INDEX idx_users_active ON users (id) WHERE deleted_at IS NULL;
 
 ```sql
 -- Một user có thể có nhiều cách đăng nhập: thiết bị khách, Apple, (sau này) email.
+-- Sửa lại khi cài đặt (2026-08-29): games có thêm undos_used SMALLINT (migration 0008);
+-- một undo được chấp nhận XÓA hàng của nước đó khỏi moves (Games.Rewind) — ngoại lệ
+-- duy nhất của quy tắc chỉ-ghi-thêm, vì replay phải khớp checksum của hàng games.
+
 CREATE TABLE user_identities (
     id              UUID PRIMARY KEY,
     user_id         UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,

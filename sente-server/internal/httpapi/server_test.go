@@ -576,3 +576,70 @@ func TestFetchingAGameOverREST(t *testing.T) {
 		t.Errorf("a missing game returned %d, want 404", missing.StatusCode)
 	}
 }
+
+// An accepted undo is the one event a client cannot apply by itself, so the full
+// position follows it; and either side can ask for the position at any time.
+func TestAnAcceptedUndoRewindsBothClients(t *testing.T) {
+	server := newTestServer(t)
+	black, white := signUp(t, server), signUp(t, server)
+	gameID := createGame(t, server, black, blitz)
+	blackConn, whiteConn := connect(t, server, black, gameID), connect(t, server, white, gameID)
+	readUntil(t, blackConn, "game_state")
+	readUntil(t, whiteConn, "game_state")
+
+	send(t, blackConn, "move", incomingMove{Kind: "play", Point: "e5", ExpectedMoveNumber: 0})
+	readMoveMade(t, whiteConn, 1)
+	send(t, whiteConn, "move", incomingMove{Kind: "play", Point: "e7", ExpectedMoveNumber: 1})
+	readMoveMade(t, blackConn, 2)
+	readMoveMade(t, whiteConn, 2)
+
+	send(t, whiteConn, "undo_request", map[string]any{})
+	readUntil(t, blackConn, "undo_requested")
+	send(t, blackConn, "undo_response", map[string]bool{"accept": true})
+
+	type position struct {
+		MoveNo int    `json:"move_no"`
+		ToPlay string `json:"to_play"`
+		Board  string `json:"board"`
+	}
+	for name, conn := range map[string]*websocket.Conn{"black": blackConn, "white": whiteConn} {
+		result := readUntil(t, conn, "undo_result")
+		var verdict struct {
+			Accepted bool `json:"accepted"`
+			MoveNo   int  `json:"move_no"`
+		}
+		_ = json.Unmarshal(result.Payload, &verdict)
+		if !verdict.Accepted || verdict.MoveNo != 1 {
+			t.Errorf("%s: undo_result %+v", name, verdict)
+		}
+		state := readUntil(t, conn, "game_state")
+		var got position
+		_ = json.Unmarshal(state.Payload, &got)
+		if got.MoveNo != 1 || got.ToPlay != "white" || strings.Count(got.Board, "w") != 0 {
+			t.Errorf("%s: after undo want move 1, white to play, no white stone; got %+v", name, got)
+		}
+	}
+
+	// White plays something else and the game goes on from move 1.
+	send(t, whiteConn, "move", incomingMove{Kind: "play", Point: "c3", ExpectedMoveNumber: 1})
+	if made := readMoveMade(t, blackConn, 2); made.Point == nil || *made.Point != "C3" {
+		t.Errorf("replacement move: %+v", made)
+	}
+
+	// What was stored agrees: a reload sees two moves, the second at C3.
+	loaded, err := store.NewGames(testPool).Load(context.Background(), gameID)
+	if err != nil {
+		t.Fatalf("reload after undo: %v", err)
+	}
+	if loaded.Session.MoveNumber() != 2 || loaded.Session.UndosUsed() != 1 {
+		t.Errorf("stored game: move %d, undos %d", loaded.Session.MoveNumber(), loaded.Session.UndosUsed())
+	}
+
+	// resume: the client asks, the server answers with the position.
+	send(t, blackConn, "resume", map[string]any{})
+	var asked position
+	_ = json.Unmarshal(readUntil(t, blackConn, "game_state").Payload, &asked)
+	if asked.MoveNo != 2 || asked.ToPlay != "black" {
+		t.Errorf("resume: %+v", asked)
+	}
+}

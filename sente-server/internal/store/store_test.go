@@ -624,3 +624,57 @@ func TestListingAPlayersGames(t *testing.T) {
 		t.Error("ListForUser must report a failed read")
 	}
 }
+
+// An accepted undo must survive a reload: the removed move may not come back,
+// and the undo budget must not reset (docs/01 FR-G10).
+func TestAnAcceptedUndoRewindsTheStoredGame(t *testing.T) {
+	games := newGames(t)
+	ctx := context.Background()
+	id, err := games.Create(ctx, CreateParams{Config: blitzConfig(), StartedAt: epoch})
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, _ := games.Load(ctx, id)
+	session := loaded.Session
+	session, _ = playAndStore(t, games, id, session, rules.Black, rules.Play(coord(t, "E5")), NewID(), epoch)
+	session, _ = playAndStore(t, games, id, session, rules.White, rules.Play(coord(t, "E7")), NewID(), epoch.Add(time.Second))
+
+	session, _, err = session.Apply(game.RequestUndoCommand{By: rules.White}, epoch.Add(2*time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, events, err := session.Apply(game.RespondUndoCommand{By: rules.Black, Accept: true}, epoch.Add(3*time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolved, ok := events[0].(game.UndoResolved); !ok || !resolved.Accepted || resolved.MoveNumber != 1 {
+		t.Fatalf("unexpected events %+v", events)
+	}
+	if err := games.Rewind(ctx, id, session, epoch.Add(3*time.Second)); err != nil {
+		t.Fatal(err)
+	}
+
+	reloaded, err := games.Load(ctx, id)
+	if err != nil {
+		t.Fatalf("a rewound game must still load: %v", err)
+	}
+	if reloaded.Session.MoveNumber() != 1 || reloaded.Session.ToPlay() != rules.White {
+		t.Errorf("want move 1, white to play; got move %d, %v", reloaded.Session.MoveNumber(), reloaded.Session.ToPlay())
+	}
+	if reloaded.Session.UndosUsed() != 1 {
+		t.Errorf("undo budget lost on reload: %d", reloaded.Session.UndosUsed())
+	}
+	if reloaded.Session.Engine.Board().At(coord(t, "E7")) != rules.Empty {
+		t.Error("the undone stone came back")
+	}
+
+	// The seat is free again for a different move.
+	_, applied := playAndStore(t, games, id, reloaded.Session, rules.White, rules.Play(coord(t, "C3")), NewID(), epoch.Add(4*time.Second))
+	if !applied {
+		t.Error("the replacement move was not stored")
+	}
+	final, err := games.Load(ctx, id)
+	if err != nil || final.Session.MoveNumber() != 2 {
+		t.Errorf("after replaying: %v, move %d", err, final.Session.MoveNumber())
+	}
+}

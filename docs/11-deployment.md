@@ -109,10 +109,14 @@ Cần tài khoản Apple Developer Program. Ở *Certificates, Identifiers & Pro
 Đưa hai file `.p8` vào thư mục bí mật, giữ nguyên tên:
 
 ```bash
-mkdir -p ~/sente/deploy/secrets && chmod 700 ~/sente/deploy/secrets
+mkdir -p ~/sente/deploy/secrets && chmod 711 ~/sente/deploy/secrets
 # scp AuthKey_*.p8 vào đó, rồi:
-chmod 644 ~/sente/deploy/secrets/*.p8    # container chạy non-root nên cần đọc được
+chmod 644 ~/sente/deploy/secrets/*.p8
 ```
+
+Container chạy user non-root (uid 65532) nên **thư mục phải có bit `x` cho người khác** (711:
+đi qua được, không liệt kê được) và file phải đọc được (644). Thư mục 700 cho lỗi
+`reading APNs key: ... permission denied` dù file đúng quyền — đã vấp đúng chỗ này ở lần đầu.
 
 Thêm vào `.env`:
 

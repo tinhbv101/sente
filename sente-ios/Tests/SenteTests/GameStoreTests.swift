@@ -201,6 +201,47 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(resignKind, "resign")
     }
 
+    /// The bug seen in the field: white asked, black agreed, and both boards kept
+    /// the undone stone. The client cannot rebuild the position itself; it must
+    /// freeze input until the server's game_state arrives, then show that.
+    func testAnAcceptedUndoFreezesInputUntilTheServersBoardArrives() async {
+        let two = Fixture.board([
+            ".........", ".........", "....w....", ".........",
+            "....b....", ".........", ".........", ".........", ".........",
+        ])
+        await store.handle(.gameState(Fixture.gameState(board: two, toPlay: "black", moveNo: 2,
+                                                        hash: hash(black: ["E5"], white: ["E7"]))))
+        XCTAssertTrue(store.isMyTurn)
+
+        await store.handle(.undoResult(accepted: true, moveNo: 1))
+        XCTAssertFalse(store.isMyTurn, "the board on screen is stale; no move may be built on it")
+        XCTAssertNotNil(store.legality(point("C3")), "placing is refused while waiting")
+        XCTAssertEqual(store.snapshot.board.stones(of: .white).count, 1, "no spinner: the old board stays visible")
+        XCTAssertEqual(store.phase, .playing)
+        XCTAssertEqual(store.toast, "Đã hoãn một nước.")
+
+        let one = Fixture.board([
+            ".........", ".........", ".........", ".........",
+            "....b....", ".........", ".........", ".........", ".........",
+        ])
+        await store.handle(.gameState(Fixture.gameState(board: one, toPlay: "white", moveNo: 1,
+                                                        lastMove: "E5", hash: hash(black: ["E5"]))))
+        XCTAssertEqual(store.moveNumber, 1)
+        XCTAssertEqual(store.toPlay, .white)
+        XCTAssertEqual(store.snapshot.board.stones(of: .white).count, 0)
+        XCTAssertFalse(store.awaitingState)
+        XCTAssertFalse(store.isMyTurn, "it is white's move again")
+    }
+
+    func testASelfDetectedDesyncAsksTheServerForThePosition() async throws {
+        await loadEmptyGame()
+        await store.handle(.moveMade(Fixture.moveMade(moveNo: 2, color: "white", point: "E5",
+                                                      hash: hash(white: ["E5"]))))
+        try await waitUntil { self.transport.sent.count == 1 }
+        guard case .resume = transport.sent[0] else { return XCTFail("want a resume, got \(transport.sent[0])") }
+        XCTAssertEqual(store.phase, .loading)
+    }
+
     func testUndoRequestsFromTheOpponentRaiseTheFlag() async {
         await loadEmptyGame()
         await store.handle(.undoRequested(by: "white"))

@@ -208,8 +208,15 @@ func (r *Registry) persist(ctx context.Context, gameID string, session game.Game
 	}
 	// Anything that ended the game or changed the negotiation still has to land.
 	for _, event := range events {
-		switch event.(type) {
-		case game.GameEnded, game.PlayResumed, game.UndoResolved:
+		switch e := event.(type) {
+		case game.UndoResolved:
+			// An accepted undo removes a stored move; a declined one changes nothing.
+			if e.Accepted {
+				if err := r.config.Games.Rewind(ctx, gameID, session, r.config.Time.Now()); err != nil {
+					return err
+				}
+			}
+		case game.GameEnded, game.PlayResumed:
 			if err := r.config.Games.Finish(ctx, gameID, session, r.config.Time.Now()); err != nil {
 				return err
 			}

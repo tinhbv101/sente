@@ -40,7 +40,7 @@ services:
       SENTE_SIWA_KEY_ID: ${SENTE_SIWA_KEY_ID:-}
       SENTE_SIWA_KEY_FILE: ${SENTE_SIWA_KEY_FILE:-}
     # The secrets directory is git-ignored. The container runs as a non-root user,
-    # so the files must be world-readable (644) inside a 700 directory.
+    # so the directory needs the traverse bit for others (711) and the files 644.
     volumes:
       - ${SENTE_SECRETS_DIR:-./secrets}:/run/secrets:ro
     # Loopback only. Widening SENTE_BIND to 0.0.0.0 exposes the server directly,

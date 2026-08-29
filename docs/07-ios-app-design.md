@@ -569,6 +569,14 @@ và cho ra "Hết hạn next week" trên simulator tiếng Anh.
 Deep link `sente://g/<id>` và `sente://j/<code>` hoạt động nhưng iOS hỏi xác nhận khi mở từ
 ngoài app — không tự động được trong XCUITest, nên dùng launch argument.
 
+**Xin hoãn (undo).** Lỗi gặp thật: hai bên đồng ý hoãn nhưng bàn cờ không lùi, Trắng không
+đánh được, Đen đánh thì "chưa tới lượt". Nguyên nhân: `undo_result` chỉ hiện toast. Client
+không thể tự lùi (quân bị bắt không khôi phục được từ hash), nên giờ nó **khóa thao tác**
+(`awaitingState`) và giữ bàn cờ cũ cho tới `game_state` server gửi ngay sau. Cùng lúc phát hiện
+ba đường "đồng bộ lại" (hụt nước, sai hash, `resync_required`) chỉ xóa bàn cờ mà không xin
+lại — giờ có lệnh `resume`. Phía server còn nặng hơn: nước bị hoãn vẫn nằm trong `moves`, ván
+sẽ không load lại được sau 5 phút idle (lệch checksum) — đã sửa bằng `Games.Rewind`.
+
 **Sign in with Apple** nằm trong Cài đặt → Tài khoản (`SignInWithAppleButton`), chỉ hiện khi
 `is_guest`. Nonce sinh mới mỗi lần vào màn hình, gửi Apple dạng SHA-256 và gửi server dạng
 gốc. Tên đầy đủ chỉ có ở lần đầu nên đưa lên server ngay. Sau khi liên kết `AppSession.adopt`

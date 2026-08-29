@@ -30,6 +30,9 @@ final class GameStore {
     private(set) var toast: String?
     private(set) var result: GameResultPayload?
     private(set) var undoRequestedByOpponent = false
+    /// Set between an accepted undo and the `game_state` that follows it: the
+    /// board on screen is stale, so no move may be built on it.
+    private(set) var awaitingState = false
 
     // Scoring phase
     private(set) var deadStones: Set<Point> = []
@@ -65,7 +68,7 @@ final class GameStore {
         return snapshot
     }
 
-    var isMyTurn: Bool { phase == .playing && toPlay == myColor && pending == nil }
+    var isMyTurn: Bool { phase == .playing && toPlay == myColor && pending == nil && !awaitingState }
     var iAccepted: Bool { myColor == .black ? blackAccepted : whiteAccepted }
     var opponentAccepted: Bool { myColor == .black ? whiteAccepted : blackAccepted }
     var ghostPlayer: StonePlayer { myColor == .black ? .black : .white }
@@ -189,9 +192,22 @@ final class GameStore {
         case .undoRequested(let by):
             undoRequestedByOpponent = by != myColor.rawValue
         case .undoResult(let accepted, _):
-            if accepted { toast = "Đã hoãn một nước." } else { toast = "Đối thủ không đồng ý hoãn." }
+            undoRequestedByOpponent = false
+            if accepted {
+                // The position after a rewind cannot be rebuilt here (captures are
+                // gone for good), so the server sends game_state right behind this.
+                // Keep showing the old board rather than flashing a spinner, but
+                // take no input on it.
+                toast = "Đã hoãn một nước."
+                pending = nil
+                optimistic = confirmed
+                awaitingState = true
+            } else {
+                toast = "Đối thủ không đồng ý hoãn."
+            }
         case .resyncRequired:
-            // A rewind changes more than the client can patch: reload everything.
+            // A rewind changes more than the client can patch; the server follows
+            // with game_state, so only drop what is on screen.
             phase = .loading
             confirmed = nil; optimistic = nil; pending = nil
         case .error(let error, _):
@@ -223,6 +239,7 @@ final class GameStore {
         confirmed = engine
         optimistic = engine
         pending = nil
+        awaitingState = false
         verify(hash: state.boardHash, against: engine)
 
         switch state.phase {
@@ -238,7 +255,7 @@ final class GameStore {
         guard let engine = confirmed else { return }
         if made.moveNo <= engine.state.moveNumber { return }
         guard made.moveNo == engine.state.moveNumber + 1 else {
-            phase = .loading; confirmed = nil; optimistic = nil; pending = nil
+            resync()
             return
         }
         let move: Move
@@ -268,8 +285,16 @@ final class GameStore {
         let mine = String(format: "0x%016llx", engine.state.boardHash)
         if mine != hash.lowercased() {
             toast = "Bàn cờ lệch với máy chủ — đang đồng bộ lại."
-            phase = .loading; confirmed = nil; optimistic = nil; pending = nil
+            resync()
         }
+    }
+
+    /// The client noticed it is out of step: drop its picture and ask for the
+    /// server's. Without the ask, "loading" would last until the next reconnect.
+    private func resync() {
+        phase = .loading
+        confirmed = nil; optimistic = nil; pending = nil
+        send(.resume)
     }
 
     // MARK: - Helpers for the view

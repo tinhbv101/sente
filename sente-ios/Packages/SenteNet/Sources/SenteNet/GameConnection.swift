@@ -15,6 +15,8 @@ public enum ClientCommand: Sendable {
     case scoringResume
     case undoRequest
     case undoResponse(accept: Bool)
+    /// Ask for the full position again; the server answers with `game_state`.
+    case resume
 
     var type: String {
         switch self {
@@ -24,6 +26,7 @@ public enum ClientCommand: Sendable {
         case .scoringResume: "scoring_resume"
         case .undoRequest: "undo_request"
         case .undoResponse: "undo_response"
+        case .resume: "resume"
         }
     }
 
@@ -33,7 +36,7 @@ public enum ClientCommand: Sendable {
             return try JSONValue(encoding: MovePayload(clientMoveId: id, expectedMoveNo: expected, kind: kind, point: point))
         case .markDead(let point): return try JSONValue(encoding: MarkDeadPayload(point: point))
         case .scoringAccept(let accepted): return try JSONValue(encoding: AcceptPayload(accepted: accepted))
-        case .scoringResume, .undoRequest: return .object([:])
+        case .scoringResume, .undoRequest, .resume: return .object([:])
         case .undoResponse(let accept): return try JSONValue(encoding: UndoResponsePayload(accept: accept))
         }
     }

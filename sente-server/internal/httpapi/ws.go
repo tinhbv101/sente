@@ -155,6 +155,12 @@ func (c *connection) handle(ctx context.Context, message Message) {
 		return
 	}
 
+	if message.Type == "resume" {
+		// A client that lost track asks for the whole picture (docs/06 §3.3).
+		c.sendState(ctx, message.ID)
+		return
+	}
+
 	command, err := c.commandFrom(message)
 	if err != nil {
 		c.sendError(message.ID, "malformed", err.Error())
@@ -240,8 +246,29 @@ func (c *connection) forwardEvents(ctx context.Context, events <-chan game.Event
 			if message, ok := protocolMessage(c.gameID, c.size, event); ok {
 				c.send(message)
 			}
+			// A rewind changes more than a client can patch from the event alone,
+			// so the full position follows. The actor persisted before it broadcast.
+			switch e := event.(type) {
+			case game.UndoResolved:
+				if e.Accepted {
+					c.sendState(ctx, "")
+				}
+			case game.PlayResumed:
+				c.sendState(ctx, "")
+			}
 		}
 	}
+}
+
+func (c *connection) sendState(ctx context.Context, replyTo string) {
+	loaded, err := c.server.games.Load(ctx, c.gameID)
+	if err != nil {
+		c.sendError(replyTo, "internal", "Không đọc được ván.")
+		return
+	}
+	message := newMessageOrDrop("game_state", gameStateOf(c.gameID, store.RulesVersion, loaded.Session))
+	message.Re = replyTo
+	c.send(message)
 }
 
 func (c *connection) writeLoop(ctx context.Context) {
