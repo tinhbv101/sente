@@ -85,6 +85,14 @@ check "bạn nhận lời mời và vào ván" test -n "$JOINED"
 check "lời mời đã dùng không nhận lần hai" \
   bash -c "test \$(curl -s -o /dev/null -w '%{http_code}' -X POST '$BASE/v1/challenges/$CODE/accept' -H 'Authorization: Bearer $FRIEND') -eq 409"
 
+REFRESH=$(curl -sf -X POST "$BASE/v1/auth/guest" | json "d['refresh_token']")
+ROTATED=$(curl -sf -X POST "$BASE/v1/auth/refresh" -H 'Content-Type: application/json' \
+  -d "{\"refresh_token\":\"$REFRESH\"}" | json "d['refresh_token']")
+check "refresh token xoay vòng" bash -c "test -n '$ROTATED' && test '$ROTATED' != '$REFRESH'"
+
+check "landing page /j/<code> là HTML" \
+  bash -c "curl -sf '$BASE/j/$CODE' | grep -q '<html'"
+
 check "có header rate limit" \
   bash -c "curl -sfI '$BASE/v1/config' | grep -qi 'x-ratelimit-limit'"
 

@@ -21,6 +21,14 @@ public struct GuestSignUp: Decodable, Sendable {
     public let user: User
     public let accessToken: String
     public let expiresIn: Int
+    public let refreshToken: String?
+}
+
+/// What `POST /v1/auth/refresh` returns: a new pair, the old refresh token spent.
+public struct Session: Decodable, Sendable {
+    public let accessToken: String
+    public let expiresIn: Int
+    public let refreshToken: String
 }
 
 public struct ServerConfig: Decodable, Sendable {
@@ -110,6 +118,7 @@ public struct GameSummary: Decodable, Sendable, Identifiable, Equatable, Hashabl
     public let toPlay: String?
     public let myColor: String
     public let yourTurn: Bool
+    public let opponentId: String?
     public let opponentName: String
     public let moveNo: Int
     public let moveDeadline: Date?
@@ -118,6 +127,21 @@ public struct GameSummary: Decodable, Sendable, Identifiable, Equatable, Hashabl
 
     public var id: String { gameId }
     public var isActive: Bool { phase == "playing" || phase == "scoring" }
+}
+
+public struct GameMoves: Decodable, Sendable {
+    public struct Item: Decodable, Sendable, Equatable {
+        public let moveNo: Int
+        public let color: String
+        public let kind: String
+        public let point: String?
+    }
+    public let gameId: String
+    public let boardSize: Int
+    public let rules: String
+    public let komi: Double
+    public let handicap: Int
+    public let items: [Item]
 }
 
 // MARK: - WebSocket envelope

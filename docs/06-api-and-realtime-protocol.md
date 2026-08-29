@@ -81,7 +81,7 @@ Vượt hạn mức → `429` với `code: "rate_limited"` và header `Retry-Aft
 |--------|------|-------|
 | `POST` | `/v1/auth/guest` | Tạo tài khoản khách gắn với thiết bị |
 | `POST` | `/v1/auth/apple` | Đăng nhập / liên kết Sign in with Apple |
-| `POST` | `/v1/auth/refresh` | Đổi refresh token lấy cặp token mới (rotating) |
+| `POST` | `/v1/auth/refresh` | Đổi refresh token lấy cặp token mới (rotating). Mọi thất bại đều là `401`; dùng lại token đã xoay quá 10 giây → `session_revoked`, cả họ token bị thu hồi |
 | `POST` | `/v1/auth/logout` | Thu hồi refresh token hiện tại |
 
 ```http
@@ -232,6 +232,9 @@ Gửi lại cùng `client_move_id` trả về **đúng response cũ** với `200
 | `DELETE` | `/v1/devices/{id}` | Hủy đăng ký |
 | `POST` | `/v1/reports` | Báo cáo người chơi |
 | `GET` | `/v1/config` | **Không cần auth.** Cấu hình client |
+| `GET` | `/j/{code}` | **Không cần auth.** Landing page HTML cho người chưa cài app |
+| `GET` | `/.well-known/apple-app-site-association` | **Không cần auth.** Chỉ có khi cấu hình `SENTE_APPLE_TEAM_ID` |
+| `GET` | `/metrics` | Prometheus. **Không** được proxy ra ngoài — chỉ mạng nội bộ |
 
 ```json
 GET /v1/config

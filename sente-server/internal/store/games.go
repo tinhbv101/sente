@@ -44,6 +44,9 @@ type LoadedGame struct {
 	// LastActivityAt is when the game was last written. A node taking a game over
 	// uses it to work out how long the game was stranded (docs/04 §4.5).
 	LastActivityAt time.Time
+	// ParkedAt is set while no node runs the game on purpose. Nil on load means
+	// the last owner never said goodbye -- it crashed.
+	ParkedAt *time.Time
 }
 
 // MoveRecord is one row of the append-only move log.
@@ -92,12 +95,12 @@ func createGameTx(ctx context.Context, db execer, params CreateParams) (string, 
 			id, board_size, rules, rules_version, komi, handicap, time_control,
 			is_ranked, is_correspondence, black_user_id, white_user_id,
 			phase, to_play, current_move_no, board_hash, clock, move_deadline,
-			started_at, last_activity_at
+			started_at, last_activity_at, parked_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7,
 			$8, $9, $10, $11,
 			'playing', $12, 0, $13, $14, $15,
-			$16, $16
+			$16, $16, $16
 		)`,
 		id, params.Config.Size, string(params.Config.Rules), RulesVersion,
 		komiOf(params.Config), params.Config.Handicap, timeControl,
@@ -128,15 +131,16 @@ func (g *Games) Load(ctx context.Context, id string) (*LoadedGame, error) {
 		storedRulesVersion      string
 		currentMoveNo, undoUsed int
 		lastActivityAt          time.Time
+		parkedAt                *time.Time
 	)
 	err := g.pool.QueryRow(ctx, `
 		SELECT board_size, rules, rules_version, komi, handicap, time_control,
 		       clock, result, board_hash, is_ranked, black_user_id, white_user_id,
-		       current_move_no, 0, last_activity_at
+		       current_move_no, 0, last_activity_at, parked_at
 		  FROM games WHERE id = $1`, id).
 		Scan(&size, &ruleSet, &storedRulesVersion, &komi, &handicap, &timeControlJSON,
 			&clockJSON, &resultJSON, &boardHash, &isRanked, &black, &white,
-			&currentMoveNo, &undoUsed, &lastActivityAt)
+			&currentMoveNo, &undoUsed, &lastActivityAt, &parkedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -189,7 +193,7 @@ func (g *Games) Load(ctx context.Context, id string) (*LoadedGame, error) {
 	return &LoadedGame{
 		ID: id, Session: session, IsRanked: isRanked,
 		BlackUserID: deref(black), WhiteUserID: deref(white),
-		LastActivityAt: lastActivityAt,
+		LastActivityAt: lastActivityAt, ParkedAt: parkedAt,
 	}, nil
 }
 
@@ -595,4 +599,49 @@ func (g *Games) ListForUser(ctx context.Context, userID string, limit int) ([]Ga
 		out = append(out, summary)
 	}
 	return out, rows.Err()
+}
+
+// ListExpired finds games whose player on move has run out of time but that no
+// node is currently running -- typically correspondence games, whose actor stops
+// after a few idle minutes and takes its timer with it (docs/04 §4.4).
+func (g *Games) ListExpired(ctx context.Context, now time.Time, limit int) ([]string, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	rows, err := g.pool.Query(ctx, `
+		SELECT id FROM games
+		 WHERE phase = 'playing' AND move_deadline IS NOT NULL AND move_deadline < $1
+		 ORDER BY move_deadline LIMIT $2`, now, limit)
+	if err != nil {
+		return nil, fmt.Errorf("store: listing expired games: %w", err)
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// Park records that a node stopped running a game on purpose. A game created
+// fresh is parked too: nobody has run it yet, so nothing was interrupted.
+func (g *Games) Park(ctx context.Context, id string, at time.Time) error {
+	_, err := g.pool.Exec(ctx, `UPDATE games SET parked_at = $2 WHERE id = $1`, id, at)
+	if err != nil {
+		return fmt.Errorf("store: parking game: %w", err)
+	}
+	return nil
+}
+
+// Unpark marks a game as running somewhere; a crash from here on is a stranding.
+func (g *Games) Unpark(ctx context.Context, id string) error {
+	_, err := g.pool.Exec(ctx, `UPDATE games SET parked_at = NULL WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("store: unparking game: %w", err)
+	}
+	return nil
 }

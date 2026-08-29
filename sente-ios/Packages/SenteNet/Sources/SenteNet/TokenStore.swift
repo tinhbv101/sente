@@ -13,6 +13,10 @@ public struct TokenStore: Sendable {
         self.account = account
     }
 
+    /// The long-lived token that turns a 15-minute session back into the same
+    /// person. Losing it means becoming a new guest, so it lives in the Keychain too.
+    public static let refresh = TokenStore(account: "refresh_token")
+
     private var query: [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
          kSecAttrService as String: service,

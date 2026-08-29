@@ -24,39 +24,80 @@ final class AppSession {
 
     private(set) var api: APIClient
     private let tokens = TokenStore()
+    private let refreshTokens = TokenStore.refresh
 
     init() {
-        api = APIClient(baseURL: Settings.load().serverURL, accessToken: TokenStore().load())
+        api = APIClient(baseURL: Settings.load().serverURL, accessToken: TokenStore().load(),
+                        refreshToken: TokenStore.refresh.load())
     }
 
     func start() async {
         phase = .starting
-        api = APIClient(baseURL: settings.serverURL, accessToken: tokens.load())
+        api = APIClient(baseURL: settings.serverURL, accessToken: tokens.load(),
+                        refreshToken: refreshTokens.load())
+        // Every rotation lands in the Keychain, or the next launch is a stranger.
+        // Local names must not shadow refresh(), which is called just below.
+        let accessStore = tokens, refreshStore = refreshTokens
+        await api.onTokensChanged { newAccess, newRefresh in
+            accessStore.save(newAccess)
+            if let newRefresh { refreshStore.save(newRefresh) }
+        }
         do {
-            if await api.token == nil {
-                let signUp = try await api.signUpGuest()
-                if !tokens.save(signUp.accessToken) {
-                    // Without the token the next launch becomes a new guest, and this
-                    // account's games vanish with it. Loud in debug, visible in logs.
-                    assertionFailure("Keychain refused the access token")
-                    keychainUnavailable = true
-                }
-                user = signUp.user
+            // Order of preference: the access token we have; a refresh of it; and
+            // only then a brand-new guest -- which is a different person.
+            if await api.token == nil, await api.hasRefreshToken {
+                _ = await api.refresh()
             }
+            if await api.token == nil {
+                try await becomeNewGuest()
+            }
+            try await loadProfile()
             try await refresh()
             phase = .ready
             consumeLaunchArguments()
         } catch APIError.unauthorized {
-            // The token expired (guest tokens live 15 minutes until refresh tokens
-            // exist). Sign up again rather than showing a login screen.
-            tokens.clear()
-            await api.setAccessToken(nil)
-            await start()
+            // Both tokens are dead: expired after 30 days away, revoked, or the
+            // account was deleted. Start over rather than show a login screen.
+            tokens.clear(); refreshTokens.clear()
+            await api.setTokens(access: nil, refresh: nil)
+            do {
+                try await becomeNewGuest()
+                try await refresh()
+                phase = .ready
+            } catch let error as APIError {
+                phase = .failed(error.userMessage)
+            } catch {
+                phase = .failed(error.localizedDescription)
+            }
         } catch let error as APIError {
             phase = .failed(error.userMessage)
         } catch {
             phase = .failed(error.localizedDescription)
         }
+    }
+
+    private func becomeNewGuest() async throws {
+        let signUp = try await api.signUpGuest()
+        if !tokens.save(signUp.accessToken) {
+            // Without the token the next launch becomes a new guest, and this
+            // account's games vanish with it. Loud in debug, visible in logs.
+            assertionFailure("Keychain refused the access token")
+            keychainUnavailable = true
+        }
+        if let refreshToken = signUp.refreshToken { refreshTokens.save(refreshToken) }
+        user = signUp.user
+    }
+
+    /// Who am I, from the server: after a refresh the app has a token but no name.
+    private func loadProfile() async throws {
+        if user == nil { user = try await api.me() }
+    }
+
+    func deleteAccount() async throws {
+        try await api.deleteAccount()
+        tokens.clear(); refreshTokens.clear()
+        user = nil; games = []; invitations = []
+        await start()
     }
 
     func refresh() async throws {

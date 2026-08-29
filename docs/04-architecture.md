@@ -309,6 +309,20 @@ cùng đã commit, **không** từ thời điểm khôi phục. Nghĩa là thờ
 **Giảm nhẹ:** nếu khoảng gián đoạn > 15 giây, cộng bù đúng khoảng gián đoạn cho bên đang tới
 lượt và gửi kèm `clock_adjusted{reason:"server_interruption", ms:N}` để client hiển thị minh bạch.
 
+> **Sửa lại khi cài đặt: chỉ bù khi ván bị *bỏ rơi*, không bù khi ván *đỗ xe*.** Bản đầu bù
+> cho mọi khoảng trống > 15 giây. Với ván thư tín, actor rỗi tự tắt sau 5 phút là chuyện
+> bình thường, và khoảng trống hai ngày sau đó là thời gian người chơi suy nghĩ — bù nó nghĩa
+> là **không ai bao giờ hết giờ**. Cách phân biệt: node dừng actor một cách chủ động (rỗi,
+> drain, mất lease) ghi `games.parked_at`; node nhận ván xóa cột đó. Khi tiếp quản mà
+> `parked_at IS NULL` → chủ cũ chết không kịp nói → bù giờ. Ván mới tạo cũng ở trạng thái đỗ
+> xe: chưa ai chạy nó nên không có gì bị gián đoạn. Cài đặt: `internal/node/registry.go`,
+> test `TestAParkedGameGetsNoCompensation`.
+>
+> Hệ quả kéo theo: ván hết hạn khi không node nào chạy nó cần một **sweeper** đọc
+> `games.move_deadline < now()` mỗi phút và đẩy `TimeoutCommand` qua hub
+> (`internal/sweep`). Actor vừa khởi động cho ván quá hạn sẽ tự bắn timer ngay lập tức, nên
+> sweeper đếm kết quả bằng cách đọc lại DB thay vì tin vào lệnh của mình.
+
 ## 5. Triển khai
 
 ### 5.1 Hạ tầng (giai đoạn v1.0)

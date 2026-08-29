@@ -17,15 +17,16 @@ Cờ vây online trên iOS. Thiết kế đầy đủ ở [`docs/`](docs/README.
 | `sente-server/internal/node` — Registry: lease + store + actor, **chaos test takeover** | **Xong · 19/19 xanh** |
 | `sente-server/internal/wire` — codec command/event xuyên tiến trình | **Xong · 7/7 xanh** |
 | `sente-server/internal/hub` — định tuyến xuyên node, fanout sự kiện | **Xong · 14/14 xanh** |
-| `sente-server/internal/auth` — tài khoản khách + JWT | **Xong · 6/6 xanh** (chưa có Apple, chưa có refresh) |
-| `sente-server/internal/httpapi` — REST + WebSocket gateway + **lời mời qua link** | **Xong · 25/25 xanh (đầu-cuối)** |
+| `sente-server/internal/auth` + `store/refresh` — tài khoản khách, JWT 15′, **refresh token xoay vòng 30 ngày** | **Xong** (chưa có Sign in with Apple) |
+| `sente-server/internal/httpapi` — REST + WebSocket, lời mời, **xóa tài khoản, báo cáo/chặn, SGF, replay, landing page, AASA, /metrics** | **Xong · 36/36 xanh (đầu-cuối)** |
+| `sente-server/internal/sweep` — xử hết giờ cho ván không node nào đang chạy | **Xong · 3/3 xanh** |
 | `sente-server/internal/ratelimit` — token bucket trong Redis | **Xong · 8/8 xanh** |
 | `cmd/server` + Docker, chạy sau reverse proxy có sẵn — **deploy được** | **Xong** — xem [docs/11](docs/11-deployment.md) |
 | CI (`make ci`) — drift, parity, test, coverage gate | **Xong** |
 | `sente-ios/Packages/SenteNet` — REST + WebSocket client, reconnect, outbox | **Xong · 12/12 xanh** |
 | `sente-ios/Packages/SenteUI` — bàn cờ Canvas, cử chỉ đặt quân, đồng hồ | **Xong · 6/6 xanh** |
-| `sente-ios/App` — Home, mời/nhận lời mời, màn hình ván, đếm điểm, cài đặt (sáng/tối/hệ thống), icon | **Chạy được trên simulator** · `GameStore` **23/23 test** (optimistic/rollback, thứ tự sự kiện, canary hash) |
-| Còn lại (Sign in with Apple, push, landing page, XCUITest, TestFlight) | Chưa bắt đầu |
+| `sente-ios/App` — Home, mời/nhận, ván, đếm điểm, **xem lại ván**, cài đặt (sáng/tối, **xóa tài khoản**), **báo cáo/chặn**, icon | **Chạy được trên simulator** · `GameStore` **23/23 test** (optimistic/rollback, thứ tự sự kiện, canary hash) |
+| Còn lại (Sign in with Apple, push APNs, XCUITest, TestFlight) | Chưa bắt đầu — cả hai đầu cần Apple Developer key |
 
 Hai engine luật độc lập, cùng chạy một bộ vector và một file parity — ràng buộc quan trọng
 nhất của toàn hệ thống ([ADR-002](docs/03-solution-design.md#adr-002--nơi-đặt-engine-luật-cờ)).

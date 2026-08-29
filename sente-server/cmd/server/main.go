@@ -31,6 +31,7 @@ import (
 	"sente.app/server/internal/node"
 	"sente.app/server/internal/ratelimit"
 	"sente.app/server/internal/store"
+	"sente.app/server/internal/sweep"
 )
 
 // drainTimeout bounds how long a shutting-down node waits to hand its games over.
@@ -49,6 +50,8 @@ type config struct {
 	publicBaseURL  string
 	trustProxy     bool
 	clientIPHeader string
+	appleTeamID    string
+	appStoreURL    string
 }
 
 func loadConfig() (config, error) {
@@ -63,6 +66,8 @@ func loadConfig() (config, error) {
 		publicBaseURL:  strings.TrimRight(os.Getenv("SENTE_PUBLIC_URL"), "/"),
 		trustProxy:     envOr("SENTE_TRUST_PROXY", "false") == "true",
 		clientIPHeader: os.Getenv("SENTE_CLIENT_IP_HEADER"),
+		appleTeamID:    os.Getenv("SENTE_APPLE_TEAM_ID"),
+		appStoreURL:    os.Getenv("SENTE_APP_STORE_URL"),
 	}
 	if origins := os.Getenv("SENTE_ALLOWED_ORIGINS"); origins != "" {
 		c.allowedOrigins = strings.Split(origins, ",")
@@ -211,7 +216,13 @@ func run(logger *slog.Logger) error {
 		AllowedOrigins: config.allowedOrigins,
 		PublicBaseURL:  config.publicBaseURL, TrustProxyHeaders: config.trustProxy,
 		ClientIPHeader: config.clientIPHeader,
+		AppleTeamID:    config.appleTeamID, AppStoreURL: config.appStoreURL,
 	})
+
+	// Games whose clock ran out while no node was running them -- correspondence
+	// games, mostly -- are ended by looking at the database (docs/04 §4.4).
+	go (&sweep.Sweeper{Games: store.NewGames(pool), Hub: messageHub, Logger: logger}).
+		Run(background, time.Minute)
 
 	// Invitations nobody answered are closed once an hour. Reads already treat them
 	// as expired, so this is tidying, not correctness.

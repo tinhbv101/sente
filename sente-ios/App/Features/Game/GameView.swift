@@ -9,6 +9,8 @@ struct GameView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var store: GameStore
     @State private var confirmResign = false
+    @State private var showReport = false
+    @State private var moderationNote: String?
 
     init(summary: GameSummary) {
         self.summary = summary
@@ -38,6 +40,17 @@ struct GameView: View {
         .confirmationDialog("Xin thua ván này?", isPresented: $confirmResign, titleVisibility: .visible) {
             Button("Xin thua", role: .destructive) { store.resign() }
         }
+        .confirmationDialog("Báo cáo \(summary.opponentName)", isPresented: $showReport, titleVisibility: .visible) {
+            Button("Quấy rối / lời lẽ xúc phạm") { Task { await report("abuse") } }
+            Button("Nghi dùng AI") { Task { await report("cheating") } }
+            Button("Bỏ ván giữa chừng") { Task { await report("escaping") } }
+            Button("Tên hiển thị không phù hợp") { Task { await report("name") } }
+        } message: {
+            Text("Báo cáo được người thật xem xét trong 24 giờ. Ván đang chơi không bị ảnh hưởng.")
+        }
+        .alert("Đã ghi nhận", isPresented: Binding(get: { moderationNote != nil }, set: { _ in moderationNote = nil })) {
+            Button("Đóng") {}
+        } message: { Text(moderationNote ?? "") }
         .alert("Đối thủ xin hoãn một nước", isPresented: Binding(
             get: { store.undoRequestedByOpponent }, set: { _ in })) {
             Button("Đồng ý") { store.answerUndo(true) }
@@ -48,6 +61,22 @@ struct GameView: View {
             await store.connect(api: session.api, token: token)
         }
         .onDisappear { Task { await store.disconnect(); await session.refreshQuietly() } }
+    }
+
+    private func report(_ category: String) async {
+        guard let opponent = summary.opponentId else { return }
+        do {
+            try await session.api.report(userID: opponent, gameID: summary.gameId, category: category, note: "")
+            moderationNote = "Cảm ơn bạn. Báo cáo đã được gửi."
+        } catch let error as APIError { moderationNote = error.userMessage } catch { moderationNote = error.localizedDescription }
+    }
+
+    private func block() async {
+        guard let opponent = summary.opponentId else { return }
+        do {
+            try await session.api.block(userID: opponent)
+            moderationNote = "Đã chặn \(summary.opponentName). Người này không thể mời bạn nữa; ván này vẫn tiếp tục."
+        } catch let error as APIError { moderationNote = error.userMessage } catch { moderationNote = error.localizedDescription }
     }
 
     private var board: some View {
@@ -135,6 +164,12 @@ struct GameView: View {
                     .buttonStyle(SecondaryButton()).disabled(!store.isMyTurn)
                 Menu {
                     Button("Xin hoãn một nước") { store.requestUndo() }
+                    if summary.opponentId != nil {
+                        Divider()
+                        Button("Báo cáo đối thủ") { showReport = true }
+                        Button("Chặn đối thủ") { Task { await block() } }
+                    }
+                    Divider()
                     Button("Xin thua", role: .destructive) { confirmResign = true }
                 } label: {
                     Image(systemName: "ellipsis").frame(width: 56, height: 50)

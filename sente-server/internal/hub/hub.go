@@ -18,7 +18,9 @@ import (
 
 	"sente.app/server/internal/cluster"
 	"sente.app/server/internal/game"
+	"sente.app/server/internal/metrics"
 	"sente.app/server/internal/node"
+	"sente.app/server/internal/rules"
 	"sente.app/server/internal/wire"
 )
 
@@ -82,6 +84,29 @@ func (h *Hub) Broadcast(gameID string, events []game.Event) {
 // Execute runs a command on the node that owns the game, forwarding if that is
 // not this one.
 func (h *Hub) Execute(ctx context.Context, gameID string, command game.Command) ([]game.Event, error) {
+	events, err := h.execute(ctx, gameID, command)
+	record(command, events, err)
+	return events, err
+}
+
+// record feeds the metrics ADR-015 asks for. A rules rejection of a *move* is the
+// interesting one: the client should have caught it first.
+func record(command game.Command, events []game.Event, err error) {
+	if _, isMove := command.(game.PlayCommand); isMove && err != nil {
+		switch err.Error() {
+		case string(rules.ErrOccupied), string(rules.ErrSuicide), string(rules.ErrKo),
+			string(rules.ErrSuperko), string(rules.ErrNotYourTurn), string(game.ErrOutOfSync):
+			metrics.IllegalMoveRejected.WithLabelValues(err.Error()).Inc()
+		}
+	}
+	for _, event := range events {
+		if ended, ok := event.(game.GameEnded); ok {
+			metrics.GameEnded.WithLabelValues(string(ended.Result.Reason)).Inc()
+		}
+	}
+}
+
+func (h *Hub) execute(ctx context.Context, gameID string, command game.Command) ([]game.Event, error) {
 	if actor, ok := h.config.Registry.Get(gameID); ok {
 		events, _, err := actor.Send(ctx, command)
 		// A stopped actor means the game is no longer runnable here. Fall through
@@ -127,6 +152,16 @@ func (h *Hub) Execute(ctx context.Context, gameID string, command game.Command) 
 		return nil, err
 	}
 	events, _, err := actor.Send(ctx, command)
+	if errors.Is(err, game.ErrActorStopped) {
+		// A freshly started actor can end the game on its own before our command
+		// reaches it: an overdue clock fires the moment the timer is armed. Ask once
+		// more so the caller gets the game's verdict rather than a lifecycle error.
+		actor, err = h.config.Registry.Acquire(ctx, gameID)
+		if err != nil {
+			return nil, err
+		}
+		events, _, err = actor.Send(ctx, command)
+	}
 	return events, err
 }
 

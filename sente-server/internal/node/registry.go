@@ -11,6 +11,7 @@ import (
 
 	"sente.app/server/internal/cluster"
 	"sente.app/server/internal/game"
+	"sente.app/server/internal/metrics"
 	"sente.app/server/internal/rules"
 	"sente.app/server/internal/store"
 )
@@ -139,11 +140,15 @@ func (r *Registry) start(ctx context.Context, gameID string) (*game.Actor, error
 	session := loaded.Session
 	now := r.config.Time.Now()
 
-	// Work out whether the game was stranded, and if so hand the time back.
+	// Hand time back only for a stranding: the last owner stopped without saying
+	// so. A parked game -- idle, drained, or never run -- simply sat there, and
+	// the gap is the player's own thinking time (a correspondence game sits for
+	// days by design).
 	var adjustments []game.Event
-	if session.Phase() == rules.Playing {
+	if session.Phase() == rules.Playing && loaded.ParkedAt == nil {
 		gap := now.Sub(loaded.LastActivityAt)
 		if gap > TakeoverGrace {
+			metrics.OwnerReclaimed.Inc()
 			session = session.ResumeTurnAt(now)
 			adjustments = append(adjustments, game.ClockAdjusted{
 				Player: session.ToPlay(), Delta: gap, Reason: "server_interruption",
@@ -166,6 +171,8 @@ func (r *Registry) start(ctx context.Context, gameID string) (*game.Actor, error
 	r.mu.Lock()
 	r.actors[gameID] = actor
 	r.mu.Unlock()
+	// From here a crash is a stranding.
+	_ = r.config.Games.Unpark(ctx, gameID)
 
 	if len(adjustments) > 0 {
 		// Persisted as an audit entry, not as game state: the clock itself is
@@ -230,6 +237,8 @@ func (r *Registry) onActorStopped(gameID string) {
 	// Release on a fresh context: the one that started the game may be long gone.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	// Parked before released, so whoever acquires next already sees the mark.
+	_ = r.config.Games.Park(ctx, gameID, r.config.Time.Now())
 	_ = r.config.Leases.Release(ctx, gameID)
 }
 

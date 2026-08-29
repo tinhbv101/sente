@@ -1,10 +1,13 @@
 import SwiftUI
+import SenteNet
 import SenteUI
 
 struct SettingsView: View {
     @Environment(AppSession.self) private var session
     @State private var draft = Settings.load()
     @State private var serverText = Settings.load().serverURL.absoluteString
+    @State private var confirmDelete = false
+    @State private var deleteError: String?
 
     var body: some View {
         Form {
@@ -30,6 +33,12 @@ struct SettingsView: View {
                 Text("Tắt: quân rơi đúng chỗ bạn chạm. Bật: quân ma hiện cao hơn ngón tay một chút để không bị che — hữu ích trên bàn 19×19, kéo xuống dưới mép bàn để đặt hàng cuối.")
             }
             Section {
+                Button("Xóa tài khoản", role: .destructive) { confirmDelete = true }
+                if let deleteError { Text(deleteError).font(.footnote).foregroundStyle(.red) }
+            } footer: {
+                Text("Tên và mã bạn bè của bạn bị xóa vĩnh viễn. Các ván đã chơi vẫn còn trong lịch sử của đối thủ, dưới tên \"Người chơi đã xóa\".")
+            }
+            Section {
                 TextField("https://…", text: $serverText)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                     .font(.system(.body, design: .monospaced))
@@ -38,6 +47,17 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Cài đặt")
+        .confirmationDialog("Xóa tài khoản này?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Xóa vĩnh viễn", role: .destructive) {
+                Task {
+                    do { try await session.deleteAccount() }
+                    catch let error as APIError { deleteError = error.userMessage }
+                    catch { deleteError = error.localizedDescription }
+                }
+            }
+        } message: {
+            Text("Không thể khôi phục. Bạn sẽ được tạo một tài khoản khách mới.")
+        }
         .onChange(of: draft) { _, new in new.save(); Task { session.settings = new } }
         .onSubmit { applyServer() }
         .toolbar {

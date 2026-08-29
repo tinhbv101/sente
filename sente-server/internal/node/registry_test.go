@@ -709,3 +709,41 @@ func TestAdoptReportsRedisFailures(t *testing.T) {
 		t.Error("a failed lease lookup must be reported")
 	}
 }
+
+// An actor that stopped because the game went quiet did not strand anyone. When
+// the game is picked up again -- days later, for a correspondence game -- the gap
+// is the player's own time and must not be handed back.
+func TestAParkedGameGetsNoCompensation(t *testing.T) {
+	first, _ := newNode(t, "a", time.Minute)
+	second, events := newNode(t, "b", time.Minute)
+	ctx := context.Background()
+	id := newGame(t)
+
+	actor, err := first.Acquire(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	play(t, actor, rules.Black, "e5")
+	turnStarted := actor.Snapshot().Clock.TurnStartedAt
+	first.Drain(ctx) // stops cleanly: the game is parked
+
+	// Pretend a long time passed while it sat there.
+	if _, err := testPool.Exec(ctx, `
+		UPDATE games SET last_activity_at = now() - interval '2 days',
+		                 parked_at = now() - interval '2 days' WHERE id = $1`, id); err != nil {
+		t.Fatal(err)
+	}
+	taken, err := second.Acquire(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer second.Drain(ctx)
+	if !taken.Snapshot().Clock.TurnStartedAt.Equal(turnStarted) {
+		t.Error("a parked game's turn must keep its original reference point")
+	}
+	for _, event := range events.all() {
+		if _, ok := event.(game.ClockAdjusted); ok {
+			t.Error("a parked game must not be compensated")
+		}
+	}
+}

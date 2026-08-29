@@ -42,6 +42,10 @@ type Config struct {
 	// ClientIPHeader names a header carrying the real client address, for setups
 	// with a CDN in front of the proxy. Honoured only with TrustProxyHeaders.
 	ClientIPHeader string
+	// AppleTeamID enables the apple-app-site-association file for universal links.
+	AppleTeamID string
+	// AppStoreURL is offered on the landing page to people without the app.
+	AppStoreURL string
 	// AllowedOrigins for the WebSocket handshake. Empty means same-origin only.
 	AllowedOrigins []string
 }
@@ -51,6 +55,8 @@ type Server struct {
 	games      *store.Games
 	users      *store.Users
 	challenges *store.Challenges
+	refresh    *store.RefreshTokens
+	moderation *store.Moderation
 	mux        *http.ServeMux
 }
 
@@ -63,6 +69,8 @@ func New(config Config) *Server {
 		games:      store.NewGames(config.Pool),
 		users:      store.NewUsers(config.Pool),
 		challenges: store.NewChallenges(config.Pool),
+		refresh:    store.NewRefreshTokens(config.Pool),
+		moderation: store.NewModeration(config.Pool),
 		mux:        http.NewServeMux(),
 	}
 	s.routes()
@@ -80,10 +88,20 @@ func (s *Server) routes() {
 
 	// Charged to the caller's address, since there is no user yet.
 	s.mux.HandleFunc("POST /v1/auth/guest", s.limit(ratelimit.SignUp, s.handleGuest))
+	s.mux.HandleFunc("POST /v1/auth/refresh", s.limit(ratelimit.SignUp, s.handleRefresh))
+	s.mux.HandleFunc("POST /v1/auth/logout", s.limit(ratelimit.Read, s.handleLogout))
+
+	s.mux.HandleFunc("GET /v1/me", s.authed(ratelimit.Read, s.handleMe))
+	s.mux.HandleFunc("DELETE /v1/me", s.authed(ratelimit.Read, s.handleDeleteAccount))
+	s.mux.HandleFunc("POST /v1/reports", s.authed(ratelimit.CreateInvite, s.handleReport))
+	s.mux.HandleFunc("POST /v1/blocks", s.authed(ratelimit.Read, s.handleBlock))
+	s.mux.HandleFunc("DELETE /v1/blocks/{id}", s.authed(ratelimit.Read, s.handleUnblock))
 
 	s.mux.HandleFunc("POST /v1/games", s.authed(ratelimit.CreateGame, s.handleCreateGame))
 	s.mux.HandleFunc("GET /v1/games", s.authed(ratelimit.Read, s.handleListGames))
 	s.mux.HandleFunc("GET /v1/games/{id}", s.authed(ratelimit.Read, s.handleGetGame))
+	s.mux.HandleFunc("GET /v1/games/{id}/moves", s.authed(ratelimit.Read, s.handleMoves))
+	s.mux.HandleFunc("GET /v1/games/{id}/sgf", s.authed(ratelimit.Read, s.handleSGF))
 
 	// The preview needs no token: a link has to be readable before signing up.
 	s.mux.HandleFunc("GET /v1/challenges/{code}", s.limit(ratelimit.Read, s.handleGetChallenge))
@@ -97,6 +115,11 @@ func (s *Server) routes() {
 		s.authed(ratelimit.CreateInvite, s.handleCancelChallenge))
 
 	s.mux.HandleFunc("GET /v1/ws", s.handleWebSocket)
+
+	// Public pages and operational endpoints.
+	s.mux.HandleFunc("GET /j/{code}", s.limit(ratelimit.Read, s.handleLanding))
+	s.mux.HandleFunc("GET /.well-known/apple-app-site-association", s.handleAASA)
+	s.mux.Handle("GET /metrics", metricsHandler())
 }
 
 // ── plumbing ────────────────────────────────────────────────────────────────
@@ -215,7 +238,7 @@ func (s *Server) handleConfig(w http.ResponseWriter, _ *http.Request) {
 		"board_sizes":       rules.SupportedSizes,
 		"feature_flags": map[string]bool{
 			"matchmaking": false, "ai_opponent": false, "ranked": false,
-			"apple_sign_in": false, "invite_links": true,
+			"apple_sign_in": false, "invite_links": true, "refresh_tokens": true,
 		},
 	})
 }
@@ -229,9 +252,8 @@ func (s *Server) handleGuest(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal", "Không tạo được tài khoản.")
 		return
 	}
-	token, expiry, err := s.config.Issuer.Issue(user.ID, true)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "Không tạo được phiên.")
+	session, ok := s.issueSession(w, r, user.ID, true)
+	if !ok {
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{
@@ -239,8 +261,9 @@ func (s *Server) handleGuest(w http.ResponseWriter, r *http.Request) {
 			"id": user.ID, "display_name": user.DisplayName,
 			"friend_code": user.FriendCode, "is_guest": true,
 		},
-		"access_token": token,
-		"expires_in":   int(time.Until(expiry).Seconds()),
+		"access_token":  session.AccessToken,
+		"expires_in":    session.ExpiresIn,
+		"refresh_token": session.RefreshToken,
 	})
 }
 
@@ -352,6 +375,7 @@ type gameSummaryJSON struct {
 	ToPlay       string      `json:"to_play,omitempty"`
 	MyColor      string      `json:"my_color"`
 	YourTurn     bool        `json:"your_turn"`
+	OpponentID   string      `json:"opponent_id,omitempty"`
 	OpponentName string      `json:"opponent_name"`
 	MoveNumber   int         `json:"move_no"`
 	MoveDeadline *time.Time  `json:"move_deadline,omitempty"`
@@ -373,7 +397,8 @@ func (s *Server) handleListGames(w http.ResponseWriter, r *http.Request) {
 	for _, g := range list {
 		item := gameSummaryJSON{
 			GameID: g.ID, BoardSize: g.BoardSize, Rules: string(g.Rules), Phase: string(g.Phase),
-			MyColor: g.MyColor.String(), OpponentName: g.OpponentName, MoveNumber: g.MoveNumber,
+			MyColor: g.MyColor.String(), OpponentID: g.OpponentID, OpponentName: g.OpponentName,
+			MoveNumber:   g.MoveNumber,
 			MoveDeadline: g.MoveDeadline, LastActivity: g.LastActivity, Result: resultOf(g.Result),
 		}
 		if g.Phase == rules.Playing {

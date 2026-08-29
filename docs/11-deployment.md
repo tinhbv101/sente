@@ -287,6 +287,11 @@ và `proxy_read_timeout` đủ dài. NPM làm việc này bằng nút **Websocke
 | `SENTE_TRUST_PROXY` | | `false` | Tin `X-Forwarded-For` để tính rate limit theo IP thật. **Chỉ** bật khi đứng sau proxy — bật sai là ai cũng giả được IP |
 | `SENTE_CLIENT_IP_HEADER` | | rỗng | Header chứa IP thật khi có CDN trước proxy, ví dụ `CF-Connecting-IP`. Xem [§6.1](#61-nếu-domain-đi-qua-cloudflare) |
 | `SENTE_MIGRATE` | | `true` | Đặt `false` nếu chạy migration riêng |
+| `SENTE_APPLE_TEAM_ID` | | rỗng | Bật file AASA cho universal link. Lấy từ Apple Developer → Membership |
+| `SENTE_APP_STORE_URL` | | rỗng | Nút "Tải trên App Store" ở landing page `/j/<code>` |
+
+**`/metrics`** (Prometheus) không có xác thực — nó dành cho mạng nội bộ. Trong NPM, thêm một
+Custom Location `/metrics` trả `403`, hoặc chỉ scrape từ trong VPS (`127.0.0.1:8080/metrics`).
 
 Hai biến sau **không** phải của server mà của `docker-compose.prod.yml`, đọc từ `deploy/.env`:
 
@@ -325,14 +330,14 @@ Nói rõ để không ai tưởng đã xong:
 
 | Thiếu | Hệ quả |
 |---|---|
-| Sign in with Apple, refresh token | Access token hết hạn sau 15 phút là phải đăng ký khách lại |
-| Push (APNs) | Ván thư tín không báo được cho ai |
-| Ván thư tín qua REST | Chỉ chơi realtime khi cả hai đang mở kết nối |
-| Metric / tracing | Chỉ có log; `/readyz` là thứ duy nhất để giám sát |
-| Landing page cho `/j/<code>` | Link mời hiện chỉ là API; người chưa cài app mở ra thấy JSON |
+| Sign in with Apple | Tài khoản gắn với máy; mất máy là mất tài khoản. Refresh token 30 ngày đã có, nên **không** còn mất tài khoản sau 15 phút |
+| Push (APNs) | Ván thư tín không báo được cho ai — phải mở app mới thấy tới lượt |
+| Tracing | Có `/metrics` Prometheus (bốn series của ADR-015); chưa có trace |
 
-**Đã có:** lời mời qua link (`/v1/challenges`) với ghế được gán lúc chấp nhận, và rate limit
-theo IP cho đăng ký / theo người dùng cho mọi thứ khác ([06 §1.3](06-api-and-realtime-protocol.md#13-rate-limit)).
+**Đã có:** lời mời qua link với landing page cho người chưa cài app, refresh token xoay vòng,
+xóa tài khoản trong app, báo cáo/chặn (App Store 1.2 và 5.1.1(v)), xuất SGF, ván thư tín được
+xử hết giờ bởi sweeper, rate limit theo IP cho đăng ký / theo người dùng cho mọi thứ khác
+([06 §1.3](06-api-and-realtime-protocol.md#13-rate-limit)).
 Ghế trống trong ván tạo trực tiếp qua `POST /v1/games` vẫn là "ai vào trước lấy" — đó là
 đường thử nghiệm; ván thật đi qua lời mời.
 

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"sente.app/server/internal/metrics"
 	"sente.app/server/internal/rules"
 )
 
@@ -215,6 +216,9 @@ func (a *Actor) handle(req request) {
 // apply runs the command, persists the outcome, and only then commits it. The
 // order matters: a client must never be told about a move the database refused.
 func (a *Actor) apply(req request) ([]Event, GameSession, error) {
+	if _, isMove := req.command.(PlayCommand); isMove {
+		defer func(start time.Time) { metrics.MoveApplyDuration.Observe(time.Since(start).Seconds()) }(time.Now())
+	}
 	next, events, err := a.session.Apply(req.command, req.at)
 	if err != nil {
 		return nil, a.session, err

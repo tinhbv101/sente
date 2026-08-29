@@ -23,15 +23,61 @@ public actor APIClient {
     public let baseURL: URL
     private let session: URLSession
     private var accessToken: String?
+    private var refreshToken: String?
+    /// Called whenever the pair changes, so the caller can persist it.
+    private var onTokens: (@Sendable (String, String?) -> Void)?
+    private var refreshing: Task<Bool, Never>?
 
-    public init(baseURL: URL, session: URLSession = .shared, accessToken: String? = nil) {
+    public init(baseURL: URL, session: URLSession = .shared, accessToken: String? = nil,
+                refreshToken: String? = nil) {
         self.baseURL = baseURL
         self.session = session
         self.accessToken = accessToken
+        self.refreshToken = refreshToken
     }
 
     public func setAccessToken(_ token: String?) { accessToken = token }
+    public func setTokens(access: String?, refresh: String?) { accessToken = access; refreshToken = refresh }
+    public func onTokensChanged(_ handler: @escaping @Sendable (String, String?) -> Void) { onTokens = handler }
     public var token: String? { accessToken }
+    public var hasRefreshToken: Bool { refreshToken != nil }
+
+    /// Exchanges the refresh token for a new pair. False means the session is
+    /// gone for good (expired, revoked, or the account deleted) and the caller
+    /// should start over as a new guest.
+    public func refresh() async -> Bool {
+        // Concurrent 401s share one refresh: a second rotation would spend the
+        // token the first one just received.
+        if let refreshing { return await refreshing.value }
+        let task = Task<Bool, Never> { [refreshToken] in
+            guard let refreshToken else { return false }
+            struct Body: Encodable { let refreshToken: String }
+            do {
+                let (data, _) = try await perform("POST", "/v1/auth/refresh", body: Body(refreshToken: refreshToken),
+                                                  authenticated: false, allowRefresh: false)
+                let session = try ProtocolDecoder.json.decode(Session.self, from: data)
+                accessToken = session.accessToken
+                self.refreshToken = session.refreshToken
+                onTokens?(session.accessToken, session.refreshToken)
+                return true
+            } catch {
+                return false
+            }
+        }
+        refreshing = task
+        defer { refreshing = nil }
+        return await task.value
+    }
+
+    public func logout() async {
+        if let refreshToken {
+            struct Body: Encodable { let refreshToken: String }
+            _ = try? await perform("POST", "/v1/auth/logout", body: Body(refreshToken: refreshToken),
+                                   authenticated: false, allowRefresh: false)
+        }
+        accessToken = nil
+        refreshToken = nil
+    }
 
     // MARK: - Endpoints
 
@@ -39,11 +85,39 @@ public actor APIClient {
         try await request("GET", "/v1/config", authenticated: false)
     }
 
-    /// Creates a guest account and keeps its token for later calls.
+    /// Creates a guest account and keeps its tokens for later calls.
     public func signUpGuest() async throws -> GuestSignUp {
         let result: GuestSignUp = try await request("POST", "/v1/auth/guest", authenticated: false)
         accessToken = result.accessToken
+        refreshToken = result.refreshToken
+        onTokens?(result.accessToken, result.refreshToken)
         return result
+    }
+
+    public func me() async throws -> GuestSignUp.User {
+        try await request("GET", "/v1/me")
+    }
+
+    public func deleteAccount() async throws {
+        try await requestNoContent("DELETE", "/v1/me")
+        accessToken = nil
+        refreshToken = nil
+    }
+
+    public func moves(gameID: String) async throws -> GameMoves {
+        try await request("GET", "/v1/games/\(gameID)/moves")
+    }
+
+    public func report(userID: String, gameID: String?, category: String, note: String) async throws {
+        struct Body: Encodable { let userId: String; let gameId: String?; let category: String; let note: String }
+        _ = try await perform("POST", "/v1/reports",
+                              body: Body(userId: userID, gameId: gameID, category: category, note: note),
+                              authenticated: true, allowRefresh: true)
+    }
+
+    public func block(userID: String) async throws {
+        struct Body: Encodable { let userId: String }
+        _ = try await perform("POST", "/v1/blocks", body: Body(userId: userID), authenticated: true, allowRefresh: true)
     }
 
     public func myGames() async throws -> [GameSummary] {
@@ -113,6 +187,23 @@ public actor APIClient {
 
     private func perform<B: Encodable>(_ method: String, _ path: String, body: B?,
                                         authenticated: Bool) async throws -> (Data, Int) {
+        try await perform(method, path, body: body, authenticated: authenticated, allowRefresh: true)
+    }
+
+    /// One transparent retry after a 401: refresh, then repeat the request. Only
+    /// once, so a token the server keeps rejecting cannot loop forever.
+    private func perform<B: Encodable>(_ method: String, _ path: String, body: B?,
+                                        authenticated: Bool, allowRefresh: Bool) async throws -> (Data, Int) {
+        do {
+            return try await performOnce(method, path, body: body, authenticated: authenticated)
+        } catch APIError.unauthorized where authenticated && allowRefresh && refreshToken != nil {
+            guard await refresh() else { throw APIError.unauthorized }
+            return try await performOnce(method, path, body: body, authenticated: authenticated)
+        }
+    }
+
+    private func performOnce<B: Encodable>(_ method: String, _ path: String, body: B?,
+                                            authenticated: Bool) async throws -> (Data, Int) {
         var urlRequest = URLRequest(url: baseURL.appending(path: path))
         urlRequest.httpMethod = method
         urlRequest.timeoutInterval = 15

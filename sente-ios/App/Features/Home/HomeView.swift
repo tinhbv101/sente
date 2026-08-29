@@ -34,7 +34,9 @@ struct HomeView: View {
                 .background(Tokens.paper)
             }
             .refreshable { await session.refreshQuietly() }
-            .navigationDestination(for: GameSummary.self) { GameView(summary: $0) }
+            .navigationDestination(for: GameSummary.self) { game in
+                if game.isActive { GameView(summary: game) } else { ReplayView(summary: game) }
+            }
             .sheet(isPresented: $showCreate) { CreateInviteView() }
             .sheet(item: joinBinding) { target in
                 JoinView(initialCode: target.code) { game in
