@@ -147,14 +147,14 @@ final class ProtocolTests: XCTestCase {
          "expires_at":"2026-09-04T09:14:03Z","is_mine":false}
         """
         let invite = try ProtocolDecoder.json.decode(Challenge.self, from: Data(challenge.utf8))
-        XCTAssertEqual(invite.config.timeControl.summary, "10′ + 3×30″")
+        XCTAssertEqual(invite.config.timeControl.summary, "10 phút + 3×30″")
     }
 
     func testTimeControlSummaries() {
-        XCTAssertEqual(TimeControl.quick.summary, "10′")
-        XCTAssertEqual(TimeControl.standard.summary, "20′ + 3×30″")
+        XCTAssertEqual(TimeControl.quick.summary, "10 phút")
+        XCTAssertEqual(TimeControl.standard.summary, "20 phút + 3×30″")
         XCTAssertEqual(TimeControl.correspondence.summary, "2 ngày/nước")
-        XCTAssertEqual(TimeControl(kind: .fischer, mainTimeMs: 300_000, incrementMs: 10_000).summary, "5′ + 10″")
+        XCTAssertEqual(TimeControl(kind: .fischer, mainTimeMs: 300_000, incrementMs: 10_000).summary, "5 phút + 10″")
     }
 }
 

@@ -49,6 +49,9 @@ struct HomeView: View {
             // argument, or a link opened while the app was starting), and onChange
             // only fires for later changes.
             .onAppear {
+                // `-createInvite 1` opens the invitation sheet on launch, for screenshots
+                // and UI tests (docs/07 §12.2).
+                if UserDefaults.standard.bool(forKey: "createInvite") { showCreate = true }
                 openPendingGame(session.pendingGameID)
                 openPendingInvite(session.pendingInviteCode)
             }

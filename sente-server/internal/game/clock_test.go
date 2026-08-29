@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -367,5 +368,35 @@ func TestAlternatingMovesStayConsistent(t *testing.T) {
 	// 20 moves of 2s each leaves 20s of the original minute.
 	if clock.Black.Main != 20*time.Second || clock.White.Main != 20*time.Second {
 		t.Errorf("clocks drifted: black=%v white=%v", clock.Black.Main, clock.White.Main)
+	}
+}
+
+func TestMainTimeIsCappedByBoardSize(t *testing.T) {
+	caps := map[int]time.Duration{9: 3 * time.Hour, 13: 9 * time.Hour, 19: 24 * time.Hour}
+	for size, want := range caps {
+		if got := MaxMainTime(size); got != want {
+			t.Errorf("%d×%d: want %v, got %v", size, size, want, got)
+		}
+		at := Config{Size: size, TimeControl: TimeControl{Kind: Absolute, MainTime: want}}
+		if err := at.Validate(); err != nil {
+			t.Errorf("%d×%d: the cap itself must be allowed: %v", size, size, err)
+		}
+		over := Config{Size: size, TimeControl: TimeControl{Kind: Byoyomi, MainTime: want + time.Minute, Periods: 3, PeriodTime: 30 * time.Second}}
+		if err := over.Validate(); !errors.Is(err, ErrMainTimeTooLong) {
+			t.Errorf("%d×%d: a minute over the cap must be refused, got %v", size, size, err)
+		}
+	}
+	// Fischer's ceiling counts too; correspondence is paced per move and exempt.
+	fischer := Config{Size: 9, TimeControl: TimeControl{Kind: Fischer, MainTime: time.Hour, Increment: 10 * time.Second, MaxTime: 4 * time.Hour}}
+	if err := fischer.Validate(); !errors.Is(err, ErrMainTimeTooLong) {
+		t.Errorf("fischer max time over the cap: %v", err)
+	}
+	slow := Config{Size: 9, TimeControl: TimeControl{Kind: Correspondence, PerMove: 3 * 24 * time.Hour}}
+	if err := slow.Validate(); err != nil {
+		t.Errorf("correspondence is not capped: %v", err)
+	}
+	// A broken time control is still reported as such.
+	if err := (Config{Size: 9, TimeControl: TimeControl{Kind: Absolute}}).Validate(); err == nil || errors.Is(err, ErrMainTimeTooLong) {
+		t.Errorf("want the time control's own error, got %v", err)
 	}
 }

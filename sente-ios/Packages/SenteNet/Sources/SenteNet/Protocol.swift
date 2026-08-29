@@ -58,12 +58,13 @@ public struct TimeControl: Codable, Sendable, Equatable {
     public static let quick = TimeControl(kind: .absolute, mainTimeMs: 10 * 60_000)
     public static let correspondence = TimeControl(kind: .correspondence, daysPerMove: 2)
 
-    /// Short label for lists: "20′ + 3×30″", "10′", "2 ngày/nước".
+    /// Short label for lists: "20 phút + 3×30″", "3 giờ", "2 ngày/nước".
     public var summary: String {
+        let main = TimeLimits.format(ms: mainTimeMs ?? 0)
         switch kind {
-        case .absolute: return "\((mainTimeMs ?? 0) / 60_000)′"
-        case .fischer: return "\((mainTimeMs ?? 0) / 60_000)′ + \((incrementMs ?? 0) / 1000)″"
-        case .byoyomi: return "\((mainTimeMs ?? 0) / 60_000)′ + \(periods ?? 0)×\((periodTimeMs ?? 0) / 1000)″"
+        case .absolute: return main
+        case .fischer: return "\(main) + \((incrementMs ?? 0) / 1000)″"
+        case .byoyomi: return "\(main) + \(periods ?? 0)×\((periodTimeMs ?? 0) / 1000)″"
         case .correspondence: return "\(daysPerMove ?? 0) ngày/nước"
         }
     }

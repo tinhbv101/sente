@@ -3,8 +3,9 @@ import GoKit
 import SenteNet
 import SenteUI
 
-/// Three presets cover almost every real request; the custom section is for people
-/// who know what they want (docs/07 §8).
+/// Board and clock are the player's to choose (docs/01 FR-M1); the presets are
+/// shortcuts that fill the same controls. The clock's ceiling follows the board
+/// (docs/07 §8): three hours on 9×9, nine on 13×13, a day on 19×19.
 struct CreateInviteView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
@@ -20,13 +21,22 @@ struct CreateInviteView: View {
             case .correspondence: "19×19 · 2 ngày mỗi nước"
             }
         }
-        var size: Int { self == .quick ? 9 : 19 }
-        var timeControl: TimeControl {
-            switch self { case .quick: .quick; case .standard: .standard; case .correspondence: .correspondence }
-        }
     }
 
-    @State private var preset: Preset = .standard
+    private enum Pace: String, CaseIterable, Identifiable {
+        case live, correspondence
+        var id: String { rawValue }
+        var title: String { self == .live ? "Tính giờ" : "Thư tín" }
+    }
+
+    /// Byo-yomi choices as (periods, seconds); nil periods means none.
+    private static let byoyomiChoices: [(periods: Int, seconds: Int)?] = [nil, (3, 30), (5, 30), (3, 60), (5, 60)]
+
+    @State private var boardSize = 19
+    @State private var pace: Pace = .live
+    @State private var mainTimeMs = 20 * 60_000
+    @State private var byoyomi = 1
+    @State private var daysPerMove = 2
     @State private var rules: RuleSet = .japanese
     @State private var handicap = 0
     @State private var colour = "random"
@@ -34,21 +44,64 @@ struct CreateInviteView: View {
     @State private var error: String?
     @State private var busy = false
 
+    private var timeChoices: [Int] { TimeLimits.mainTimeChoicesMs(boardSize: boardSize) }
+
+    private var timeControl: TimeControl {
+        switch pace {
+        case .correspondence:
+            return TimeControl(kind: .correspondence, daysPerMove: daysPerMove)
+        case .live:
+            if let extra = Self.byoyomiChoices[byoyomi] {
+                return TimeControl(kind: .byoyomi, mainTimeMs: mainTimeMs, periods: extra.periods, periodTimeMs: extra.seconds * 1000)
+            }
+            return TimeControl(kind: .absolute, mainTimeMs: mainTimeMs)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section("Chọn nhanh") {
                     ForEach(Preset.allCases) { option in
-                        Button { preset = option } label: {
-                            HStack {
-                                Image(systemName: preset == option ? "largecircle.fill.circle" : "circle")
-                                    .foregroundStyle(Tokens.indigo)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(option.title).font(.callout.weight(.semibold))
-                                    Text(option.detail).font(.caption).foregroundStyle(Tokens.inkSecondary)
-                                }
+                        Button { apply(option) } label: {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(option.title).font(.callout.weight(.semibold))
+                                Text(option.detail).font(.caption).foregroundStyle(Tokens.inkSecondary)
                             }
                         }.foregroundStyle(Tokens.ink)
+                    }
+                }
+                Section("Bàn cờ") {
+                    Picker("Cỡ bàn", selection: $boardSize) {
+                        ForEach([9, 13, 19], id: \.self) { Text("\($0)×\($0)").tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                Section {
+                    Picker("Thể thức", selection: $pace) {
+                        ForEach(Pace.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    switch pace {
+                    case .live:
+                        Picker("Mỗi bên", selection: $mainTimeMs) {
+                            ForEach(timeChoices, id: \.self) { Text(TimeLimits.format(ms: $0)).tag($0) }
+                        }
+                        Picker("Byo-yomi", selection: $byoyomi) {
+                            ForEach(Self.byoyomiChoices.indices, id: \.self) { index in
+                                Text(Self.byoyomiChoices[index].map { "\($0.periods) × \($0.seconds) giây" } ?? "Không").tag(index)
+                            }
+                        }
+                    case .correspondence:
+                        Picker("Mỗi nước", selection: $daysPerMove) {
+                            ForEach(TimeLimits.daysPerMoveChoices, id: \.self) { Text("\($0) ngày").tag($0) }
+                        }
+                    }
+                } header: { Text("Thời gian") } footer: {
+                    if pace == .live {
+                        Text("Tối đa \(TimeLimits.format(ms: TimeLimits.maxMainTimeMs(boardSize: boardSize))) mỗi bên cho bàn \(boardSize)×\(boardSize). Hết giờ chính thì dùng byo-yomi, nếu có.")
+                    } else {
+                        Text("Mỗi nước có bấy nhiêu ngày; hết hạn là thua. Có thông báo khi đến lượt.")
                     }
                 }
                 Section("Tùy chỉnh") {
@@ -68,10 +121,15 @@ struct CreateInviteView: View {
             }
             .navigationTitle("Mời bạn chơi")
             .navigationBarTitleDisplayMode(.inline)
+            // A smaller board has a lower ceiling; a choice above it snaps to the cap.
+            .onChange(of: boardSize) { _, size in
+                let cap = TimeLimits.maxMainTimeMs(boardSize: size)
+                if mainTimeMs > cap { mainTimeMs = cap }
+            }
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Đóng") { dismiss() } } }
             .safeAreaInset(edge: .bottom) {
                 Button { Task { await create() } } label: {
-                    if busy { ProgressView().tint(.white) } else { Text("Tạo lời mời") }
+                    if busy { ProgressView().tint(.white) } else { Text("Tạo lời mời · \(boardSize)×\(boardSize) · \(timeControl.summary)") }
                 }
                 .buttonStyle(PrimaryButton()).disabled(busy)
                 .padding(16)
@@ -83,12 +141,20 @@ struct CreateInviteView: View {
         }
     }
 
+    private func apply(_ preset: Preset) {
+        switch preset {
+        case .quick: boardSize = 9; pace = .live; mainTimeMs = 10 * 60_000; byoyomi = 0
+        case .standard: boardSize = 19; pace = .live; mainTimeMs = 20 * 60_000; byoyomi = 1
+        case .correspondence: boardSize = 19; pace = .correspondence; daysPerMove = 2
+        }
+    }
+
     private func create() async {
         busy = true; defer { busy = false }
         do {
             created = try await session.api.createChallenge(GameConfigRequest(
-                boardSize: preset.size, rules: rules, handicap: handicap,
-                timeControl: preset.timeControl, creatorColor: colour))
+                boardSize: boardSize, rules: rules, handicap: handicap,
+                timeControl: timeControl, creatorColor: colour))
             await session.refreshQuietly()
         } catch let apiError as APIError {
             error = apiError.userMessage

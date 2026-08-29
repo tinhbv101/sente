@@ -40,6 +40,37 @@ type TimeControl struct {
 	PerMove    time.Duration   `json:"per_move,omitempty"`
 }
 
+// MaxMainTime caps a player's main time by board size (docs/01 FR-M1). A small
+// board finished in an afternoon does not need a day on the clock; the cap keeps
+// abandoned games from tying up seats for days. Correspondence games are paced
+// per move and are not subject to it.
+func MaxMainTime(size int) time.Duration {
+	switch {
+	case size <= 9:
+		return 3 * time.Hour
+	case size <= 13:
+		return 9 * time.Hour
+	default:
+		return 24 * time.Hour
+	}
+}
+
+// ErrMainTimeTooLong is returned by Validate when a clock exceeds MaxMainTime.
+var ErrMainTimeTooLong = errors.New("main time exceeds the cap for this board size")
+
+// Validate checks the whole configuration: the time control on its own, then
+// the parts that depend on the board.
+func (c Config) Validate() error {
+	if err := c.TimeControl.Validate(); err != nil {
+		return err
+	}
+	tc := c.TimeControl
+	if tc.Kind != Correspondence && (tc.MainTime > MaxMainTime(c.Size) || tc.MaxTime > MaxMainTime(c.Size)) {
+		return ErrMainTimeTooLong
+	}
+	return nil
+}
+
 func (tc TimeControl) Validate() error {
 	switch tc.Kind {
 	case Absolute:

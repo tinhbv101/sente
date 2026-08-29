@@ -263,13 +263,16 @@ GET /v1/config
   "min_supported_app_version": "1.0.0",
   "recommended_app_version": "1.2.0",
   "protocol_versions": [1],
+  "max_main_time_ms": { "9": 10800000, "13": 32400000, "19": 86400000 },
   "feature_flags": { "matchmaking": false, "ai_opponent": false, "ranked": false,
                      "apple_sign_in": true, "push": true, "invite_links": true, "refresh_tokens": true },
   "server_time": "2026-08-28T09:14:03.221Z"
 }
 ```
 
-App gọi endpoint này lúc khởi động. `min_supported_app_version` cho phép ép nâng cấp khi có
+`max_main_time_ms` là trần thời gian chính mỗi bên theo cỡ bàn; `POST /v1/games` và
+`POST /v1/challenges` vượt trần trả `400 invalid_config` ("bàn 9×9 cho phép tối đa 3 giờ mỗi
+bên"). Ván `correspondence` không áp trần. App gọi endpoint này lúc khởi động. `min_supported_app_version` cho phép ép nâng cấp khi có
 breaking change; `server_time` cho lần hiệu chỉnh đồng hồ đầu tiên.
 
 ## 3. WebSocket Protocol

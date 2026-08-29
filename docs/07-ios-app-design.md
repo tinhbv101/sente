@@ -394,7 +394,7 @@ iCloud backup của hệ thống. Dọn cache: giữ 50 ván gần nhất, xóa 
 |----------|----------------|---------|
 | Onboarding | 3 bước: chào, chọn trình độ (quyết định cỡ bàn mặc định), xin quyền push | P0 |
 | Home | Ván đang chờ bạn đi (nổi bật nhất), ván đang chờ đối thủ, nút "Mời bạn chơi", nút "Chơi trên máy này" | P0 |
-| Tạo lời mời | Cấu hình ván với preset nhanh ("Nhanh 9×9", "Chuẩn 19×19", "Thư tín") + tùy chỉnh nâng cao | P0 |
+| Tạo lời mời | Chọn cỡ bàn (9/13/19), thể thức (tính giờ: thời gian chính + byo-yomi; thư tín: ngày/nước), luật, chấp, màu. Ba preset chỉ là nút điền nhanh. Danh sách thời gian cắt theo trần của cỡ bàn (`TimeLimits`, phản chiếu `game.MaxMainTime`); đổi bàn nhỏ hơn thì thời gian đang chọn kẹp về trần | P0 |
 | Xem trước lời mời | Ai mời, cấu hình gì, Chấp nhận / Từ chối | P0 |
 | **Ván cờ** | Bàn cờ, hai đồng hồ, tù binh, nút Pass/Xin thua/Chat, banner trạng thái kết nối | P0 |
 | Đếm điểm | Bàn cờ với quân chết mờ + đất tô màu, tỉ số trực tiếp, Đồng ý / Chơi tiếp | P0 |

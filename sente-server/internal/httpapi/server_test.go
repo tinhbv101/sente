@@ -690,3 +690,52 @@ func TestPlayingOnFromScoringResyncsBothClientsIntoPlay(t *testing.T) {
 		t.Errorf("stored game: %v, phase %v, move %d", err, loaded.Session.Phase(), loaded.Session.MoveNumber())
 	}
 }
+
+// The clock a player may ask for depends on the board: three hours on 9×9, nine
+// on 13×13, a day on 19×19. The server refuses more, whether the game is created
+// directly or through an invitation, and tells clients the numbers.
+func TestMainTimeIsCappedByBoardSizeAtTheEdge(t *testing.T) {
+	server := newTestServer(t)
+	p := signUp(t, server)
+	hours := func(h float64) int64 { return int64(h * 3600 * 1000) }
+
+	cases := []struct {
+		size   int
+		mainMs int64
+		want   int
+	}{
+		{9, hours(3), http.StatusCreated}, {9, hours(3) + 60_000, http.StatusBadRequest},
+		{13, hours(9), http.StatusCreated}, {13, hours(10), http.StatusBadRequest},
+		{19, hours(24), http.StatusCreated}, {19, hours(25), http.StatusBadRequest},
+	}
+	for _, c := range cases {
+		body := fmt.Sprintf(`{"board_size":%d,"time_control":{"kind":"byoyomi","main_time_ms":%d,"periods":3,"period_time_ms":30000}}`, c.size, c.mainMs)
+		response, raw := do(t, server, http.MethodPost, "/v1/games", p.token, body)
+		if response.StatusCode != c.want {
+			t.Errorf("%d×%d with %d ms: want %d, got %d %s", c.size, c.size, c.mainMs, c.want, response.StatusCode, raw)
+		}
+		if c.want == http.StatusBadRequest && !strings.Contains(string(raw), "invalid_config") {
+			t.Errorf("refusal should be invalid_config: %s", raw)
+		}
+		response, _ = do(t, server, http.MethodPost, "/v1/challenges", p.token,
+			fmt.Sprintf(`{"board_size":%d,"creator_color":"black","time_control":{"kind":"absolute","main_time_ms":%d}}`, c.size, c.mainMs))
+		if response.StatusCode != c.want {
+			t.Errorf("invitation %d×%d with %d ms: want %d, got %d", c.size, c.size, c.mainMs, c.want, response.StatusCode)
+		}
+	}
+
+	// Correspondence is paced per move and not subject to the cap.
+	response, _ := do(t, server, http.MethodPost, "/v1/games", p.token,
+		`{"board_size":9,"time_control":{"kind":"correspondence","days_per_move":3}}`)
+	if response.StatusCode != http.StatusCreated {
+		t.Errorf("correspondence on 9×9: %d", response.StatusCode)
+	}
+
+	var config struct {
+		Caps map[string]int64 `json:"max_main_time_ms"`
+	}
+	_ = json.Unmarshal(readAllFrom(t, server, "/v1/config"), &config)
+	if config.Caps["9"] != hours(3) || config.Caps["13"] != hours(9) || config.Caps["19"] != hours(24) {
+		t.Errorf("published caps: %v", config.Caps)
+	}
+}

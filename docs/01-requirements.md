@@ -67,7 +67,7 @@ Ký hiệu ưu tiên: **P0** = bắt buộc cho MVP · **P1** = cần cho v1.0 �
 
 | ID | Yêu cầu | Ưu tiên |
 |----|---------|---------|
-| FR-M1 | Tạo **lời mời (challenge)** với cấu hình: cỡ bàn (9/13/19), hệ luật (Nhật/Trung), komi, chấp quân, thể thức thời gian, màu quân (đen/trắng/ngẫu nhiên) | P0 |
+| FR-M1 | Tạo **lời mời (challenge)** với cấu hình: cỡ bàn (9/13/19), hệ luật (Nhật/Trung), komi, chấp quân, thể thức thời gian, màu quân (đen/trắng/ngẫu nhiên). Thời gian chính mỗi bên do người dùng chọn, **trần theo cỡ bàn: 3 giờ (9×9), 9 giờ (13×13), 24 giờ (19×19)**; ván thư tín tính theo ngày/nước, không áp trần này | P0 |
 | FR-M2 | Chia sẻ lời mời qua Universal Link (`https://sente.app/j/<code>`) bằng iOS Share Sheet — mở app nếu đã cài, mở App Store nếu chưa | P0 |
 | FR-M3 | Người nhận xem trước cấu hình ván và Chấp nhận / Từ chối. Lời mời hết hạn sau 7 ngày | P0 |
 | FR-M4 | Mời trực tiếp một người trong danh sách bạn bè (không cần link) | P1 |

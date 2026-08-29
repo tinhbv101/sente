@@ -251,6 +251,7 @@ func (s *Server) handleConfig(w http.ResponseWriter, _ *http.Request) {
 		"protocol_versions": []int{ProtocolVersion},
 		"server_time":       time.Now().UTC(),
 		"board_sizes":       rules.SupportedSizes,
+		"max_main_time_ms":  maxMainTimeByBoard(),
 		"feature_flags": map[string]bool{
 			"matchmaking": false, "ai_opponent": false, "ranked": false,
 			"apple_sign_in": s.config.Apple != nil, "push": s.config.Notifier.Enabled(),
@@ -360,10 +361,29 @@ func configFromRequest(request createGameRequest) (game.Config, error) {
 	if komi == 0 {
 		komi = rules.DefaultKomi(ruleSet, request.Handicap)
 	}
-	return game.Config{
+	config := game.Config{
 		Size: size, Rules: ruleSet, Komi: komi, Handicap: request.Handicap,
 		TimeControl: control, MaxUndos: 3,
-	}, nil
+	}
+	if err := config.Validate(); errors.Is(err, game.ErrMainTimeTooLong) {
+		return game.Config{}, fmt.Errorf("bàn %d×%d cho phép tối đa %s mỗi bên", size, size,
+			hoursText(game.MaxMainTime(size)))
+	} else if err != nil {
+		return game.Config{}, err
+	}
+	return config, nil
+}
+
+func hoursText(d time.Duration) string { return fmt.Sprintf("%d giờ", int(d.Hours())) }
+
+// maxMainTimeByBoard is published in /v1/config so a client can build its time
+// picker from the same numbers the server enforces.
+func maxMainTimeByBoard() map[string]int64 {
+	out := make(map[string]int64, len(rules.SupportedSizes))
+	for _, size := range rules.SupportedSizes {
+		out[fmt.Sprint(size)] = game.MaxMainTime(size).Milliseconds()
+	}
+	return out
 }
 
 func (s *Server) handleGetGame(w http.ResponseWriter, r *http.Request) {
