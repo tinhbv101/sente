@@ -394,6 +394,7 @@ iCloud backup của hệ thống. Dọn cache: giữ 50 ván gần nhất, xóa 
 |----------|----------------|---------|
 | Onboarding | 3 bước: chào, chọn trình độ (quyết định cỡ bàn mặc định), xin quyền push | P0 |
 | Home | Ván đang chờ bạn đi (nổi bật nhất), ván đang chờ đối thủ, nút "Mời bạn chơi", nút "Chơi trên máy này" | P0 |
+| Chơi trên máy này | Pass-and-play (FR-M5): thiết lập (cỡ bàn, luật, chấp, tên hai người) → bàn cờ dùng lại `BoardView`, ai tới lượt thì đặt; nhường lượt, đi lại một nước (không cần hỏi — cả hai đang nhìn), xin thua, hai lần nhường → đánh dấu quân chết → Đếm điểm hoặc Chơi tiếp; chia sẻ SGF. Hoàn toàn offline: `LocalGameStore` trên GoKit, ván đang chơi lưu `local-game.json` trong Application Support và mở lại được từ Home | P1 |
 | Tạo lời mời | Chọn cỡ bàn (9/13/19), thể thức (tính giờ: thời gian chính + byo-yomi; thư tín: ngày/nước), luật, chấp, màu. Ba preset chỉ là nút điền nhanh. Danh sách thời gian cắt theo trần của cỡ bàn (`TimeLimits`, phản chiếu `game.MaxMainTime`); đổi bàn nhỏ hơn thì thời gian đang chọn kẹp về trần | P0 |
 | Xem trước lời mời | Ai mời, cấu hình gì, Chấp nhận / Từ chối | P0 |
 | **Ván cờ** | Bàn cờ, hai đồng hồ, tù binh, nút Pass/Xin thua/Chat, banner trạng thái kết nối | P0 |
@@ -561,8 +562,9 @@ Ba điều lộ ra ngay ở lần chạy đầu trên simulator, đều đã s�
   Ký ad-hoc (`CODE_SIGN_IDENTITY="-"`) là đủ. `TokenStore.save` giờ trả về `Bool` và
   `AppSession` coi thất bại là lỗi, không nuốt.
 
-Bốn launch argument phục vụ kiểm thử, script và chụp màn hình: `-openGame <id>`,
-`-inviteCode <code>`, `-createInvite 1` (mở sheet tạo lời mời), `-openSettings 1` (mở Cài đặt).
+Năm launch argument phục vụ kiểm thử, script và chụp màn hình: `-openGame <id>`,
+`-inviteCode <code>`, `-createInvite 1` (mở sheet tạo lời mời), `-openSettings 1` (mở Cài đặt),
+`-openLocal 1` (mở chơi trên máy này).
 Cả hai được tiêu thụ trong `onAppear` của Home, không chỉ `onChange` — giá trị đã có sẵn
 trước khi Home xuất hiện nên `onChange` không bao giờ bắt được (đã sập bẫy này hai lần).
 Chuỗi hiển thị thời gian **không** dùng relative formatter của hệ thống: nó theo locale máy

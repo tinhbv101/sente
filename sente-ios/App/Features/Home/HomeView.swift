@@ -6,6 +6,7 @@ struct HomeView: View {
     @Environment(AppSession.self) private var session
     @State private var showCreate = false
     @State private var showSettings = false
+    @State private var showLocal = false
     @State private var joinCode: String?
     @State private var path = NavigationPath()
 
@@ -14,6 +15,7 @@ struct HomeView: View {
             List {
                 gameSections
                 inviteSection
+                localSection
                 emptyState
             }
             .listStyle(.insetGrouped)
@@ -40,6 +42,7 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showCreate) { CreateInviteView() }
             .navigationDestination(isPresented: $showSettings) { SettingsView() }
+            .navigationDestination(isPresented: $showLocal) { LocalGameView() }
             .sheet(item: joinBinding) { target in
                 JoinView(initialCode: target.code) { game in
                     joinCode = nil
@@ -55,6 +58,7 @@ struct HomeView: View {
                 // and UI tests (docs/07 §12.2).
                 if UserDefaults.standard.bool(forKey: "createInvite") { showCreate = true }
                 if UserDefaults.standard.bool(forKey: "openSettings") { showSettings = true }
+                if UserDefaults.standard.bool(forKey: "openLocal") { showLocal = true }
                 openPendingGame(session.pendingGameID)
                 openPendingInvite(session.pendingInviteCode)
             }
@@ -183,6 +187,30 @@ struct HomeView: View {
                 Spacer()
                 Image(systemName: "chevron.right").font(.caption).foregroundStyle(Tokens.inkTertiary)
             }
+        }
+    }
+
+    /// Pass-and-play needs no account: it is offered even when the list is empty.
+    private var localSection: some View {
+        Section("Trên máy này") {
+            Button { showLocal = true } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "person.2.fill").foregroundStyle(Tokens.indigo)
+                    VStack(alignment: .leading, spacing: 2) {
+                        if let saved = FileLocalGameStorage().load(), !saved.moves.isEmpty {
+                            Text("Tiếp tục ván trên máy này").font(.callout.weight(.semibold))
+                            Text("\(saved.config.size)×\(saved.config.size) · nước \(saved.moves.count) · \(saved.config.blackName) vs \(saved.config.whiteName)")
+                                .font(.caption).foregroundStyle(Tokens.inkSecondary)
+                        } else {
+                            Text("Hai người, một máy").font(.callout.weight(.semibold))
+                            Text("Chơi offline, không cần tài khoản").font(.caption).foregroundStyle(Tokens.inkSecondary)
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Tokens.inkTertiary)
+                }
+            }
+            .foregroundStyle(Tokens.ink)
         }
     }
 }
