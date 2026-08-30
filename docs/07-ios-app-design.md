@@ -584,6 +584,14 @@ họ: **"chơi tiếp" từ đếm điểm** để lại các nước pass và h
 `game_state` gửi sau `resync_required` nói ván vẫn đang đếm điểm trong khi actor đã chơi —
 hai bên không làm được gì. `Rewind` giờ dùng cho cả `PlayResumed`.
 
+**Link mời đến khi đang mở sheet khác thì mất.** Gặp thật khi quét QR bằng Camera: app mở
+nhưng không hiện lời mời. Home có hai `.sheet` (tạo lời mời, nhập mã) trên cùng một view;
+SwiftUI chỉ trình bày một sheet nên sheet thứ hai bị bỏ qua không báo gì, và nếu chính sheet
+nhập mã đang mở thì `JoinView` giữ `@State code` cũ. Giờ Home có **một** `.sheet(item:)` với
+`HomeSheet { create, join(code) }` — link đến là thay sheet đang mở — và `JoinView` gắn
+`.id(code)` để mã mới tạo view mới, tra ngay. Kiểm bằng `simctl openurl https://…/j/<mã>` khi
+sheet tạo lời mời đang mở và khi app chưa chạy.
+
 **Tên từ Apple chỉ đến một lần.** Apple trả `fullName` duy nhất ở lần cấp quyền đầu cho app;
 mọi lần sau đều trống — kể cả sau khi xóa tài khoản Sente và đăng nhập lại (câu hỏi gặp thật:
 "sao tên không đổi theo Apple ID"). Muốn Apple gửi lại phải vào Cài đặt iOS → Apple Account →

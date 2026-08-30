@@ -4,10 +4,9 @@ import SenteUI
 
 struct HomeView: View {
     @Environment(AppSession.self) private var session
-    @State private var showCreate = false
+    @State private var sheet: HomeSheet?
     @State private var showSettings = false
     @State private var showLocal = false
-    @State private var joinCode: String?
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -30,8 +29,8 @@ struct HomeView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 8) {
-                    Button("Mời bạn chơi") { showCreate = true }.buttonStyle(PrimaryButton())
-                    Button("Nhập mã lời mời") { joinCode = "" }.buttonStyle(SecondaryButton())
+                    Button("Mời bạn chơi") { sheet = .create }.buttonStyle(PrimaryButton())
+                    Button("Nhập mã lời mời") { sheet = .join(code: "") }.buttonStyle(SecondaryButton())
                 }
                 .padding(.horizontal, 16).padding(.vertical, 10)
                 .background(Tokens.paper)
@@ -40,15 +39,23 @@ struct HomeView: View {
             .navigationDestination(for: GameSummary.self) { game in
                 if game.isActive { GameView(summary: game) } else { ReplayView(summary: game) }
             }
-            .sheet(isPresented: $showCreate) { CreateInviteView() }
-            .navigationDestination(isPresented: $showSettings) { SettingsView() }
-            .navigationDestination(isPresented: $showLocal) { LocalGameView() }
-            .sheet(item: joinBinding) { target in
-                JoinView(initialCode: target.code) { game in
-                    joinCode = nil
-                    path.append(game)
+            // One sheet for both, so an invitation arriving while another sheet is up
+            // replaces it instead of being silently dropped (SwiftUI presents one).
+            .sheet(item: $sheet) { item in
+                switch item {
+                case .create:
+                    CreateInviteView()
+                case .join(let code):
+                    JoinView(initialCode: code) { game in
+                        sheet = nil
+                        path.append(game)
+                    }
+                    // A new code means a new view: the old one's typed state must not linger.
+                    .id(code)
                 }
             }
+            .navigationDestination(isPresented: $showSettings) { SettingsView() }
+            .navigationDestination(isPresented: $showLocal) { LocalGameView() }
             .onChange(of: session.pendingInviteCode) { _, code in openPendingInvite(code) }
             // The id may already be set when this view first appears (a launch
             // argument, or a link opened while the app was starting), and onChange
@@ -56,7 +63,7 @@ struct HomeView: View {
             .onAppear {
                 // `-createInvite 1` opens the invitation sheet on launch, for screenshots
                 // and UI tests (docs/07 §12.2).
-                if UserDefaults.standard.bool(forKey: "createInvite") { showCreate = true }
+                if UserDefaults.standard.bool(forKey: "createInvite") { sheet = .create }
                 if UserDefaults.standard.bool(forKey: "openSettings") { showSettings = true }
                 if UserDefaults.standard.bool(forKey: "openLocal") { showLocal = true }
                 openPendingGame(session.pendingGameID)
@@ -111,7 +118,7 @@ struct HomeView: View {
     private func openPendingInvite(_ code: String?) {
         guard let code else { return }
         session.pendingInviteCode = nil
-        joinCode = code
+        sheet = .join(code: code)
     }
 
     /// Navigates once the game is known; if the list has not loaded yet the
@@ -121,10 +128,6 @@ struct HomeView: View {
         session.pendingGameID = nil
         path = NavigationPath()
         path.append(game)
-    }
-
-    private var joinBinding: Binding<JoinTarget?> {
-        Binding(get: { joinCode.map(JoinTarget.init) }, set: { joinCode = $0?.code })
     }
 
     private func row(_ game: GameSummary) -> some View {
@@ -176,7 +179,7 @@ struct HomeView: View {
     }
 
     private func inviteRow(_ invite: Challenge) -> some View {
-        Button { joinCode = invite.code } label: {
+        Button { sheet = .join(code: invite.code) } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(invite.isMine ? "Bạn đã mời" : "\(invite.creatorName ?? "Ai đó") mời bạn")
@@ -215,7 +218,16 @@ struct HomeView: View {
     }
 }
 
-private struct JoinTarget: Identifiable {
-    let code: String
-    var id: String { code }
+/// What the home screen can present. `Identifiable` by content, so switching from
+/// one invitation code to another re-presents rather than reuses.
+private enum HomeSheet: Identifiable, Equatable {
+    case create
+    case join(code: String)
+
+    var id: String {
+        switch self {
+        case .create: "create"
+        case .join(let code): "join:\(code)"
+        }
+    }
 }
