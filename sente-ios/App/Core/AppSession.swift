@@ -178,7 +178,7 @@ struct Settings: Equatable {
         case system, light, dark
         var id: String { rawValue }
         var title: String {
-            switch self { case .system: "Theo hệ thống"; case .light: "Sáng"; case .dark: "Tối" }
+            switch self { case .system: String(localized: "Theo hệ thống"); case .light: String(localized: "Sáng"); case .dark: String(localized: "Tối") }
         }
         /// nil defers to the system setting.
         var colorScheme: ColorScheme? {

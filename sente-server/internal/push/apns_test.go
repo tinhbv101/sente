@@ -152,6 +152,30 @@ func TestSendShapesTheRequestTheWayAPNsExpects(t *testing.T) {
 	}
 }
 
+// Localised notifications carry keys, not words; the phone does the wording.
+func TestLocalisedNotificationsCarryKeysAndArguments(t *testing.T) {
+	server, state := fakeAPNs(t)
+	client, _ := newClient(t, server)
+	err := client.Send(context.Background(), "abc", Notification{
+		Title: "ignored", Body: "ignored", TitleKey: "push.turn.title", BodyKey: "push.turn.body", Args: []string{"an", "12"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	alert := state.bodies[0]["aps"].(map[string]any)["alert"].(map[string]any)
+	if alert["title-loc-key"] != "push.turn.title" || alert["loc-key"] != "push.turn.body" {
+		t.Errorf("keys: %v", alert)
+	}
+	if args, _ := alert["loc-args"].([]any); len(args) != 2 || args[0] != "an" || args[1] != "12" {
+		t.Errorf("args: %v", alert["loc-args"])
+	}
+	if _, has := alert["title"]; has {
+		t.Error("a keyed title must not also send literal text, or old and new disagree")
+	}
+}
+
 func TestSigningTokenIsReusedWithinAppleWindow(t *testing.T) {
 	server, state := fakeAPNs(t)
 	client, _ := newClient(t, server)

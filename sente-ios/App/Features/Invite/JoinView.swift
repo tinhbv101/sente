@@ -34,7 +34,7 @@ struct JoinView: View {
             .padding(20)
             .foregroundStyle(Tokens.ink)
             .background(Tokens.paper.ignoresSafeArea())
-            .navigationTitle(preview == nil ? "Nhập mã lời mời" : "Lời mời")
+            .navigationTitle(preview == nil ? String(localized: "Nhập mã lời mời") : String(localized: "Lời mời"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Đóng") { dismiss() } } }
             .task { if code.count == 8 { await lookUp() } else { focused = true } }
@@ -79,15 +79,15 @@ struct JoinView: View {
     private func previewCard(_ invite: Challenge) -> some View {
         VStack(spacing: 16) {
             VStack(spacing: 6) {
-                Text("\(invite.creatorName ?? "Ai đó") mời bạn\nmột ván cờ vây")
+                Text("\(invite.creatorName ?? String(localized: "Ai đó")) mời bạn\nmột ván cờ vây")
                     .font(.system(size: 28, design: .serif)).multilineTextAlignment(.center)
-                Text(invite.status == "pending" ? expiry(invite.expiresAt) : "Lời mời này không còn hiệu lực")
+                Text(invite.status == "pending" ? expiry(invite.expiresAt) : String(localized: "Lời mời này không còn hiệu lực"))
                     .font(.footnote).foregroundStyle(invite.status == "pending" ? Tokens.inkSecondary : .red)
             }
             VStack(spacing: 0) {
                 detail("Cỡ bàn", "\(invite.config.boardSize) × \(invite.config.boardSize)")
                 Divider()
-                detail("Hệ luật", invite.config.rules == "japanese" ? "Nhật Bản" : "Trung Quốc")
+                detail("Hệ luật", invite.config.rules == "japanese" ? String(localized: "Nhật Bản") : String(localized: "Trung Quốc"))
                 Divider()
                 detail("Komi", invite.config.komi.formatted())
                 Divider()
@@ -113,20 +113,20 @@ struct JoinView: View {
     /// device locale and produced "Hết hạn next week" on an English phone.
     private func expiry(_ date: Date) -> String {
         let seconds = date.timeIntervalSinceNow
-        guard seconds > 0 else { return "Đã hết hạn" }
+        guard seconds > 0 else { return String(localized: "Đã hết hạn") }
         let hours = Int(seconds / 3600)
-        if hours < 1 { return "Hết hạn trong chưa đầy một giờ" }
-        if hours < 48 { return "Hết hạn sau \(hours) giờ" }
-        return "Hết hạn sau \(hours / 24) ngày"
+        if hours < 1 { return String(localized: "Hết hạn trong chưa đầy một giờ") }
+        if hours < 48 { return String(localized: "Hết hạn sau \(hours) giờ") }
+        return String(localized: "Hết hạn sau \(hours / 24) ngày")
     }
 
-    private func detail(_ label: String, _ value: String) -> some View {
+    private func detail(_ label: LocalizedStringKey, _ value: String) -> some View {
         HStack { Text(label).foregroundStyle(Tokens.inkSecondary); Spacer(); Text(value).fontWeight(.semibold) }
             .font(.subheadline).padding(.vertical, 11)
     }
 
     private func yourColour(_ invite: Challenge) -> String {
-        switch invite.creatorColor { case "black": "Trắng"; case "white": "Đen"; default: "Ngẫu nhiên" }
+        switch invite.creatorColor { case "black": String(localized: "Trắng"); case "white": String(localized: "Đen"); default: String(localized: "Ngẫu nhiên") }
     }
 
     private func lookUp() async {

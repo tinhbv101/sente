@@ -120,6 +120,9 @@ func TestAMoveInASlowGameNudgesTheOtherPlayerOnly(t *testing.T) {
 	if got.note.Title != "Đến lượt bạn" || !strings.Contains(got.note.Body, "an") || !strings.Contains(got.note.Body, "12") {
 		t.Errorf("note: %+v", got.note)
 	}
+	if got.note.TitleKey != "push.turn.title" || got.note.BodyKey != "push.turn.body" || len(got.note.Args) != 2 || got.note.Args[1] != "12" {
+		t.Errorf("localisation keys: %+v", got.note)
+	}
 	// One collapse id per game: a later "game over" replaces a stale "your turn".
 	if got.note.CollapseID != "game:g1" || got.note.Payload["game_id"] != "g1" || got.note.Priority != 5 {
 		t.Errorf("collapse/payload/priority: %+v", got.note)
@@ -159,6 +162,23 @@ func TestGameOverReachesBothSidesInTheirOwnWords(t *testing.T) {
 	}
 	if white.token != "tw" || !strings.HasPrefix(white.note.Body, "Bạn thắng") {
 		t.Errorf("white: %+v", white)
+	}
+}
+
+func TestEndKeysNameOutcomeAndReason(t *testing.T) {
+	score := &rules.Score{Black: 40.5, White: 38}
+	key, args := endKey(rules.Result{Winner: rules.Black, Reason: rules.ReasonCounting, Score: score}, rules.Black)
+	if key != "push.end.win.counting" || len(args) != 2 || args[0] != "40.5" || args[1] != "38.0" {
+		t.Errorf("counting: %s %v", key, args)
+	}
+	if key, args := endKey(rules.Result{Winner: rules.Black, Reason: rules.ReasonTimeout}, rules.White); key != "push.end.lose.timeout" || args != nil {
+		t.Errorf("timeout: %s %v", key, args)
+	}
+	if key, _ := endKey(rules.Result{Reason: rules.ReasonMutualDraw}, rules.Black); key != "push.end.draw.mutual_draw" {
+		t.Errorf("draw: %s", key)
+	}
+	if key, _ := endKey(rules.Result{Winner: rules.Black, Reason: "weird"}, rules.Black); key != "push.end.win.other" {
+		t.Errorf("unknown reason must map to a key the app has: %s", key)
 	}
 }
 

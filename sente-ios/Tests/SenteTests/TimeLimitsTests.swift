@@ -23,10 +23,11 @@ final class TimeLimitsTests: XCTestCase {
     }
 
     func testDurationsReadNaturally() {
-        XCTAssertEqual(TimeLimits.format(ms: 10 * 60_000), "10 phút")
-        XCTAssertEqual(TimeLimits.format(ms: 90 * 60_000), "1 giờ 30 phút")
-        XCTAssertEqual(TimeLimits.format(ms: 3 * 3_600_000), "3 giờ")
-        XCTAssertEqual(TimeControl(kind: .absolute, mainTimeMs: 24 * 3_600_000).summary, "24 giờ")
-        XCTAssertEqual(TimeControl.standard.summary, "20 phút + 3×30″")
+        // Resolved through the same catalog the app uses, whatever the simulator language.
+        XCTAssertEqual(TimeLimits.format(ms: 10 * 60_000), String(localized: "\(10) phút"))
+        XCTAssertEqual(TimeLimits.format(ms: 90 * 60_000), String(localized: "\(1) giờ \(30) phút"))
+        XCTAssertEqual(TimeLimits.format(ms: 3 * 3_600_000), String(localized: "\(3) giờ"))
+        XCTAssertEqual(TimeControl(kind: .absolute, mainTimeMs: 24 * 3_600_000).summary, String(localized: "\(24) giờ"))
+        XCTAssertEqual(TimeControl.standard.summary, String(localized: "\(20) phút") + " + 3×30″")
     }
 }

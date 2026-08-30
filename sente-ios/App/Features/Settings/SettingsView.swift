@@ -55,11 +55,20 @@ struct SettingsView: View {
                 }
                 notificationsSection
             }
-            Section("Giao diện") {
+            Section {
                 Picker("Chế độ màu", selection: $draft.appearance) {
                     ForEach(Settings.Appearance.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                // iOS offers a per-app language picker once the bundle carries two.
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                } label: {
+                    LabeledContent("Ngôn ngữ", value: Locale.current.language.languageCode?.identifier == "vi" ? "Tiếng Việt" : "English")
+                }
+                .foregroundStyle(Tokens.ink)
+            } header: { Text("Giao diện") } footer: {
+                Text("Ngôn ngữ theo máy. Đổi riêng cho Sente trong Cài đặt hệ thống.")
             }
             Section {
                 Toggle("Hiện tọa độ", isOn: $draft.showCoordinates)

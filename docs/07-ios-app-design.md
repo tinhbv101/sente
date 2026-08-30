@@ -510,6 +510,32 @@ Trường hợp phải xử lý đúng:
 - Âm thanh: tiếng đặt quân (3 biến thể ngẫu nhiên tránh lặp máy móc), tiếng bắt quân, tiếng
   báo sắp hết giờ. Tôn trọng chế độ im lặng.
 
+## 10.1 Ngôn ngữ (tiếng Việt, tiếng Anh)
+
+Mặc định theo ngôn ngữ máy; iOS tự thêm mục chọn ngôn ngữ riêng cho Sente trong Cài đặt hệ
+thống khi bundle có hai ngôn ngữ, và Cài đặt của app có hàng "Ngôn ngữ" mở thẳng tới đó.
+
+Cách làm — **String Catalog, khóa là tiếng Việt**:
+- `developmentLanguage: vi` trong `project.yml`; chuỗi trong code giữ nguyên tiếng Việt và là
+  khóa. `App/Resources/Localizable.xcstrings` (`sourceLanguage: vi`) chỉ chứa bản dịch Anh.
+  Thiếu bản dịch thì hiện tiếng Việt, không bao giờ hiện khóa kỹ thuật.
+- Chuỗi đưa vào `Text`, `Button`, `Label`, `Section`, `Picker`, `TextField`,
+  `navigationTitle`, `confirmationDialog`, `alert`, `LabeledContent`… tự tra catalog (kiểu
+  `LocalizedStringKey`). Chuỗi kiểu `String` (toast, lỗi, `switch` trả chuỗi, tên mặc định,
+  nhánh của toán tử ba ngôi) **phải** bọc `String(localized:)` — tam ngôi
+  `Text(a ? "x" : y)` với `y` không phải literal là `String`, không tự dịch.
+- Package `SenteNet`/`SenteUI` không có catalog riêng: dùng `String(localized:, bundle: .main)`
+  để tra catalog của app; khóa của chúng thêm tay vào catalog vì Xcode chỉ trích từ target app.
+- `xcodebuild` **không** ghi khóa vào catalog (chỉ Xcode IDE làm). Cách lấy: build với
+  `SWIFT_EMIT_LOC_STRINGS=YES` (đã bật) rồi gom các file `*.stringsdata` trong DerivedData —
+  JSON `{tables: {Localizable: [{key}]}}` — thành catalog; khóa chưa có bản dịch để trống.
+- `InfoPlist.xcstrings`: tên app và `NSCameraUsageDescription`.
+- Push: server gửi `title-loc-key` / `loc-key` / `loc-args` (`push.turn.*`, `push.invite.*`,
+  `push.end.<win|lose|draw>.<lý do>`), máy tự chọn tiếng — nội dung Việt vẫn gửi kèm làm dự
+  phòng cho bản app cũ.
+- Test so với `String(localized:)` của cùng khóa, nên chạy đúng ở simulator mọi ngôn ngữ.
+- Chưa dịch: thông điệp lỗi server trả về (`error.message`), landing page `/j/<mã>`.
+
 ## 11. Xử lý lỗi
 
 ```swift

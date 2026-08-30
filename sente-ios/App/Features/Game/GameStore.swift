@@ -75,18 +75,18 @@ final class GameStore {
 
     /// Why a point cannot be played right now, in words the player can read.
     func legality(_ point: Point) -> String? {
-        guard isMyTurn, let engine = confirmed else { return "Chưa tới lượt bạn" }
+        guard isMyTurn, let engine = confirmed else { return String(localized: "Chưa tới lượt bạn") }
         switch engine.validate(.play(point), by: myColor) {
         case .success: return nil
         case .failure(let error):
             switch error {
-            case .occupied: return "Đã có quân"
-            case .suicide: return "Tự sát"
-            case .ko: return "Luật ko"
-            case .superko: return "Lặp thế cờ"
-            case .notYourTurn: return "Chưa tới lượt"
-            case .outOfBounds: return "Ngoài bàn"
-            case .gameNotPlaying: return "Ván đã kết thúc"
+            case .occupied: return String(localized: "Đã có quân")
+            case .suicide: return String(localized: "Tự sát")
+            case .ko: return String(localized: "Luật ko")
+            case .superko: return String(localized: "Lặp thế cờ")
+            case .notYourTurn: return String(localized: "Chưa tới lượt")
+            case .outOfBounds: return String(localized: "Ngoài bàn")
+            case .gameNotPlaying: return String(localized: "Ván đã kết thúc")
             }
         }
     }
@@ -188,7 +188,7 @@ final class GameStore {
             optimistic = confirmed
         case .clockAdjusted(let adjusted):
             let seconds = adjusted.deltaMs / 1000
-            toast = "Máy chủ gián đoạn \(seconds) giây — thời gian đó được trả lại cho \(adjusted.color == "black" ? "Đen" : "Trắng")."
+            toast = String(localized: "Máy chủ gián đoạn \(seconds) giây — thời gian đó được trả lại cho \(adjusted.color == "black" ? String(localized: "Đen") : String(localized: "Trắng")).")
         case .undoRequested(let by):
             undoRequestedByOpponent = by != myColor.rawValue
         case .undoResult(let accepted, _):
@@ -198,12 +198,12 @@ final class GameStore {
                 // gone for good), so the server sends game_state right behind this.
                 // Keep showing the old board rather than flashing a spinner, but
                 // take no input on it.
-                toast = "Đã hoãn một nước."
+                toast = String(localized: "Đã hoãn một nước.")
                 pending = nil
                 optimistic = confirmed
                 awaitingState = true
             } else {
-                toast = "Đối thủ không đồng ý hoãn."
+                toast = String(localized: "Đối thủ không đồng ý hoãn.")
             }
         case .resyncRequired:
             // A rewind changes more than the client can patch; the server follows
@@ -284,7 +284,7 @@ final class GameStore {
     private func verify(hash: String, against engine: GameEngine) {
         let mine = String(format: "0x%016llx", engine.state.boardHash)
         if mine != hash.lowercased() {
-            toast = "Bàn cờ lệch với máy chủ — đang đồng bộ lại."
+            toast = String(localized: "Bàn cờ lệch với máy chủ — đang đồng bộ lại.")
             resync()
         }
     }

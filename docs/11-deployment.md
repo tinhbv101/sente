@@ -375,6 +375,7 @@ Nói rõ để không ai tưởng đã xong:
 | Push "sắp hết giờ" | Chỉ có "đến lượt bạn" (ván thư tín), "ván kết thúc", "bạn nhận lời mời" |
 | Tắt từng loại thông báo | Cột `push_prefs` có, endpoint `PATCH /v1/devices` chưa |
 | Tracing | Có `/metrics` Prometheus (bốn series của ADR-015); chưa có trace |
+| Thông điệp lỗi đa ngữ | Server trả tiếng Việt; app đã có Việt/Anh, push đã theo máy. Cần `Accept-Language` nếu muốn lỗi server theo máy |
 
 **Đã có:** Sign in with Apple (liên kết tài khoản khách, webhook thu hồi), push qua APNs
 với token key ([§4.1](#41-khóa-apple-push-và-sign-in-with-apple)),

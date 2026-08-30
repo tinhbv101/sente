@@ -41,8 +41,8 @@ final class LocalGameStoreTests: XCTestCase {
         store.place(point("E5"))
         store.place(point("E5"))
         XCTAssertEqual(store.toPlay, .white, "an occupied point is not a move")
-        XCTAssertEqual(store.toast, "Đã có quân ở đó.")
-        XCTAssertEqual(store.legality(point("E5")), "Đã có quân")
+        XCTAssertEqual(store.toast, String(localized: "Đã có quân ở đó."))
+        XCTAssertEqual(store.legality(point("E5")), String(localized: "Đã có quân"))
         XCTAssertNil(store.legality(point("D4")))
     }
 
@@ -114,14 +114,14 @@ final class LocalGameStoreTests: XCTestCase {
         XCTAssertEqual(restored.engine.state.boardHash, store.engine.state.boardHash)
         XCTAssertEqual(restored.moveNumber, 3)
         XCTAssertEqual(restored.toPlay, .white, "black played, white played, black passed")
-        XCTAssertEqual(restored.config.blackName, "Đen")
+        XCTAssertEqual(restored.config.blackName, String(localized: "Đen"))
     }
 
     func testSGFCarriesTheGame() {
         store.place(point("E5")); store.place(point("D4")); store.resign()
         let sgf = store.sgf
         XCTAssertTrue(sgf.contains("SZ[9]"))
-        XCTAssertTrue(sgf.contains("PB[Đen]"))
+        XCTAssertTrue(sgf.contains("PB[\(String(localized: "Đen"))]"))
         XCTAssertTrue(sgf.contains(";B[") && sgf.contains(";W["))
         XCTAssertTrue(sgf.contains("RE[W+R"), "black was to move and resigned: \(sgf)")
         let decoded = try? SGF.decode(sgf)

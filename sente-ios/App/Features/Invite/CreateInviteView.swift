@@ -13,12 +13,12 @@ struct CreateInviteView: View {
     private enum Preset: String, CaseIterable, Identifiable {
         case quick, standard, correspondence
         var id: String { rawValue }
-        var title: String { switch self { case .quick: "Nhanh"; case .standard: "Chuẩn"; case .correspondence: "Thư tín" } }
+        var title: String { switch self { case .quick: String(localized: "Nhanh"); case .standard: String(localized: "Chuẩn"); case .correspondence: String(localized: "Thư tín") } }
         var detail: String {
             switch self {
-            case .quick: "9×9 · 10 phút"
-            case .standard: "19×19 · 20 phút + 3×30 giây"
-            case .correspondence: "19×19 · 2 ngày mỗi nước"
+            case .quick: String(localized: "9×9 · 10 phút")
+            case .standard: String(localized: "19×19 · 20 phút + 3×30 giây")
+            case .correspondence: String(localized: "19×19 · 2 ngày mỗi nước")
             }
         }
     }
@@ -26,7 +26,7 @@ struct CreateInviteView: View {
     private enum Pace: String, CaseIterable, Identifiable {
         case live, correspondence
         var id: String { rawValue }
-        var title: String { self == .live ? "Tính giờ" : "Thư tín" }
+        var title: String { self == .live ? String(localized: "Tính giờ") : String(localized: "Thư tín") }
     }
 
     /// Byo-yomi choices as (periods, seconds); nil periods means none.
@@ -89,7 +89,7 @@ struct CreateInviteView: View {
                         }
                         Picker("Byo-yomi", selection: $byoyomi) {
                             ForEach(Self.byoyomiChoices.indices, id: \.self) { index in
-                                Text(Self.byoyomiChoices[index].map { "\($0.periods) × \($0.seconds) giây" } ?? "Không").tag(index)
+                                Text(Self.byoyomiChoices[index].map { String(localized: "\($0.periods) × \($0.seconds) giây") } ?? String(localized: "Không")).tag(index)
                             }
                         }
                     case .correspondence:
@@ -171,7 +171,7 @@ struct ShareInviteView: View {
     private var link: String { InviteCode.link(for: invite.code, shareUrl: invite.shareUrl) }
 
     private var shareText: String {
-        "Chơi cờ vây với mình nhé! Mở link hoặc nhập mã \(invite.code) trong Sente: \(link)"
+        String(localized: "Chơi cờ vây với mình nhé! Mở link hoặc nhập mã \(invite.code) trong Sente: \(link)")
     }
 
     var body: some View {

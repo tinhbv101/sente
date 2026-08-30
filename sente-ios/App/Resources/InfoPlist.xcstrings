@@ -1,0 +1,38 @@
+{
+  "sourceLanguage": "vi",
+  "strings": {
+    "CFBundleDisplayName": {
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sente"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sente"
+          }
+        }
+      }
+    },
+    "NSCameraUsageDescription": {
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sente dùng camera để quét mã QR của lời mời."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sente uses the camera to scan invitation QR codes."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

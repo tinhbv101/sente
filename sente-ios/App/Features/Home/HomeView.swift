@@ -135,7 +135,7 @@ struct HomeView: View {
             HStack(spacing: 13) {
                 thumbnail(game)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(game.opponentName.isEmpty ? "Đang chờ người chơi" : game.opponentName)
+                    Text(game.opponentName.isEmpty ? String(localized: "Đang chờ người chơi") : game.opponentName)
                         .font(.callout.weight(.semibold))
                     Text("\(game.boardSize)×\(game.boardSize) · \(game.rules == "japanese" ? "Nhật" : "Trung") · nước \(game.moveNo)")
                         .font(.caption).foregroundStyle(Tokens.inkSecondary)
@@ -162,7 +162,7 @@ struct HomeView: View {
             VStack(alignment: .trailing, spacing: 1) {
                 ClockLabel(deadline: game.moveDeadline, frozenMs: 0, active: game.isActive, offset: 0)
                     .font(.subheadline)
-                Text(game.yourTurn ? "còn lại" : "hạn của đối thủ")
+                Text(game.yourTurn ? String(localized: "còn lại") : String(localized: "hạn của đối thủ"))
                     .font(.system(size: 10, weight: .semibold)).textCase(.uppercase)
                     .foregroundStyle(Tokens.inkTertiary)
             }
@@ -174,15 +174,15 @@ struct HomeView: View {
     }
 
     private func verdict(_ result: GameResultPayload, myColor: String) -> String {
-        guard let winner = result.winner else { return "Vô hiệu" }
-        return winner == myColor ? "Thắng" : "Thua"
+        guard let winner = result.winner else { return String(localized: "Vô hiệu") }
+        return winner == myColor ? String(localized: "Thắng") : String(localized: "Thua")
     }
 
     private func inviteRow(_ invite: Challenge) -> some View {
         Button { sheet = .join(code: invite.code) } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(invite.isMine ? "Bạn đã mời" : "\(invite.creatorName ?? "Ai đó") mời bạn")
+                    Text(invite.isMine ? String(localized: "Bạn đã mời") : String(localized: "\(invite.creatorName ?? String(localized: "Ai đó")) mời bạn"))
                         .font(.callout.weight(.semibold))
                     Text("\(invite.config.boardSize)×\(invite.config.boardSize) · \(invite.config.timeControl.summary) · mã \(invite.code)")
                         .font(.caption).foregroundStyle(Tokens.inkSecondary)

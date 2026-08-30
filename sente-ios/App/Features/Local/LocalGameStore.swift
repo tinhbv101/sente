@@ -9,8 +9,8 @@ struct LocalGameConfig: Codable, Equatable {
     var size = 9
     var rules: RuleSet = .japanese
     var handicap = 0
-    var blackName = "Đen"
-    var whiteName = "Trắng"
+    var blackName = String(localized: "Đen")
+    var whiteName = String(localized: "Trắng")
 
     var komi: Double { GameEngine.defaultKomi(rules: rules, handicap: handicap) }
 }
@@ -137,13 +137,13 @@ final class LocalGameStore {
         case .success: return nil
         case .failure(let error):
             switch error {
-            case .occupied: return "Đã có quân"
-            case .suicide: return "Tự sát"
-            case .ko: return "Luật ko"
-            case .superko: return "Lặp thế cờ"
-            case .notYourTurn: return "Chưa tới lượt"
-            case .outOfBounds: return "Ngoài bàn"
-            case .gameNotPlaying: return "Ván đã kết thúc"
+            case .occupied: return String(localized: "Đã có quân")
+            case .suicide: return String(localized: "Tự sát")
+            case .ko: return String(localized: "Luật ko")
+            case .superko: return String(localized: "Lặp thế cờ")
+            case .notYourTurn: return String(localized: "Chưa tới lượt")
+            case .outOfBounds: return String(localized: "Ngoài bàn")
+            case .gameNotPlaying: return String(localized: "Ván đã kết thúc")
             }
         }
     }
@@ -164,7 +164,7 @@ final class LocalGameStore {
     func pass() {
         guard phase == .playing else { return }
         try? apply(.pass)
-        if phase == .scoring { toast = "Hai bên cùng nhường lượt — đánh dấu quân chết rồi đếm điểm." }
+        if phase == .scoring { toast = String(localized: "Hai bên cùng nhường lượt — đánh dấu quân chết rồi đếm điểm.") }
     }
 
     /// The player to move gives up.
@@ -249,13 +249,13 @@ final class LocalGameStore {
 
     private func legalityText(_ error: MoveError) -> String {
         switch error {
-        case .occupied: "Đã có quân ở đó."
-        case .suicide: "Nước tự sát."
-        case .ko: "Luật ko: phải đi chỗ khác trước."
-        case .superko: "Lặp lại thế cờ."
-        case .notYourTurn: "Chưa tới lượt."
-        case .outOfBounds: "Ngoài bàn."
-        case .gameNotPlaying: "Ván đã kết thúc."
+        case .occupied: String(localized: "Đã có quân ở đó.")
+        case .suicide: String(localized: "Nước tự sát.")
+        case .ko: String(localized: "Luật ko: phải đi chỗ khác trước.")
+        case .superko: String(localized: "Lặp lại thế cờ.")
+        case .notYourTurn: String(localized: "Chưa tới lượt.")
+        case .outOfBounds: String(localized: "Ngoài bàn.")
+        case .gameNotPlaying: String(localized: "Ván đã kết thúc.")
         }
     }
 }

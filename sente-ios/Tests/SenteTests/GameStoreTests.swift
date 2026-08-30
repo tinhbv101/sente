@@ -125,7 +125,7 @@ final class GameStoreTests: XCTestCase {
             board: board, toPlay: "black", moveNo: 5,
             hash: hash(black: ["E5"], white: ["E6", "D5", "F5", "E4"]))))
 
-        XCTAssertEqual(store.legality(point("E5")), "Đã có quân")
+        XCTAssertEqual(store.legality(point("E5")), String(localized: "Đã có quân"))
         store.place(point("E5"))
         XCTAssertNil(store.snapshot.pending)
         try await Task.sleep(for: .milliseconds(50))
@@ -134,7 +134,7 @@ final class GameStoreTests: XCTestCase {
 
     func testLegalityExplainsWhoseTurnItIs() async {
         await store.handle(.gameState(Fixture.gameState(toPlay: "white", hash: hash())))
-        XCTAssertEqual(store.legality(point("D4")), "Chưa tới lượt bạn")
+        XCTAssertEqual(store.legality(point("D4")), String(localized: "Chưa tới lượt bạn"))
     }
 
     // MARK: - Ordering (docs/06 §3.5)
@@ -218,7 +218,7 @@ final class GameStoreTests: XCTestCase {
         XCTAssertNotNil(store.legality(point("C3")), "placing is refused while waiting")
         XCTAssertEqual(store.snapshot.board.stones(of: .white).count, 1, "no spinner: the old board stays visible")
         XCTAssertEqual(store.phase, .playing)
-        XCTAssertEqual(store.toast, "Đã hoãn một nước.")
+        XCTAssertEqual(store.toast, String(localized: "Đã hoãn một nước."))
 
         let one = Fixture.board([
             ".........", ".........", ".........", ".........",
@@ -252,7 +252,7 @@ final class GameStoreTests: XCTestCase {
         store.answerUndo(true)
         XCTAssertFalse(store.undoRequestedByOpponent)
         await store.handle(.undoResult(accepted: false, moveNo: 3))
-        XCTAssertEqual(store.toast, "Đối thủ không đồng ý hoãn.")
+        XCTAssertEqual(store.toast, String(localized: "Đối thủ không đồng ý hoãn."))
     }
 
     // MARK: - Scoring
@@ -315,7 +315,7 @@ final class GameStoreTests: XCTestCase {
         await loadEmptyGame()
         await store.handle(.clockAdjusted(Fixture.decode(ClockAdjustedPayload.self,
             #"{"game_id":"g1","color":"black","delta_ms":21000,"reason":"server_interruption"}"#)))
-        XCTAssertEqual(store.toast, "Máy chủ gián đoạn 21 giây — thời gian đó được trả lại cho Đen.")
+        XCTAssertEqual(store.toast, String(localized: "Máy chủ gián đoạn \(21) giây — thời gian đó được trả lại cho \(String(localized: "Đen"))."))
     }
 
     func testRemainingTimeIsLiveOnlyForThePlayerOnMove() async {

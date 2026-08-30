@@ -105,6 +105,7 @@ func (n *Notifier) InvitationAccepted(creatorID, byName, gameID string) {
 	}
 	n.enqueue(job{gameID: gameID, direct: &directJob{userID: creatorID, kind: KindInvite, note: push.Notification{
 		Title: "Lời mời đã được nhận", Body: fmt.Sprintf("%s đã vào ván. Đến lượt bạn.", byName),
+		TitleKey: "push.invite.title", BodyKey: "push.invite.body", Args: []string{byName},
 		CollapseID: "game:" + gameID, ThreadID: gameID,
 		Payload: map[string]any{"game_id": gameID, "kind": KindInvite},
 	}}})
@@ -143,13 +144,17 @@ func (n *Notifier) process(ctx context.Context, j job) {
 			// Low priority: a days-per-move game can wait for the next radio wake-up.
 			n.deliver(ctx, userOf(participants, e.By.Opponent()), KindTurn, push.Notification{
 				Title: "Đến lượt bạn", Body: fmt.Sprintf("%s vừa đi nước %d.", nameOf(participants, e.By), e.MoveNumber),
+				TitleKey: "push.turn.title", BodyKey: "push.turn.body",
+				Args:       []string{nameOf(participants, e.By), fmt.Sprint(e.MoveNumber)},
 				CollapseID: "game:" + j.gameID, ThreadID: j.gameID, Priority: 5,
 				Payload: map[string]any{"game_id": j.gameID, "kind": KindTurn},
 			})
 		case game.GameEnded:
 			for _, colour := range []rules.Color{rules.Black, rules.White} {
+				bodyKey, args := endKey(e.Result, colour)
 				n.deliver(ctx, userOf(participants, colour), KindGameEnd, push.Notification{
 					Title: "Ván đã kết thúc", Body: describe(e.Result, colour),
+					TitleKey: "push.end.title", BodyKey: bodyKey, Args: args,
 					CollapseID: "game:" + j.gameID, ThreadID: j.gameID,
 					Payload: map[string]any{"game_id": j.gameID, "kind": KindGameEnd},
 				})
@@ -214,6 +219,27 @@ var reasonText = map[rules.EndReason]string{
 	rules.ReasonRepetition:  "do lặp thế cờ",
 	rules.ReasonAbandonment: "do bỏ ván",
 	rules.ReasonMutualDraw:  "theo thỏa thuận",
+}
+
+// endKey names the catalog entry for a result seen from one side, e.g.
+// push.end.win.resignation; the counting variants take the two totals.
+func endKey(result rules.Result, me rules.Color) (string, []string) {
+	outcome := "draw"
+	switch result.Winner {
+	case me:
+		outcome = "win"
+	case me.Opponent():
+		outcome = "lose"
+	}
+	reason := string(result.Reason)
+	if _, known := reasonText[result.Reason]; !known {
+		reason = "other"
+	}
+	key := "push.end." + outcome + "." + reason
+	if result.Score != nil && result.Reason == rules.ReasonCounting {
+		return key, []string{fmt.Sprintf("%.1f", result.Score.Black), fmt.Sprintf("%.1f", result.Score.White)}
+	}
+	return key, nil
 }
 
 // describe words the result from one player's side.

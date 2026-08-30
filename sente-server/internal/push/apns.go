@@ -35,8 +35,15 @@ var (
 )
 
 type Notification struct {
-	Title string
-	Body  string
+	// Title and Body are shown as-is. When the *Key fields are set they win: the
+	// device looks the keys up in the app's own string catalog and formats Args
+	// into the body, so a notification reads in the phone's language, not the
+	// server's (docs/03 ADR-013).
+	Title    string
+	Body     string
+	TitleKey string
+	BodyKey  string
+	Args     []string
 	// CollapseID folds repeated notifications for one game into one entry.
 	CollapseID string
 	ThreadID   string
@@ -120,10 +127,21 @@ func (c *Client) Send(ctx context.Context, deviceToken string, n Notification) e
 	if err != nil {
 		return err
 	}
-	aps := map[string]any{
-		"alert": map[string]string{"title": n.Title, "body": n.Body},
-		"sound": "default",
+	alert := map[string]any{}
+	if n.TitleKey != "" {
+		alert["title-loc-key"] = n.TitleKey
+	} else {
+		alert["title"] = n.Title
 	}
+	if n.BodyKey != "" {
+		alert["loc-key"] = n.BodyKey
+		if len(n.Args) > 0 {
+			alert["loc-args"] = n.Args
+		}
+	} else {
+		alert["body"] = n.Body
+	}
+	aps := map[string]any{"alert": alert, "sound": "default"}
 	if n.ThreadID != "" {
 		aps["thread-id"] = n.ThreadID
 	}

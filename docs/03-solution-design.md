@@ -438,6 +438,8 @@ Worker riêng đọc từ hàng đợi, không gửi trực tiếp từ đườn
 > cho người tạo. Chưa có "sắp hết giờ" — cần timer riêng trong actor. Chưa kiểm tra người nhận
 > có đang mở ván hay không (cần presence xuyên node); app tự giữ lại push của ván đang xem.
 > Hai môi trường APNs chạy song song vì bản debug và bản TestFlight có thể cùng đăng nhập.
+> Từ 2026-08-30 push mang `title-loc-key`/`loc-key`/`loc-args` để máy tự dịch (Việt/Anh) từ
+> catalog của app; `title`/`body` tiếng Việt vẫn gửi kèm cho bản app chưa có khóa.
 
 ---
 

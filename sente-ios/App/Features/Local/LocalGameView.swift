@@ -18,7 +18,7 @@ struct LocalGameView: View {
                 LocalSetupView { config in store = LocalGameStore(config: config) }
             }
         }
-        .navigationTitle(store == nil ? "Chơi trên máy này" : "")
+        .navigationTitle(store == nil ? String(localized: "Chơi trên máy này") : "")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if store == nil, let record = FileLocalGameStorage().load(), !record.moves.isEmpty {
@@ -66,8 +66,8 @@ struct LocalSetupView: View {
         .safeAreaInset(edge: .bottom) {
             Button("Bắt đầu") {
                 var final = config
-                if final.blackName.trimmingCharacters(in: .whitespaces).isEmpty { final.blackName = "Đen" }
-                if final.whiteName.trimmingCharacters(in: .whitespaces).isEmpty { final.whiteName = "Trắng" }
+                if final.blackName.trimmingCharacters(in: .whitespaces).isEmpty { final.blackName = String(localized: "Đen") }
+                if final.whiteName.trimmingCharacters(in: .whitespaces).isEmpty { final.whiteName = String(localized: "Trắng") }
                 onStart(final)
             }
             .buttonStyle(PrimaryButton()).padding(16)
@@ -135,7 +135,7 @@ struct LocalBoardView: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(name).font(.callout.weight(.semibold))
-                Text(active ? "đang tới lượt" : (player == .black ? "Đen" : "Trắng"))
+                Text(active ? String(localized: "đang tới lượt") : (player == .black ? String(localized: "Đen") : String(localized: "Trắng")))
                     .font(.caption).foregroundStyle(active ? Tokens.seal : Tokens.inkSecondary)
             }
             Spacer()
@@ -158,11 +158,11 @@ struct LocalBoardView: View {
             Text("NƯỚC \(store.moveNumber)").font(.system(.caption, design: .monospaced))
             Spacer()
             if let last = store.lastMove {
-                Text("\(store.toPlay == .black ? "Trắng" : "Đen") đi \(Coordinate.text(last, size: store.config.size))")
+                Text("\(store.toPlay == .black ? String(localized: "Trắng") : String(localized: "Đen")) đi \(Coordinate.text(last, size: store.config.size))")
                     .font(.caption.weight(.semibold))
             }
             Spacer()
-            Text("\(store.config.rules == .japanese ? "Nhật" : "Trung") · komi \(store.config.komi.formatted())")
+            Text("\(store.config.rules == .japanese ? String(localized: "Nhật") : String(localized: "Trung")) · komi \(store.config.komi.formatted())")
                 .font(.caption)
         }
         .foregroundStyle(Tokens.inkSecondary)
@@ -238,15 +238,15 @@ struct LocalBoardView: View {
 
     private var title: String {
         guard let result = store.result else { return "" }
-        guard let winner = result.winner else { return "Ván vô hiệu" }
-        return "\(store.name(of: winner)) thắng"
+        guard let winner = result.winner else { return String(localized: "Ván vô hiệu") }
+        return String(localized: "\(store.name(of: winner)) thắng")
     }
 
     private var reasonLabel: String {
         switch store.result?.reason {
-        case .counting: "Đếm điểm · nước \(store.moveNumber)"
-        case .resignation: "Xin thua"
-        case .repetition: "Lặp thế cờ"
+        case .counting: String(localized: "Đếm điểm · nước \(store.moveNumber)")
+        case .resignation: String(localized: "Xin thua")
+        case .repetition: String(localized: "Lặp thế cờ")
         default: ""
         }
     }

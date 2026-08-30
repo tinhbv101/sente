@@ -57,7 +57,7 @@ struct ReplayView: View {
     private func header(_ moves: GameMoves) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 1) {
-                Text(summary.opponentName.isEmpty ? "Người chơi đã xóa" : summary.opponentName)
+                Text(summary.opponentName.isEmpty ? String(localized: "Người chơi đã xóa") : summary.opponentName)
                     .font(.callout.weight(.semibold))
                 Text("\(moves.boardSize)×\(moves.boardSize) · \(moves.rules == "japanese" ? "Nhật" : "Trung") · komi \(moves.komi.formatted())")
                     .font(.caption).foregroundStyle(Tokens.inkSecondary)
@@ -77,7 +77,7 @@ struct ReplayView: View {
                 Spacer()
                 if index > 0 {
                     let move = moves.items[index - 1]
-                    Text("\(move.color == "black" ? "Đen" : "Trắng") \(move.kind == "play" ? "đi \(move.point ?? "")" : move.kind == "pass" ? "nhường lượt" : "xin thua")")
+                    Text("\(move.color == "black" ? String(localized: "Đen") : String(localized: "Trắng")) \(move.kind == "play" ? String(localized: "đi \(move.point ?? "")") : move.kind == "pass" ? String(localized: "nhường lượt") : String(localized: "xin thua"))")
                         .font(.caption.weight(.semibold))
                 }
             }
@@ -101,13 +101,13 @@ struct ReplayView: View {
     }
 
     private func verdict(_ result: GameResultPayload) -> String {
-        guard let winner = result.winner else { return "Vô hiệu" }
+        guard let winner = result.winner else { return String(localized: "Vô hiệu") }
         let mine = winner == summary.myColor
-        if let score = result.score { return "\(mine ? "Thắng" : "Thua") \(score.margin.formatted())" }
+        if let score = result.score { return mine ? String(localized: "Thắng \(score.margin.formatted())") : String(localized: "Thua \(score.margin.formatted())") }
         switch result.reason {
-        case "resignation": return mine ? "Thắng (đối thủ xin thua)" : "Thua (xin thua)"
-        case "timeout": return mine ? "Thắng (hết giờ)" : "Thua (hết giờ)"
-        default: return mine ? "Thắng" : "Thua"
+        case "resignation": return mine ? String(localized: "Thắng (đối thủ xin thua)") : String(localized: "Thua (xin thua)")
+        case "timeout": return mine ? String(localized: "Thắng (hết giờ)") : String(localized: "Thua (hết giờ)")
+        default: return mine ? String(localized: "Thắng") : String(localized: "Thua")
         }
     }
 
