@@ -88,6 +88,7 @@ var landingTemplate = template.Must(template.New("landing").Parse(`<!doctype htm
   <h1>Không tìm thấy lời mời</h1>
   <p class="muted">Mã <span class="code" style="font-size:18px;padding:6px 10px">{{.Code}}</span> không tồn tại hoặc đã hết hạn.</p>
 {{end}}
+<p class="muted"><a href="/privacy" style="color:#7B7364">Quyền riêng tư</a></p>
 </main></body></html>`))
 
 // handleAASA lets iOS open https://<host>/j/… and /g/… in the app. Apple fetches

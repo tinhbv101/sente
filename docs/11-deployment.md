@@ -330,6 +330,7 @@ và `proxy_read_timeout` đủ dài. NPM làm việc này bằng nút **Websocke
 | `SENTE_SECRETS_DIR` | | `/run/secrets` | Nơi tìm `AuthKey_<KEY_ID>.p8` |
 | `SENTE_APNS_KEY_FILE`, `SENTE_SIWA_KEY_FILE` | | theo Key ID | Chỉ khi file không mang tên Apple đặt |
 | `SENTE_APP_STORE_URL` | | rỗng | Nút "Tải trên App Store" ở landing page `/j/<code>` |
+| `SENTE_CONTACT_EMAIL` | | rỗng | Email liên hệ trên trang `/privacy`; rỗng thì bỏ mục liên hệ |
 
 **`/metrics`** (Prometheus) không có xác thực — nó dành cho mạng nội bộ. Trong NPM, thêm một
 Custom Location `/metrics` trả `403`, hoặc chỉ scrape từ trong VPS (`127.0.0.1:8080/metrics`).

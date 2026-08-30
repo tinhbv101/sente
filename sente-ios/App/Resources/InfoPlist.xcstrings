@@ -1,38 +1,52 @@
 {
-  "sourceLanguage": "vi",
-  "strings": {
-    "CFBundleDisplayName": {
-      "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sente"
+  "sourceLanguage" : "vi",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sente"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sente"
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sente"
           }
         }
       }
     },
-    "NSCameraUsageDescription": {
-      "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sente dùng camera để quét mã QR của lời mời."
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sente"
+          }
+        }
+      }
+    },
+    "NSCameraUsageDescription" : {
+      "comment" : "Privacy - Camera Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sente uses the camera to scan invitation QR codes."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sente uses the camera to scan invitation QR codes."
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sente dùng camera để quét mã QR của lời mời."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

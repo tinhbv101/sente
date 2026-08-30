@@ -48,6 +48,8 @@ type Config struct {
 	AppleTeamID string
 	// AppStoreURL is offered on the landing page to people without the app.
 	AppStoreURL string
+	// ContactEmail is shown on the privacy policy. Empty omits the section.
+	ContactEmail string
 	// AllowedOrigins for the WebSocket handshake. Empty means same-origin only.
 	AllowedOrigins []string
 	// Apple verifies Sign in with Apple tokens. Nil disables the endpoints.
@@ -134,6 +136,7 @@ func (s *Server) routes() {
 
 	// Public pages and operational endpoints.
 	s.mux.HandleFunc("GET /j/{code}", s.limit(ratelimit.Read, s.handleLanding))
+	s.mux.HandleFunc("GET /privacy", s.limit(ratelimit.Read, s.handlePrivacy))
 	s.mux.HandleFunc("GET /.well-known/apple-app-site-association", s.handleAASA)
 	s.mux.Handle("GET /metrics", metricsHandler())
 }

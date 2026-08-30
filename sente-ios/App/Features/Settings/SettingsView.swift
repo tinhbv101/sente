@@ -84,6 +84,13 @@ struct SettingsView: View {
                 Text("Tên và mã bạn bè của bạn bị xóa vĩnh viễn. Các ván đã chơi vẫn còn trong lịch sử của đối thủ, dưới tên \"Người chơi đã xóa\".")
             }
             Section {
+                Link(destination: session.settings.serverURL.appending(path: "/privacy")
+                        .appending(queryItems: [URLQueryItem(name: "lang", value: Locale.current.language.languageCode?.identifier == "vi" ? "vi" : "en")])) {
+                    Label("Chính sách quyền riêng tư", systemImage: "hand.raised")
+                }
+                .foregroundStyle(Tokens.ink)
+            }
+            Section {
                 TextField("https://…", text: $serverText)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                     .font(.system(.body, design: .monospaced))

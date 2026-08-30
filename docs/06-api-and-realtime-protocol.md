@@ -253,6 +253,7 @@ Gửi lại cùng `client_move_id` trả về **đúng response cũ** với `200
 | `POST` | `/v1/reports` | Báo cáo người chơi |
 | `GET` | `/v1/config` | **Không cần auth.** Cấu hình client |
 | `GET` | `/j/{code}` | **Không cần auth.** Landing page HTML cho người chưa cài app |
+| `GET` | `/privacy` | **Không cần auth.** Chính sách quyền riêng tư, Việt/Anh theo `Accept-Language` hoặc `?lang=` |
 | `GET` | `/.well-known/apple-app-site-association` | **Không cần auth.** Chỉ có khi cấu hình `SENTE_APPLE_TEAM_ID` |
 | `GET` | `/metrics` | Prometheus. **Không** được proxy ra ngoài — chỉ mạng nội bộ |
 

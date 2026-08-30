@@ -55,6 +55,7 @@ type config struct {
 	clientIPHeader string
 	appleTeamID    string
 	appStoreURL    string
+	contactEmail   string
 	appleBundleID  string
 	apnsKeyID      string
 	apnsKeyFile    string
@@ -76,6 +77,7 @@ func loadConfig() (config, error) {
 		clientIPHeader: os.Getenv("SENTE_CLIENT_IP_HEADER"),
 		appleTeamID:    os.Getenv("SENTE_APPLE_TEAM_ID"),
 		appStoreURL:    os.Getenv("SENTE_APP_STORE_URL"),
+		contactEmail:   os.Getenv("SENTE_CONTACT_EMAIL"),
 		appleBundleID:  envOr("SENTE_APPLE_BUNDLE_ID", "app.sente.go"),
 		apnsKeyID:      os.Getenv("SENTE_APNS_KEY_ID"),
 		siwaKeyID:      os.Getenv("SENTE_SIWA_KEY_ID"),
@@ -251,7 +253,8 @@ func run(logger *slog.Logger) error {
 		PublicBaseURL:  config.publicBaseURL, TrustProxyHeaders: config.trustProxy,
 		ClientIPHeader: config.clientIPHeader,
 		AppleTeamID:    config.appleTeamID, AppStoreURL: config.appStoreURL,
-		Apple: verifier, Notifier: notifier,
+		ContactEmail: config.contactEmail,
+		Apple:        verifier, Notifier: notifier,
 	})
 
 	// Games whose clock ran out while no node was running them -- correspondence

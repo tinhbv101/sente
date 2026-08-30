@@ -138,3 +138,53 @@ func newRecorder() *recorder { return &recorder{header: http.Header{}} }
 func (r *recorder) Header() http.Header         { return r.header }
 func (r *recorder) WriteHeader(status int)      { r.status = status }
 func (r *recorder) Write(b []byte) (int, error) { return r.body.Write(b) }
+
+// The privacy policy is what App Store Connect links to; it must be there in
+// both languages, pick the reader's, and only show a contact when there is one.
+func TestPrivacyPolicyIsServedInTheReadersLanguage(t *testing.T) {
+	server := newTestServer(t, func(c *Config) { c.ContactEmail = "hello@example.test" })
+	get := func(path, acceptLanguage string) (*http.Response, string) {
+		request, _ := http.NewRequest(http.MethodGet, server.URL+path, nil)
+		if acceptLanguage != "" {
+			request.Header.Set("Accept-Language", acceptLanguage)
+		}
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return response, string(readAll(t, response))
+	}
+
+	response, body := get("/privacy", "")
+	if response.StatusCode != http.StatusOK || !strings.Contains(response.Header.Get("Content-Type"), "text/html") {
+		t.Fatalf("status %d type %s", response.StatusCode, response.Header.Get("Content-Type"))
+	}
+	if !strings.Contains(body, "Chính sách quyền riêng tư") || !strings.Contains(body, `lang="vi"`) {
+		t.Error("default should be Vietnamese")
+	}
+	if !strings.Contains(body, "mailto:hello@example.test") || !strings.Contains(body, "Xóa tài khoản") {
+		t.Error("contact and deletion instructions must be present")
+	}
+
+	if _, body := get("/privacy?lang=en", ""); !strings.Contains(body, "Privacy Policy") || !strings.Contains(body, `lang="en"`) {
+		t.Error("?lang=en should switch to English")
+	}
+	if _, body := get("/privacy", "en-US,en;q=0.9"); !strings.Contains(body, "Privacy Policy") {
+		t.Error("Accept-Language en should pick English")
+	}
+	if _, body := get("/privacy", "vi-VN,vi;q=0.9,en;q=0.8"); !strings.Contains(body, "Chính sách quyền riêng tư") {
+		t.Error("Accept-Language vi should pick Vietnamese")
+	}
+	if _, body := get("/privacy?lang=fr", "fr-FR"); !strings.Contains(body, `lang="vi"`) {
+		t.Error("unknown languages fall back to Vietnamese")
+	}
+
+	plain := newTestServer(t)
+	if body := string(readAllFrom(t, plain, "/privacy")); strings.Contains(body, "mailto:") {
+		t.Error("no contact configured: no contact section")
+	}
+	// The landing page links to it.
+	if body := string(readAllFrom(t, server, "/j/NOPE1234")); !strings.Contains(body, `href="/privacy"`) {
+		t.Error("landing page should link to the policy")
+	}
+}

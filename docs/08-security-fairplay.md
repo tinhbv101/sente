@@ -248,6 +248,13 @@ tại và được ghi lại (mọi hành động admin ghi vào `game_events` v
 **Không thu thập:** vị trí, danh bạ, ảnh, IDFA, hành vi để quảng cáo. Không có SDK theo dõi
 của bên thứ ba ([ADR-012](03-solution-design.md#adr-012--mời-bạn-qua-universal-link-có-xử-lý-deferred)).
 
+> **Sửa lại khi cài đặt (2026-08-30).** Chính sách quyền riêng tư công khai ở
+> `GET /privacy` trên chính server (Việt/Anh theo `Accept-Language`, `?lang=` để ép), liên hệ
+> lấy từ `SENTE_CONTACT_EMAIL`; landing page và Cài đặt trong app đều dẫn tới. Nội dung bám
+> đúng bảng trên, **trừ chat** — chưa có chat nên chưa nhắc. Đây là URL điền vào App Store
+> Connect (bắt buộc cho external TestFlight và khi nộp App Store). Thay đổi cách thu dữ liệu
+> thì sửa trang này cùng lúc và cập nhật `privacyUpdated`.
+
 ### 7.2 Quy tắc log
 
 ```

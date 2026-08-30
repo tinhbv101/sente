@@ -77,6 +77,7 @@
       }
     },
     "%@, quân trắng": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -87,6 +88,7 @@
       }
     },
     "%@, quân đen": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -97,6 +99,7 @@
       }
     },
     "%@, trống": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -108,6 +111,7 @@
     },
     "%lld": {},
     "%lld giờ": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -118,6 +122,7 @@
       }
     },
     "%lld giờ %lld phút": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -138,6 +143,7 @@
       }
     },
     "%lld ngày/nước": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -148,6 +154,7 @@
       }
     },
     "%lld phút": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -281,6 +288,7 @@
       }
     },
     "Bàn cờ %lld × %lld": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -430,6 +438,16 @@
         }
       }
     },
+    "Chính sách quyền riêng tư": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy policy"
+          }
+        }
+      }
+    },
     "Chơi cờ vây với mình nhé! Mở link hoặc nhập mã %@ trong Sente: %@": {
       "localizations": {
         "en": {
@@ -511,6 +529,7 @@
       }
     },
     "Chạm hai lần để đặt quân": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -761,6 +780,7 @@
       }
     },
     "Không kết nối được máy chủ.": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -922,6 +942,7 @@
       }
     },
     "Máy chủ trả về dữ liệu không đọc được.": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -932,6 +953,7 @@
       }
     },
     "Máy chủ trả về lỗi %lld.": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -992,6 +1014,7 @@
       }
     },
     "Mất kết nối. Nước đi sẽ được gửi khi có mạng.": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1242,6 +1265,7 @@
       }
     },
     "Phiên đăng nhập đã hết hạn.": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1875,417 +1899,443 @@
       }
     },
     "push.end.draw.abandonment": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hòa do bỏ ván."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Draw by abandonment."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hòa do bỏ ván."
+          }
         }
       }
     },
     "push.end.draw.counting": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hòa khi đếm điểm (%1$@ – %2$@)."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Draw on points (%1$@ – %2$@)."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hòa khi đếm điểm (%1$@ – %2$@)."
+          }
         }
       }
     },
     "push.end.draw.mutual_draw": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hòa theo thỏa thuận."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Draw by agreement."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hòa theo thỏa thuận."
+          }
         }
       }
     },
     "push.end.draw.other": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hòa."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Draw."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hòa."
+          }
         }
       }
     },
     "push.end.draw.repetition": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hòa do lặp thế cờ."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Draw by repetition."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hòa do lặp thế cờ."
+          }
         }
       }
     },
     "push.end.draw.resignation": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hòa do đầu hàng."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Draw by resignation."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hòa do đầu hàng."
+          }
         }
       }
     },
     "push.end.draw.timeout": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hòa do hết giờ."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Draw on time."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hòa do hết giờ."
+          }
         }
       }
     },
     "push.end.lose.abandonment": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thua do bỏ ván."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You lost by abandonment."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thua do bỏ ván."
+          }
         }
       }
     },
     "push.end.lose.counting": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thua khi đếm điểm (%1$@ – %2$@)."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You lost on points (%1$@ – %2$@)."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thua khi đếm điểm (%1$@ – %2$@)."
+          }
         }
       }
     },
     "push.end.lose.mutual_draw": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thua theo thỏa thuận."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You lost by agreement."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thua theo thỏa thuận."
+          }
         }
       }
     },
     "push.end.lose.other": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thua."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You lost."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thua."
+          }
         }
       }
     },
     "push.end.lose.repetition": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thua do lặp thế cờ."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You lost by repetition."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thua do lặp thế cờ."
+          }
         }
       }
     },
     "push.end.lose.resignation": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thua do đầu hàng."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You lost by resignation."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thua do đầu hàng."
+          }
         }
       }
     },
     "push.end.lose.timeout": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thua do hết giờ."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You lost on time."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thua do hết giờ."
+          }
         }
       }
     },
     "push.end.title": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ván đã kết thúc"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Game over"
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ván đã kết thúc"
+          }
         }
       }
     },
     "push.end.win.abandonment": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thắng do bỏ ván."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You won by abandonment."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thắng do bỏ ván."
+          }
         }
       }
     },
     "push.end.win.counting": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thắng khi đếm điểm (%1$@ – %2$@)."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You won on points (%1$@ – %2$@)."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thắng khi đếm điểm (%1$@ – %2$@)."
+          }
         }
       }
     },
     "push.end.win.mutual_draw": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thắng theo thỏa thuận."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You won by agreement."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thắng theo thỏa thuận."
+          }
         }
       }
     },
     "push.end.win.other": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thắng."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You won."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thắng."
+          }
         }
       }
     },
     "push.end.win.repetition": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thắng do lặp thế cờ."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You won by repetition."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thắng do lặp thế cờ."
+          }
         }
       }
     },
     "push.end.win.resignation": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thắng do đầu hàng."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You won by resignation."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thắng do đầu hàng."
+          }
         }
       }
     },
     "push.end.win.timeout": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bạn thắng do hết giờ."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You won on time."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bạn thắng do hết giờ."
+          }
         }
       }
     },
     "push.invite.body": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ đã vào ván. Đến lượt bạn."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ joined the game. Your move."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ đã vào ván. Đến lượt bạn."
+          }
         }
       }
     },
     "push.invite.title": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lời mời đã được nhận"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Invitation accepted"
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lời mời đã được nhận"
+          }
         }
       }
     },
     "push.turn.body": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ vừa đi nước %2$@."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ just played move %2$@."
           }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ vừa đi nước %2$@."
+          }
         }
       }
     },
     "push.turn.title": {
+      "extractionState": "stale",
       "localizations": {
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Đến lượt bạn"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Your move"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đến lượt bạn"
           }
         }
       }
@@ -2331,6 +2381,7 @@
       }
     },
     "Đang kết nối lại…": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2341,6 +2392,7 @@
       }
     },
     "Đang đồng bộ ván…": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {

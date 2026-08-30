@@ -93,6 +93,9 @@ check "refresh token xoay vòng" bash -c "test -n '$ROTATED' && test '$ROTATED' 
 check "landing page /j/<code> là HTML" \
   bash -c "curl -sf '$BASE/j/$CODE' | grep -q '<html'"
 
+check "trang quyền riêng tư /privacy là HTML hai ngôn ngữ" \
+  bash -c "curl -sf '$BASE/privacy' | grep -q 'Chính sách quyền riêng tư' && curl -sf '$BASE/privacy?lang=en' | grep -q 'Privacy Policy'"
+
 check "có header rate limit" \
   bash -c "curl -sfI '$BASE/v1/config' | grep -qi 'x-ratelimit-limit'"
 

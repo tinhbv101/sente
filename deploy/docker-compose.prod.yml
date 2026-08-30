@@ -31,6 +31,8 @@ services:
       SENTE_CLIENT_IP_HEADER: ${SENTE_CLIENT_IP_HEADER:-}
       SENTE_MIGRATE: "true"
       # Apple: identifiers here, the .p8 keys as read-only mounts below.
+      # Shown on /privacy; leave empty to omit the contact section.
+      SENTE_CONTACT_EMAIL: ${SENTE_CONTACT_EMAIL:-}
       SENTE_APPLE_TEAM_ID: ${SENTE_APPLE_TEAM_ID:-}
       SENTE_APPLE_BUNDLE_ID: ${SENTE_APPLE_BUNDLE_ID:-app.sente.go}
       # Key files default to /run/secrets/AuthKey_<KEY_ID>.p8, the name Apple
