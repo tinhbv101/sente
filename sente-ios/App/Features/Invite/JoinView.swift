@@ -12,6 +12,7 @@ struct JoinView: View {
     @State private var preview: Challenge?
     @State private var error: String?
     @State private var busy = false
+    @State private var scanning = false
     @FocusState private var focused: Bool
 
     init(initialCode: String, onJoined: @escaping (GameSummary) -> Void) {
@@ -48,7 +49,12 @@ struct JoinView: View {
                 .textInputAutocapitalization(.characters).autocorrectionDisabled()
                 .focused($focused)
                 .onChange(of: code) { _, new in
-                    code = String(new.uppercased().filter { "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".contains($0) }.prefix(8))
+                    // A pasted link is the common case from a chat; a typed code the other.
+                    if let parsed = InviteCode.parse(new) {
+                        code = parsed
+                    } else {
+                        code = String(new.uppercased().filter(InviteCode.alphabet.contains).prefix(InviteCode.length))
+                    }
                 }
                 .onSubmit { Task { await lookUp() } }
                 .padding(.vertical, 12)
@@ -58,6 +64,15 @@ struct JoinView: View {
                 if busy { ProgressView().tint(.white) } else { Text("Xem lời mời") }
             }
             .buttonStyle(PrimaryButton()).disabled(code.count != 8 || busy)
+            Button { scanning = true } label: { Label("Quét mã QR", systemImage: "qrcode.viewfinder") }
+                .buttonStyle(SecondaryButton())
+        }
+        .sheet(isPresented: $scanning) {
+            QRScanSheet { scanned in
+                scanning = false
+                code = scanned
+                Task { await lookUp() }
+            }
         }
     }
 

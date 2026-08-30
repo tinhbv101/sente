@@ -136,7 +136,7 @@ struct CreateInviteView: View {
             }
             .sheet(item: $created) { invite in
                 ShareInviteView(invite: invite) { dismiss() }
-                    .presentationDetents([.medium])
+                    .presentationDetents([.large])
             }
         }
     }
@@ -168,21 +168,32 @@ struct ShareInviteView: View {
     let invite: Challenge
     let onDone: () -> Void
 
+    private var link: String { InviteCode.link(for: invite.code, shareUrl: invite.shareUrl) }
+
     private var shareText: String {
-        let link = invite.shareUrl ?? "sente://j/\(invite.code)"
-        return "Chơi cờ vây với mình nhé! Mở link hoặc nhập mã \(invite.code) trong Sente: \(link)"
+        "Chơi cờ vây với mình nhé! Mở link hoặc nhập mã \(invite.code) trong Sente: \(link)"
     }
 
     var body: some View {
         VStack(spacing: 18) {
             Text("Gửi lời mời").font(.title3.weight(.semibold))
+            // Scanned in Sente, or by the iOS Camera: the link opens the app either way.
+            if let qr = QRCode.image(for: link) {
+                Image(uiImage: qr)
+                    .interpolation(.none)
+                    .resizable().scaledToFit()
+                    .frame(width: 200, height: 200)
+                    .padding(12)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 16))
+                    .accessibilityLabel("Mã QR của lời mời")
+            }
             Text(invite.code)
                 .font(.system(size: 34, weight: .medium, design: .monospaced)).tracking(4)
                 .padding(.vertical, 8).padding(.horizontal, 20)
                 .background(Tokens.sheetSecondary, in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityLabel("Mã lời mời \(invite.code.map(String.init).joined(separator: " "))")
-            Text("\(invite.config.boardSize)×\(invite.config.boardSize) · \(invite.config.timeControl.summary) · hết hạn sau 7 ngày")
-                .font(.footnote).foregroundStyle(Tokens.inkSecondary)
+            Text("Bạn bè quét mã trong Sente (Nhập mã lời mời → Quét mã QR) hoặc bằng Camera.\n\(invite.config.boardSize)×\(invite.config.boardSize) · \(invite.config.timeControl.summary) · hết hạn sau 7 ngày")
+                .font(.footnote).foregroundStyle(Tokens.inkSecondary).multilineTextAlignment(.center)
             ShareLink(item: shareText) { Label("Chia sẻ", systemImage: "square.and.arrow.up") }
                 .buttonStyle(PrimaryButton())
             Button("Xong") { onDone() }.buttonStyle(SecondaryButton())
