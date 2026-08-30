@@ -7,6 +7,7 @@ deploy/secret/
 
 # Build output
 sente-ios/.build/
+sente-ios/build/
 sente-ios/Packages/*/.build/
 sente-server/.coverage.out
 *.xcuserstate

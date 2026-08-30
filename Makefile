@@ -49,6 +49,9 @@ test-ios:
 # Regenerates the Xcode project, builds the app for the simulator and runs its unit
 # tests (GameStore). Signed ad hoc: an unsigned build has no entitlements and the
 # Keychain refuses it.
+testflight: ## Archive and upload the iOS app to TestFlight (needs ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_FILE)
+	scripts/testflight.sh
+
 app:
 	cd sente-ios && xcodegen generate && xcodebuild test -project Sente.xcodeproj -scheme Sente \
 	  -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath .build/derived \

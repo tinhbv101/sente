@@ -632,6 +632,17 @@ nhận cặp token mới — cùng hàm với đăng ký khách. Hủy sheet kh�
 Entitlements (`App/Resources/Sente.entitlements`): `aps-environment`, `applesignin`,
 `applinks:sente.devlord.net`; `DEVELOPMENT_TEAM` nằm trong `project.yml`.
 
+## 12.2 Phát hành TestFlight
+
+`make testflight` (`scripts/testflight.sh`): `xcodegen generate` → `xcodebuild archive` Release,
+đích `generic/platform=iOS`, ký tự động bằng API key App Store Connect (`ASC_KEY_ID`,
+`ASC_ISSUER_ID`, `ASC_KEY_FILE` — file `.p8` để trong `deploy/secret/`, không commit) →
+`-exportArchive` với `method: app-store-connect`, `destination: upload`. Build number =
+`git rev-list --count HEAD`, nên mỗi lần upload luôn cao hơn lần trước; phiên bản lấy từ
+`MARKETING_VERSION` trong `project.yml`. Lần đầu nên archive qua Xcode để nó tạo chứng chỉ
+Apple Distribution; bản TestFlight là Release nên đăng ký push môi trường `production` và
+`aps-environment` tự thành production theo profile App Store.
+
 ## 13. Những chỗ dễ sai đã biết
 
 Ghi ra để review PR có thứ để đối chiếu:
