@@ -458,6 +458,16 @@
         }
       }
     },
+    "Cao thủ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strong"
+          }
+        }
+      }
+    },
     "Chia sẻ": {
       "localizations": {
         "en": {
@@ -1507,12 +1517,12 @@
         }
       }
     },
-    "Suy nghĩ sâu": {
+    "Suy tính": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Thinks deep"
+            "value": "Calculating"
           }
         }
       }
@@ -1823,16 +1833,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Timed"
-          }
-        }
-      }
-    },
-    "Tính một nước": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reads one move"
           }
         }
       }

@@ -35,7 +35,7 @@ final class GoBotTests: XCTestCase {
                                          white: [point("E5")], toPlay: .black)
         for level in BotLevel.allCases {
             var bot = GoBot(level: level, seed: 7)
-            bot.playoutCandidates = 4; bot.playoutsPerCandidate = 20; bot.playoutDepth = 30
+            bot.searchIterations = 250; bot.deepIterations = 250; bot.deepDeadline = nil
             guard level != .novice else { continue } // the novice is allowed to miss it
             XCTAssertEqual(bot.chooseMove(engine), .play(point("E4")), "\(level)")
         }
@@ -47,6 +47,7 @@ final class GoBotTests: XCTestCase {
                                          black: [point("E5")],
                                          white: [point("D5"), point("E6"), point("F5")], toPlay: .black)
         var bot = GoBot(level: .thoughtful, seed: 5)
+        bot.searchIterations = 250
         let move = bot.chooseMove(engine)
         guard case .play(let chosen) = move else { return XCTFail("must not pass") }
         let after = try engine.apply(.play(chosen), by: .black)
@@ -61,7 +62,7 @@ final class GoBotTests: XCTestCase {
         for seed: UInt64 in 1...20 {
             for level in BotLevel.allCases {
                 var bot = GoBot(level: level, seed: seed)
-                bot.playoutCandidates = 3; bot.playoutsPerCandidate = 4; bot.playoutDepth = 10
+                bot.searchIterations = 40; bot.deepIterations = 40; bot.deepDeadline = nil
                 let move = bot.chooseMove(engine)
                 XCTAssertNotEqual(move, .play(point("A1")), "\(level) seed \(seed)")
                 XCTAssertNotEqual(move, .play(point("C1")), "\(level) seed \(seed)")
@@ -69,13 +70,14 @@ final class GoBotTests: XCTestCase {
         }
     }
 
-    /// Levels must mean something: thoughtful beats novice across fixed seeds.
-    func testThoughtfulBeatsNovice() throws {
+    /// Levels must mean something: the search level beats the tactical one.
+    func testSearchBeatsGreedy() throws {
         var wins = 0
         for (index, seed) in ([21, 22, 23, 24] as [UInt64]).enumerated() {
             let strongIsBlack = index % 2 == 0
-            let strong = GoBot(level: .thoughtful, seed: seed)
-            let weak = GoBot(level: .novice, seed: seed &+ 500)
+            var strong = GoBot(level: .thoughtful, seed: seed)
+            strong.searchIterations = 320
+            let weak = GoBot(level: .greedy, seed: seed &+ 500)
             let end = try play(black: strongIsBlack ? strong : weak,
                                white: strongIsBlack ? weak : strong)
             let map = end.territory(deadStones: [])
@@ -83,6 +85,6 @@ final class GoBotTests: XCTestCase {
                 - Double(end.board.stones(of: .white).count + map.white.count) - end.komi
             if (margin > 0) == strongIsBlack { wins += 1 }
         }
-        XCTAssertGreaterThanOrEqual(wins, 3, "thoughtful should win at least 3 of 4 fixed-seed games")
+        XCTAssertGreaterThanOrEqual(wins, 3, "search should win at least 3 of 4 fixed-seed games")
     }
 }
