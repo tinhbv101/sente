@@ -276,6 +276,16 @@
         }
       }
     },
+    "Biết bắt quân": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captures stones"
+          }
+        }
+      }
+    },
     "Byo-yomi": {},
     "Bàn cờ": {
       "localizations": {
@@ -358,6 +368,16 @@
         }
       }
     },
+    "Bạn": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You"
+          }
+        }
+      }
+    },
     "Bạn bè quét mã trong Sente (Nhập mã lời mời → Quét mã QR) hoặc bằng Camera.\n%lld×%lld · %@ · hết hạn sau 7 ngày": {
       "localizations": {
         "en": {
@@ -424,6 +444,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Discard this game and start a new one?"
+          }
+        }
+      }
+    },
+    "Bốn cấp độ, chạy trên máy, không cần mạng": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Four levels, on-device, no network"
           }
         }
       }
@@ -589,6 +619,16 @@
         }
       }
     },
+    "Chạy tiếp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume"
+          }
+        }
+      }
+    },
     "Chấp nhận": {
       "localizations": {
         "en": {
@@ -655,6 +695,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Thank you. Your report has been sent."
+          }
+        }
+      }
+    },
+    "Cấp độ máy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bot level"
+          }
+        }
+      }
+    },
+    "Cấp độ từng máy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each bot's level"
           }
         }
       }
@@ -991,6 +1051,26 @@
         }
       }
     },
+    "Máy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bot"
+          }
+        }
+      }
+    },
+    "Máy chạy ngay trên điện thoại, không cần mạng. Cấp cao nghĩ lâu hơn một chút.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs right on the phone, no network needed. Higher levels think a little longer."
+          }
+        }
+      }
+    },
     "Máy chủ": {
       "localizations": {
         "en": {
@@ -1039,6 +1119,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "This device has no camera."
+          }
+        }
+      }
+    },
+    "Máy đang nghĩ…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The bot is thinking…"
+          }
+        }
+      }
+    },
+    "Máy đấu máy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bot vs bot"
           }
         }
       }
@@ -1120,6 +1220,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Each move gets this many days; running out loses. You are notified when it is your move."
+          }
+        }
+      }
+    },
+    "Mới tập": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginner"
           }
         }
       }
@@ -1393,6 +1503,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sente is not allowed to use the camera."
+          }
+        }
+      }
+    },
+    "Suy nghĩ sâu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thinks deep"
           }
         }
       }
@@ -1707,12 +1827,32 @@
         }
       }
     },
+    "Tính một nước": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reads one move"
+          }
+        }
+      }
+    },
     "Tùy chỉnh": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Options"
+          }
+        }
+      }
+    },
+    "Tạm dừng": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
           }
         }
       }
@@ -1853,6 +1993,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Void"
+          }
+        }
+      }
+    },
+    "Xem hai bot chơi, chỉnh cấp từng bên": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Watch two bots play, set each side's level"
+          }
+        }
+      }
+    },
+    "Xem hai cấp độ chơi với nhau là cách nhanh để thấy chúng khác gì nhau.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Watching two levels play each other is the quickest way to see the difference."
           }
         }
       }
@@ -2672,6 +2832,16 @@
         }
       }
     },
+    "Đấu với máy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play the bot"
+          }
+        }
+      }
+    },
     "Đặt quân phía trên ngón tay": {
       "localizations": {
         "en": {
@@ -2718,6 +2888,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your move — tap the board"
+          }
+        }
+      }
+    },
+    "Đối thủ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opponent"
           }
         }
       }

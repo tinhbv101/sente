@@ -11,7 +11,7 @@ final class LessonContentTests: XCTestCase {
 
     func testTheLibraryIsSubstantialAndUnique() {
         XCTAssertGreaterThanOrEqual(library.chapters.count, 4)
-        XCTAssertGreaterThanOrEqual(library.lessonCount, 14)
+        XCTAssertGreaterThanOrEqual(library.lessonCount, 20)
         let ids = library.chapters.flatMap { $0.lessons.map(\.id) }
         XCTAssertEqual(ids.count, Set(ids).count, "lesson ids must be unique")
         for chapter in library.chapters {
@@ -62,6 +62,12 @@ final class LessonContentTests: XCTestCase {
                     if let expected = step.captures {
                         XCTAssertEqual(taken(engine) - before, expected,
                                        "\(label): capture count")
+                    }
+                    if let atari = step.atariAt {
+                        let point = try XCTUnwrap(Coordinate.point(atari, size: size), "\(label) atariAt")
+                        XCTAssertNotNil(engine.board[point], "\(label): atariAt point is empty")
+                        XCTAssertEqual(engine.liberties(at: point), 1,
+                                       "\(label): \(atari) should be in atari after the move")
                     }
                     if let reply = step.reply {
                         let replyPoint = try XCTUnwrap(Coordinate.point(reply, size: size), "\(label) reply")

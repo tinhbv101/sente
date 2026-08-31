@@ -11,8 +11,16 @@ struct LocalGameConfig: Codable, Equatable {
     var handicap = 0
     var blackName = String(localized: "Đen")
     var whiteName = String(localized: "Trắng")
+    /// A seat can be a bot: the level's raw value, nil for a person. Both set =
+    /// a bot-versus-bot game to watch.
+    var blackBot: Int?
+    var whiteBot: Int?
 
     var komi: Double { GameEngine.defaultKomi(rules: rules, handicap: handicap) }
+    func botLevel(for player: Player) -> BotLevel? {
+        BotLevel(rawValue: (player == .black ? blackBot : whiteBot) ?? 0)
+    }
+    var isWatch: Bool { blackBot != nil && whiteBot != nil }
 }
 
 /// What survives an app relaunch: the setup and every move, nothing derived.
@@ -36,10 +44,12 @@ protocol LocalGameStorage: Sendable {
 
 /// One JSON file in Application Support; there is at most one local game.
 struct FileLocalGameStorage: LocalGameStorage {
+    /// Pass-and-play and the bot game are separate saves; a bot match is not saved.
+    var name = "local-game"
     private var url: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-        return base.appending(path: "local-game.json")
+        return base.appending(path: "\(name).json")
     }
 
     func load() -> LocalGameRecord? {
@@ -52,6 +62,13 @@ struct FileLocalGameStorage: LocalGameStorage {
     }
 
     func clear() { try? FileManager.default.removeItem(at: url) }
+}
+
+/// Watching bots needs no file behind it.
+struct NullGameStorage: LocalGameStorage {
+    func load() -> LocalGameRecord? { nil }
+    func save(_ record: LocalGameRecord) {}
+    func clear() {}
 }
 
 /// Two people, one phone. The engine alone is the arbiter: whoever is to move
@@ -68,6 +85,12 @@ final class LocalGameStore {
     private(set) var counted: (score: Score, result: GameResult)?
     private let startedAt: Date
     private let storage: any LocalGameStorage
+    /// Bots keep their RNG state across moves, one per seat.
+    private var bots: [Player: GoBot] = [:]
+    private(set) var thinking = false
+    var paused = false {
+        didSet { if !paused { scheduleBot() } }
+    }
 
     init(config: LocalGameConfig, storage: any LocalGameStorage = FileLocalGameStorage()) {
         self.config = config
@@ -75,6 +98,8 @@ final class LocalGameStore {
         self.startedAt = Date()
         self.storage = storage
         save()
+        makeBots()
+        scheduleBot()
     }
 
     /// Rebuilds a saved game by replaying it. A move that no longer applies ends
@@ -96,6 +121,14 @@ final class LocalGameStore {
             guard let next = try? engine.apply(move, by: stored.player) else { break }
             engine = next
             moves.append(RecordedMove(player: stored.player, move: move))
+        }
+        makeBots()
+        scheduleBot()
+    }
+
+    private func makeBots() {
+        for player in [Player.black, .white] {
+            if let level = config.botLevel(for: player) { bots[player] = GoBot(level: level) }
         }
     }
 
@@ -132,6 +165,9 @@ final class LocalGameStore {
 
     func name(of player: Player) -> String { player == .black ? config.blackName : config.whiteName }
 
+    /// A person may act only on their own seat, and not while the bot thinks.
+    var isHumanTurn: Bool { phase == .playing && config.botLevel(for: toPlay) == nil && !thinking }
+
     func legality(_ point: Point) -> String? {
         switch engine.validate(.play(point)) {
         case .success: return nil
@@ -151,9 +187,10 @@ final class LocalGameStore {
     // MARK: - Intents
 
     func place(_ point: Point) {
-        guard phase == .playing else { return }
+        guard phase == .playing, config.botLevel(for: toPlay) == nil else { return }
         do {
             try apply(.play(point))
+            scheduleBot()
         } catch let error as MoveError {
             toast = legalityText(error)
         } catch {
@@ -162,9 +199,10 @@ final class LocalGameStore {
     }
 
     func pass() {
-        guard phase == .playing else { return }
+        guard phase == .playing, config.botLevel(for: toPlay) == nil else { return }
         try? apply(.pass)
         if phase == .scoring { toast = String(localized: "Hai bên cùng nhường lượt — đánh dấu quân chết rồi đếm điểm.") }
+        scheduleBot()
     }
 
     /// The player to move gives up.
@@ -173,11 +211,16 @@ final class LocalGameStore {
         try? apply(.resign)
     }
 
-    /// Takes back the last move. Also the way out of scoring by mistake.
+    /// Takes back the last move — and keeps unwinding until it is a person's
+    /// turn again, so "undo" against the bot reverts your move, not just its reply.
     func undo() {
         guard !moves.isEmpty, counted == nil else { return }
         deadStones = []
+        thinking = false
         replay(Array(moves.dropLast()))
+        while config.botLevel(for: toPlay) != nil, !moves.isEmpty {
+            replay(Array(moves.dropLast()))
+        }
         save()
     }
 
@@ -206,6 +249,55 @@ final class LocalGameStore {
     }
 
     func dismissToast() { toast = nil }
+
+    // MARK: - Bots
+
+    /// Lets the bot on turn move, off the main thread, after a small beat so the
+    /// game feels played rather than instantaneous.
+    func scheduleBot(after delay: Duration = .milliseconds(600)) {
+        guard phase == .playing, !paused, !thinking, bots[toPlay] != nil else { return }
+        thinking = true
+        let side = toPlay
+        let snapshot = engine
+        guard let bot = bots[side] else { thinking = false; return }
+        Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            // Value copies cross into the detached task; nothing shared mutates.
+            let result = await Task.detached(priority: .userInitiated) { [bot, snapshot] () -> (Move, GoBot) in
+                var thinker = bot
+                let move = thinker.chooseMove(snapshot)
+                return (move, thinker)
+            }.value
+            guard let self else { return }
+            self.bots[side] = result.1
+            self.thinking = false
+            // The position may have changed under the bot (undo, new game): drop the move.
+            guard self.phase == .playing, self.toPlay == side,
+                  self.engine.state.boardHash == snapshot.state.boardHash,
+                  self.engine.state.moveNumber == snapshot.state.moveNumber else { return }
+            try? self.apply(result.0)
+            self.afterBotMove()
+            self.scheduleBot()
+        }
+    }
+
+    /// The synchronous variant tests drive; identical rules, no delay. Any move
+    /// still brewing on the background task is orphaned by the position guards.
+    func stepBotNow() {
+        thinking = false
+        guard phase == .playing, var bot = bots[toPlay] else { return }
+        let side = toPlay
+        let move = bot.chooseMove(engine)
+        bots[side] = bot
+        try? apply(move)
+        afterBotMove()
+    }
+
+    /// Two bots reaching scoring have nobody to argue about dead stones: count
+    /// the board as it stands.
+    private func afterBotMove() {
+        if phase == .scoring, config.isWatch { finishCounting() }
+    }
 
     /// A finished record for sharing. Dead stones are not part of SGF's main line.
     var sgf: String {

@@ -56,6 +56,9 @@ struct LessonStep: Decodable, Hashable {
     var highlight: [String]?
     var correct: [String]?
     var reply: String?
+    /// After the correct move, the chain at this point must have exactly one
+    /// liberty — how a forcing sequence (a ladder) proves it really forces.
+    var atariAt: String?
     var captures: Int?
     var success: LText?
     var wrong: LText?

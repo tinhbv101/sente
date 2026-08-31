@@ -7,7 +7,6 @@ struct HomeView: View {
     @State private var sheet: HomeSheet?
     @State private var showSettings = false
     @State private var showLocal = false
-    @State private var showLearn = false
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -58,7 +57,14 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $showSettings) { SettingsView() }
             .navigationDestination(isPresented: $showLocal) { LocalGameView() }
-            .navigationDestination(isPresented: $showLearn) { LearnView() }
+            .navigationDestination(for: LearnRoute.self) { _ in LearnView() }
+            .navigationDestination(for: BotRoute.self) { route in
+                switch route {
+                case .play: BotPlayView()
+                case .watch: BotWatchView()
+                }
+            }
+            .navigationDestination(for: Lesson.self) { LessonPlayerView(lesson: $0) }
             .onChange(of: session.pendingInviteCode) { _, code in openPendingInvite(code) }
             // The id may already be set when this view first appears (a launch
             // argument, or a link opened while the app was starting), and onChange
@@ -69,7 +75,14 @@ struct HomeView: View {
                 if UserDefaults.standard.bool(forKey: "createInvite") { sheet = .create }
                 if UserDefaults.standard.bool(forKey: "openSettings") { showSettings = true }
                 if UserDefaults.standard.bool(forKey: "openLocal") { showLocal = true }
-                if UserDefaults.standard.bool(forKey: "openLearn") { showLearn = true }
+                if UserDefaults.standard.bool(forKey: "openLearn") { path.append(LearnRoute.list) }
+                if UserDefaults.standard.bool(forKey: "openBot") { path.append(BotRoute.play) }
+                if UserDefaults.standard.bool(forKey: "openWatch") { path.append(BotRoute.watch) }
+                if let id = UserDefaults.standard.string(forKey: "openLesson"),
+                   let lesson = LessonLibrary.shared.chapters.flatMap(\.lessons).first(where: { $0.id == id }) {
+                    path.append(LearnRoute.list)
+                    path.append(lesson)
+                }
                 openPendingGame(session.pendingGameID)
                 openPendingInvite(session.pendingInviteCode)
             }
@@ -199,13 +212,37 @@ struct HomeView: View {
 
     private var learnSection: some View {
         Section {
-            Button { showLearn = true } label: {
+            Button { path.append(LearnRoute.list) } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "graduationcap.fill").foregroundStyle(Tokens.indigo)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Học cờ vây").font(.callout.weight(.semibold))
                         Text("Từ luật cơ bản đến sống chết · \(LessonProgress().done.count)/\(LessonLibrary.shared.lessonCount) bài")
                             .font(.caption).foregroundStyle(Tokens.inkSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Tokens.inkTertiary)
+                }
+            }
+            .foregroundStyle(Tokens.ink)
+            Button { path.append(BotRoute.play) } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "cpu").foregroundStyle(Tokens.indigo)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Đấu với máy").font(.callout.weight(.semibold))
+                        Text("Bốn cấp độ, chạy trên máy, không cần mạng").font(.caption).foregroundStyle(Tokens.inkSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Tokens.inkTertiary)
+                }
+            }
+            .foregroundStyle(Tokens.ink)
+            Button { path.append(BotRoute.watch) } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "eye").foregroundStyle(Tokens.indigo)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Máy đấu máy").font(.callout.weight(.semibold))
+                        Text("Xem hai bot chơi, chỉnh cấp từng bên").font(.caption).foregroundStyle(Tokens.inkSecondary)
                     }
                     Spacer()
                     Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Tokens.inkTertiary)
@@ -239,6 +276,13 @@ struct HomeView: View {
         }
     }
 }
+
+/// The lesson catalogue as a pushable route, so Learn and its lessons travel
+/// through the same NavigationPath as everything else.
+enum LearnRoute: Hashable { case list }
+
+/// The two bot screens, pushed through the same path.
+enum BotRoute: Hashable { case play, watch }
 
 /// What the home screen can present. `Identifiable` by content, so switching from
 /// one invitation code to another re-presents rather than reuses.

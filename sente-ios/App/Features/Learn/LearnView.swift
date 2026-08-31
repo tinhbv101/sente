@@ -32,9 +32,6 @@ struct LearnView: View {
         .background(Tokens.paper.ignoresSafeArea())
         .foregroundStyle(Tokens.ink)
         .navigationTitle("Học cờ vây")
-        .navigationDestination(for: Lesson.self) { lesson in
-            LessonPlayerView(lesson: lesson)
-        }
         .onAppear { progress = LessonProgress().done }
     }
 }
@@ -46,6 +43,11 @@ struct LessonPlayerView: View {
 
     init(lesson: Lesson) {
         _store = State(initialValue: LessonPlayerStore(lesson: lesson))
+    }
+
+    /// For tests and snapshots: drive the store from outside.
+    init(store: LessonPlayerStore) {
+        _store = State(initialValue: store)
     }
 
     var body: some View {

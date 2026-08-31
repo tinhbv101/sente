@@ -87,7 +87,7 @@ struct LocalBoardView: View {
             BoardView(
                 snapshot: store.snapshot,
                 ghostPlayer: store.toPlay == .black ? .black : .white,
-                interactive: store.phase == .playing,
+                interactive: store.isHumanTurn,
                 showsCoordinates: session.settings.showCoordinates,
                 colourBlindSymbols: session.settings.colourBlindSymbols,
                 fingerOffset: session.settings.offsetPlacement ? BoardView.defaultFingerOffset : 0,
@@ -96,6 +96,10 @@ struct LocalBoardView: View {
                 onTapChain: store.phase == .scoring ? { store.toggleDead($0) } : nil)
             .accessibilityLabel("Bàn cờ")
             moveBar
+            if store.thinking {
+                Label("Máy đang nghĩ…", systemImage: "hourglass")
+                    .font(.caption.weight(.medium)).foregroundStyle(Tokens.inkSecondary)
+            }
             playerRow(.black)
             controls
             Spacer(minLength: 0)
@@ -174,6 +178,7 @@ struct LocalBoardView: View {
         case .playing:
             HStack(spacing: 9) {
                 Button("Nhường lượt") { store.pass() }.buttonStyle(SecondaryButton())
+                    .disabled(!store.isHumanTurn)
                 Menu {
                     Button("Đi lại một nước") { store.undo() }.disabled(store.moves.isEmpty)
                     Button("\(store.name(of: store.toPlay)) xin thua", role: .destructive) { confirmResign = true }
