@@ -14,7 +14,7 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
     # Apple Developer Team ID (Membership details). Needed for push, Sign in
     # with Apple and universal links; simulator builds ignore it.
@@ -45,6 +45,10 @@ targets:
       properties:
         CFBundleDisplayName: Sente
         CFBundleName: Sente
+        # xcodegen would otherwise hard-code 1.0 / 1; these follow the build settings,
+        # which scripts/testflight.sh bumps per upload.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UIRequiresFullScreen: true
