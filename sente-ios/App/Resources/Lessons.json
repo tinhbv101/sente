@@ -1,0 +1,398 @@
+{
+  "chapters": [
+    {
+      "id": "basics",
+      "icon": "1.circle",
+      "title": { "vi": "Luật cơ bản", "en": "The rules" },
+      "lessons": [
+        {
+          "id": "liberties",
+          "title": { "vi": "Quân và khí", "en": "Stones and liberties" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Quân cờ đứng trên giao điểm. Các giao điểm trống ngay cạnh nó gọi là KHÍ. Quân đen này có bốn khí (các điểm được đánh dấu).",
+                        "en": "Stones sit on intersections. The empty points right next to a stone are its LIBERTIES. This black stone has four (marked)." },
+              "board": [".........",".........",".........",".........","....b....",".........",".........",".........","........."],
+              "highlight": ["D5","F5","E4","E6"]
+            },
+            {
+              "kind": "info",
+              "text": { "vi": "Khi khí bị lấp dần, quân yếu đi. Quân trắng này chỉ còn MỘT khí — trạng thái đó gọi là ATARI.",
+                        "en": "As liberties are filled, a stone weakens. This white stone has only ONE liberty left — that state is called ATARI." },
+              "board": [".........",".........",".........","....b....","...bwb...",".........",".........",".........","........."],
+              "highlight": ["E4"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Lấp nốt khí cuối cùng để bắt quân trắng.",
+                        "en": "Fill the last liberty to capture the white stone." },
+              "board": [".........",".........",".........","....b....","...bwb...",".........",".........",".........","........."],
+              "correct": ["E4"],
+              "captures": 1,
+              "success": { "vi": "Quân hết khí bị nhấc khỏi bàn — đó là bắt quân.", "en": "A stone with no liberties is lifted off the board — that is a capture." }
+            }
+          ]
+        },
+        {
+          "id": "edges",
+          "title": { "vi": "Biên và góc", "en": "Edges and corners" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Ở biên, quân chỉ có ba khí; ở góc chỉ có hai. Vì vậy quân ở gần mép bàn dễ bị bắt hơn.",
+                        "en": "On the edge a stone has only three liberties; in the corner only two. Stones near the edge are easier to capture." },
+              "board": [".........",".........",".........",".........","w........",".........",".........",".........","........."],
+              "highlight": ["A4","A6","B5"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Bắt quân trắng ở biên.", "en": "Capture the white stone on the edge." },
+              "board": [".........",".........",".........","b........","wb.......",".........",".........",".........","........."],
+              "correct": ["A4"],
+              "captures": 1,
+              "success": { "vi": "Chỉ cần ba nước để bắt một quân ở biên.", "en": "Only three moves are needed to capture an edge stone." }
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Ở góc còn nhanh hơn: bắt quân trắng ở góc.", "en": "The corner is even quicker: capture the white corner stone." },
+              "board": ["wb.......",".........",".........",".........",".........",".........",".........",".........","........."],
+              "correct": ["A8"],
+              "captures": 1,
+              "success": { "vi": "Hai khí — hai nước. Góc là nơi nguy hiểm nhất cho quân đơn độc.", "en": "Two liberties — two moves. The corner is the most dangerous place for a lone stone." }
+            }
+          ]
+        },
+        {
+          "id": "escape",
+          "title": { "vi": "Thoát atari", "en": "Escaping atari" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Quân đen đang bị atari — chỉ còn một khí (điểm đánh dấu). Nối dài đám quân sẽ tạo thêm khí.",
+                        "en": "The black stone is in atari — one liberty left (marked). Extending the group creates new liberties." },
+              "board": [".........",".........",".........","....w....","...wbw...",".........",".........",".........","........."],
+              "highlight": ["E4"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Chạy khỏi atari bằng cách nối dài xuống dưới.", "en": "Run from atari by extending downward." },
+              "board": [".........",".........",".........","....w....","...wbw...",".........",".........",".........","........."],
+              "correct": ["E4"],
+              "captures": 0,
+              "success": { "vi": "Đám đen giờ có ba khí. Nhưng cẩn thận: không phải lúc nào chạy cũng thoát.", "en": "The black group now has three liberties. But beware: running does not always work." }
+            }
+          ]
+        },
+        {
+          "id": "suicide",
+          "title": { "vi": "Không được tự sát", "en": "No suicide" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Không được đặt quân vào điểm mà đám của mình lập tức hết khí. Đen không được đi vào điểm đánh dấu — đó là TỰ SÁT.",
+                        "en": "You may not place a stone where your own group would instantly have no liberties. Black may not play the marked point — that is SUICIDE." },
+              "board": [".........",".........",".........","....w....","...w.w...","....w....",".........",".........","........."],
+              "highlight": ["E5"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Nhưng nếu nước đi BẮT được quân đối phương thì không phải tự sát. Quân trắng E4 chỉ còn một khí — hãy đi vào giữa.",
+                        "en": "But if the move CAPTURES enemy stones, it is not suicide. The white stone at E4 has one liberty left — play into the middle." },
+              "board": [".........",".........",".........","....w....","...w.w...","...bwb...","....b....",".........","........."],
+              "correct": ["E5"],
+              "captures": 1,
+              "success": { "vi": "Nước này bắt quân trắng E4 trước, nên quân đen có khí ngay — hợp lệ.", "en": "The move captures the white stone at E4 first, so the black stone has a liberty — legal." }
+            }
+          ]
+        },
+        {
+          "id": "ko",
+          "title": { "vi": "Luật ko", "en": "The ko rule" },
+          "steps": [
+            {
+              "kind": "task",
+              "text": { "vi": "Quân trắng E5 đang atari. Hãy bắt nó.", "en": "The white stone at E5 is in atari. Capture it." },
+              "board": [".........",".........",".........","....bw...","...bw.w..","....bw...",".........",".........","........."],
+              "correct": ["F5"],
+              "captures": 1,
+              "success": { "vi": "Bắt được! Nhưng nhìn kỹ: quân đen F5 vừa đặt cũng chỉ còn một khí…", "en": "Captured! But look: the black stone at F5 now has one liberty itself…" }
+            },
+            {
+              "kind": "info",
+              "text": { "vi": "Trắng muốn bắt lại ngay tại E5 — thế cờ sẽ lặp vô tận. LUẬT KO cấm điều đó: trắng phải đi nơi khác một nước trước, rồi mới được bắt lại.",
+                        "en": "White wants to recapture at E5 at once — the position would repeat forever. The KO rule forbids it: white must play elsewhere first, then may recapture." }
+            }
+          ]
+        },
+        {
+          "id": "territory",
+          "title": { "vi": "Lãnh thổ và đếm điểm", "en": "Territory and counting" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Ván cờ kết thúc khi cả hai bên cùng nhường lượt. Các giao điểm trống chỉ chạm quân một màu là LÃNH THỔ của màu đó. Ở đây đen giữ bên trái (36 điểm), trắng giữ bên phải (27 điểm).",
+                        "en": "A game ends when both players pass. Empty points touching only one colour are that colour's TERRITORY. Here black owns the left (36 points), white the right (27)." },
+              "board": ["....bw...","....bw...","....bw...","....bw...","....bw...","....bw...","....bw...","....bw...","....bw..."]
+            },
+            {
+              "kind": "info",
+              "text": { "vi": "Đen đi trước nên trắng được cộng KOMI (6,5 điểm theo luật Nhật). Ở đây: đen 36, trắng 27 + 6,5 = 33,5 — đen thắng 2,5 điểm. Quân bắt được cũng tính, tùy hệ luật.",
+                        "en": "Black moves first, so white receives KOMI (6.5 under Japanese rules). Here: black 36, white 27 + 6.5 = 33.5 — black wins by 2.5. Captures also count, depending on the ruleset." },
+              "board": ["....bw...","....bw...","....bw...","....bw...","....bw...","....bw...","....bw...","....bw...","....bw..."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "capturing",
+      "icon": "2.circle",
+      "title": { "vi": "Kỹ thuật bắt quân", "en": "Capturing techniques" },
+      "lessons": [
+        {
+          "id": "double-atari",
+          "title": { "vi": "Đánh đôi", "en": "Double atari" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Hai quân trắng đều còn hai khí. Một nước tại điểm đánh dấu sẽ atari CẢ HAI cùng lúc — trắng chỉ cứu được một.",
+                        "en": "Both white stones have two liberties. One move at the marked point puts BOTH in atari — white can only save one." },
+              "board": [".........",".........",".........",".........","...b.b...","..bw.wb..",".........",".........","........."],
+              "highlight": ["E4"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Đánh đôi hai quân trắng.", "en": "Play the double atari." },
+              "board": [".........",".........",".........",".........","...b.b...","..bw.wb..",".........",".........","........."],
+              "correct": ["E4"],
+              "captures": 0,
+              "reply": "D3",
+              "success": { "vi": "Cả hai quân trắng cùng atari. Trắng nối cứu quân bên trái…", "en": "Both white stones are in atari. White extends to save the left one…" }
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Trắng đã cứu bên trái. Bắt quân bên phải.", "en": "White saved the left side. Capture the right stone." },
+              "correct": ["F3"],
+              "captures": 1,
+              "success": { "vi": "Đánh đôi: ép đối thủ chọn, rồi lấy phần còn lại.", "en": "Double atari: force a choice, then take what is left." }
+            }
+          ]
+        },
+        {
+          "id": "snapback",
+          "title": { "vi": "Bắt hồi", "en": "Snapback" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Đám trắng bốn quân còn hai khí (C1 và D1). Đánh thẳng vào không đủ — nhưng đen có thể THÍ một quân.",
+                        "en": "The white group has two liberties (C1 and D1). A direct move is not enough — but black can SACRIFICE a stone." },
+              "board": [".........",".........",".........",".........",".........",".........","..bbb....",".bwwwb...",".b..wb..."],
+              "highlight": ["C1","D1"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Thí quân vào D1.", "en": "Throw a stone in at D1." },
+              "board": [".........",".........",".........",".........",".........",".........","..bbb....",".bwwwb...",".b..wb..."],
+              "correct": ["D1"],
+              "captures": 0,
+              "reply": "C1",
+              "success": { "vi": "Trắng bắt quân thí — nhưng nhìn lại: cả đám trắng giờ chỉ còn đúng MỘT khí, ngay chỗ vừa bắt.",
+                           "en": "White captures the sacrifice — but look: the whole white group now has exactly ONE liberty, right where it captured." }
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Bắt lại cả đám trắng.", "en": "Capture the whole white group back." },
+              "correct": ["D1"],
+              "captures": 5,
+              "success": { "vi": "Bắt hồi: thí một quân để lấy cả đám. Đổi một lấy năm.", "en": "Snapback: give one stone to take the whole group. One for five." }
+            }
+          ]
+        },
+        {
+          "id": "edge-chase",
+          "title": { "vi": "Đuổi dọc biên", "en": "Chasing along the edge" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Quân trắng C2 còn hai khí. Đuổi nó về phía biên: ở đó khí không sinh thêm được.",
+                        "en": "The white stone at C2 has two liberties. Chase it toward the edge, where no new liberties appear." },
+              "board": [".........",".........",".........",".........",".........",".........","..bb.....",".bw......","........."],
+              "highlight": ["C1","D2"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Chặn đường lên — ép trắng xuống hàng cuối.", "en": "Block the way up — force white to the last line." },
+              "board": [".........",".........",".........",".........",".........",".........","..bb.....",".bw......","........."],
+              "correct": ["D2"],
+              "captures": 0,
+              "reply": "C1",
+              "success": { "vi": "Trắng chui xuống hàng một…", "en": "White crawls to the first line…" }
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Tiếp tục chặn.", "en": "Keep blocking." },
+              "correct": ["D1"],
+              "captures": 0,
+              "reply": "B1",
+              "success": { "vi": "Trắng bò thêm — nhưng tự đưa mình vào atari.", "en": "White crawls on — into atari." },
+              "wrong": { "vi": "Đuổi sát: chặn ngay cạnh quân trắng ở hàng một.", "en": "Chase tightly: block right next to white on the first line." }
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Kết thúc.", "en": "Finish it." },
+              "correct": ["A1"],
+              "captures": 3,
+              "success": { "vi": "Ở biên không có chỗ chạy. Vì thế người ta nói: hàng một là hàng của kẻ thua.",
+                           "en": "There is nowhere to run on the edge. Hence the saying: the first line is the line of defeat." }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "life-death",
+      "icon": "3.circle",
+      "title": { "vi": "Sống và chết", "en": "Life and death" },
+      "lessons": [
+        {
+          "id": "two-eyes",
+          "title": { "vi": "Hai mắt là sống", "en": "Two eyes live" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Một đám có HAI mắt (hai vùng trống tách biệt bên trong) thì không bao giờ bị bắt: đối thủ không thể lấp cả hai cùng lúc, và đi vào từng mắt là tự sát. Đám đen này mới có một vùng trống ba điểm.",
+                        "en": "A group with TWO eyes (two separate internal empty areas) can never be captured: the opponent cannot fill both at once, and playing inside either is suicide. This black group has only one three-point space." },
+              "board": [".........",".........",".........",".........",".........",".........",".wwwww...","wbbbbbw..","wb...bw.."],
+              "highlight": ["C1","D1","E1"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Chia vùng trống thành hai mắt.", "en": "Split the space into two eyes." },
+              "board": [".........",".........",".........",".........",".........",".........",".wwwww...","wbbbbbw..","wb...bw.."],
+              "correct": ["D1"],
+              "captures": 0,
+              "success": { "vi": "Hai mắt C1 và E1 — đám đen sống vĩnh viễn.", "en": "Two eyes at C1 and E1 — the black group lives forever." },
+              "wrong": { "vi": "Điểm chia đôi vùng trống nằm ở giữa.", "en": "The splitting point is in the middle." }
+            },
+            {
+              "kind": "info",
+              "text": { "vi": "Nếu đen bỏ qua, trắng sẽ đánh đúng vào D1 — vùng trống chỉ còn là một mắt, và đám đen chết. Điểm sinh tử của cả hai bên thường là MỘT.",
+                        "en": "Had black passed, white would play D1 — the space becomes a single eye and the group dies. The vital point for both sides is usually the SAME." }
+            }
+          ]
+        },
+        {
+          "id": "vital-point",
+          "title": { "vi": "Điểm trọng yếu", "en": "The vital point" },
+          "steps": [
+            {
+              "kind": "task",
+              "text": { "vi": "Đám trắng có vùng trống ba điểm thẳng. Giết nó: đánh vào điểm khiến trắng không thể tạo hai mắt.",
+                        "en": "The white group has a straight three-point space. Kill it: play the point that denies two eyes." },
+              "board": [".........",".........",".........",".........",".........",".........",".bbbbb...","bwwwwwb..","bw...wb.."],
+              "correct": ["D1"],
+              "captures": 0,
+              "success": { "vi": "Trắng đánh C1 thì đen E1, và ngược lại — không cách nào ra hai mắt. Đám trắng chết đứng.",
+                           "en": "If white C1 then black E1, and vice versa — two eyes are impossible. The white group is dead as it stands." },
+              "wrong": { "vi": "Với vùng ba điểm thẳng, điểm sinh tử là điểm giữa.", "en": "In a straight three, the vital point is the centre." }
+            }
+          ]
+        },
+        {
+          "id": "false-eye",
+          "title": { "vi": "Mắt giả", "en": "False eyes" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "C1 trông như một mắt của trắng — nhưng quân trắng D1 đang atari. Mắt mà quân bao quanh có thể bị bắt gọi là MẮT GIẢ.",
+                        "en": "C1 looks like a white eye — but the white stone at D1 is in atari. An eye whose surrounding stones can be captured is a FALSE eye." },
+              "board": [".........",".........",".........",".........",".........",".........",".........","..wb.....",".w.wb...."],
+              "highlight": ["C1"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Phá mắt giả: bắt quân trắng D1.", "en": "Break the false eye: capture the white stone at D1." },
+              "board": [".........",".........",".........",".........",".........",".........",".........","..wb.....",".w.wb...."],
+              "correct": ["C1"],
+              "captures": 1,
+              "success": { "vi": "Đi vào 'mắt' được vì nước này bắt quân. Đám sống phải có hai mắt THẬT.",
+                           "en": "Playing inside the 'eye' is fine because it captures. A living group needs two REAL eyes." }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advanced",
+      "icon": "4.circle",
+      "title": { "vi": "Khai cuộc và tổng hợp", "en": "Openings and beyond" },
+      "lessons": [
+        {
+          "id": "corners-first",
+          "title": { "vi": "Góc trước, biên sau", "en": "Corners first" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Cùng một lãnh thổ, ở góc cần ít quân nhất (hai phía đã có mép bàn giữ hộ), rồi đến biên, cuối cùng mới là trung tâm. Vì vậy khai cuộc: GÓC TRƯỚC, BIÊN SAU, TRUNG TÂM CUỐI.",
+                        "en": "The same territory needs the fewest stones in a corner (two sides are walls), more on a side, most in the centre. Hence the opening rule: CORNERS FIRST, then sides, the centre last." },
+              "highlight": ["C3","G3","C7","G7"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Đặt nước đầu tiên vào một góc.", "en": "Play your first move in a corner." },
+              "correct": ["C3","G3","C7","G7"],
+              "captures": 0,
+              "success": { "vi": "Trên bàn 9×9, các điểm 3-3 là chỗ khai cuộc vững chắc.", "en": "On 9×9, the 3-3 points are solid opening moves." },
+              "wrong": { "vi": "Hãy chọn một trong bốn điểm sao ở góc.", "en": "Pick one of the four corner star points." }
+            }
+          ]
+        },
+        {
+          "id": "cutting",
+          "title": { "vi": "Cắt và nối", "en": "Cutting and connecting" },
+          "steps": [
+            {
+              "kind": "info",
+              "text": { "vi": "Hai quân trắng chỉ đứng CHÉO nhau — chưa thật sự dính liền. Điểm đánh dấu cắt chúng làm đôi.",
+                        "en": "The two white stones only touch DIAGONALLY — they are not truly connected. The marked point cuts them apart." },
+              "board": [".........",".........",".........",".........","...w.....","...bw....",".........",".........","........."],
+              "highlight": ["E5"]
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Cắt hai quân trắng.", "en": "Cut the white stones." },
+              "board": [".........",".........",".........",".........","...w.....","...bw....",".........",".........","........."],
+              "correct": ["E5"],
+              "captures": 0,
+              "success": { "vi": "Giờ mỗi đám trắng phải tự lo thân — hai đám yếu thay vì một đám khỏe. Ngược lại: khi bị dọa cắt, hãy NỐI.",
+                           "en": "Now each white group must fend for itself — two weak groups instead of one strong one. Conversely: when a cut looms, CONNECT." }
+            }
+          ]
+        },
+        {
+          "id": "review",
+          "title": { "vi": "Bài tập tổng hợp", "en": "Putting it together" },
+          "steps": [
+            {
+              "kind": "task",
+              "text": { "vi": "Đọc khí: bắt HAI quân trắng bằng một nước.", "en": "Count liberties: capture TWO white stones with one move." },
+              "board": [".........",".........",".........","...bb....","..bwwb...","...b.....",".........",".........","........."],
+              "correct": ["E4"],
+              "captures": 2,
+              "success": { "vi": "Cả đám chung khí thì chết cùng nhau.", "en": "Stones that share liberties die together." }
+            },
+            {
+              "kind": "task",
+              "text": { "vi": "Lần cuối: đám trắng dưới biên còn mấy khí? Bắt nó.", "en": "One last time: how many liberties has the white pair on the edge? Capture it." },
+              "board": [".........",".........",".........",".........",".........",".........",".........","...bb....","..bww...."],
+              "correct": ["F1"],
+              "captures": 2,
+              "success": { "vi": "Bạn đã đi hết các bài. Giờ vào ván thật thôi — mời một người bạn!", "en": "You have finished the lessons. Time for a real game — invite a friend!" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

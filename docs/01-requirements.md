@@ -72,6 +72,7 @@ Ký hiệu ưu tiên: **P0** = bắt buộc cho MVP · **P1** = cần cho v1.0 �
 | FR-M3 | Người nhận xem trước cấu hình ván và Chấp nhận / Từ chối. Lời mời hết hạn sau 7 ngày | P0 |
 | FR-M4 | Mời trực tiếp một người trong danh sách bạn bè (không cần link) | P1 |
 | FR-M5 | Chơi trên cùng một máy (pass-and-play), không cần mạng | P1 — **đã làm 2026-08-30** (Home → "Trên máy này") |
+| FR-M8 | Bài học tương tác từ cơ bản đến nâng cao: luật, bắt quân, sống chết, khai cuộc; làm trên bàn cờ thật, chấm bằng engine | P1 — **đã làm 2026-08-31** (Home → "Học cờ vây") |
 | FR-M6 | Ghép ngẫu nhiên với người lạ theo hạng, có bộ lọc cỡ bàn và thể thức thời gian | P2 |
 | FR-M7 | Xem người khác chơi (spectate) qua link ván công khai | P2 |
 

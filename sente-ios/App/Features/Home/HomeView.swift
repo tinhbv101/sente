@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var sheet: HomeSheet?
     @State private var showSettings = false
     @State private var showLocal = false
+    @State private var showLearn = false
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -15,6 +16,7 @@ struct HomeView: View {
                 gameSections
                 inviteSection
                 localSection
+                learnSection
                 emptyState
             }
             .listStyle(.insetGrouped)
@@ -56,6 +58,7 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $showSettings) { SettingsView() }
             .navigationDestination(isPresented: $showLocal) { LocalGameView() }
+            .navigationDestination(isPresented: $showLearn) { LearnView() }
             .onChange(of: session.pendingInviteCode) { _, code in openPendingInvite(code) }
             // The id may already be set when this view first appears (a launch
             // argument, or a link opened while the app was starting), and onChange
@@ -66,6 +69,7 @@ struct HomeView: View {
                 if UserDefaults.standard.bool(forKey: "createInvite") { sheet = .create }
                 if UserDefaults.standard.bool(forKey: "openSettings") { showSettings = true }
                 if UserDefaults.standard.bool(forKey: "openLocal") { showLocal = true }
+                if UserDefaults.standard.bool(forKey: "openLearn") { showLearn = true }
                 openPendingGame(session.pendingGameID)
                 openPendingInvite(session.pendingInviteCode)
             }
@@ -190,6 +194,24 @@ struct HomeView: View {
                 Spacer()
                 Image(systemName: "chevron.right").font(.caption).foregroundStyle(Tokens.inkTertiary)
             }
+        }
+    }
+
+    private var learnSection: some View {
+        Section {
+            Button { showLearn = true } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "graduationcap.fill").foregroundStyle(Tokens.indigo)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Học cờ vây").font(.callout.weight(.semibold))
+                        Text("Từ luật cơ bản đến sống chết · \(LessonProgress().done.count)/\(LessonLibrary.shared.lessonCount) bài")
+                            .font(.caption).foregroundStyle(Tokens.inkSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Tokens.inkTertiary)
+                }
+            }
+            .foregroundStyle(Tokens.ink)
         }
     }
 

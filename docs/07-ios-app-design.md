@@ -394,6 +394,7 @@ iCloud backup của hệ thống. Dọn cache: giữ 50 ván gần nhất, xóa 
 |----------|----------------|---------|
 | Onboarding | 3 bước: chào, chọn trình độ (quyết định cỡ bàn mặc định), xin quyền push | P0 |
 | Home | Ván đang chờ bạn đi (nổi bật nhất), ván đang chờ đối thủ, nút "Mời bạn chơi", nút "Chơi trên máy này" | P0 |
+| Học cờ vây | Bài học tương tác (FR-M8): nội dung là dữ liệu (`App/Resources/Lessons.json`, song ngữ vi/en, 4 chương · 15 bài · 36 bước — luật, khí, bắt quân, atari, tự sát, ko, lãnh thổ, đánh đôi, bắt hồi, đuổi biên, hai mắt, điểm trọng yếu, mắt giả, góc trước, cắt/nối, tổng hợp). Mỗi bước là *info* (bàn cờ + điểm đánh dấu, dùng lớp chấm territory của `BoardView` làm marker) hoặc *task* (đặt đúng nước → engine GoKit áp thật, có kịch bản trắng đáp, sai giữ nguyên và báo; bước không có `board` nối tiếp thế cờ bước trước). `LessonContentTests` phát lại **toàn bộ** file qua engine: thế cờ 9 hàng × 9 cột, nước đúng hợp lệ, số quân bắt khớp `captures` — nội dung sai là CI đỏ. Tiến độ trong UserDefaults; Home hiện x/15; launch arg `-openLearn 1` | P1 |
 | Chơi trên máy này | Pass-and-play (FR-M5): thiết lập (cỡ bàn, luật, chấp, tên hai người) → bàn cờ dùng lại `BoardView`, ai tới lượt thì đặt; nhường lượt, đi lại một nước (không cần hỏi — cả hai đang nhìn), xin thua, hai lần nhường → đánh dấu quân chết → Đếm điểm hoặc Chơi tiếp; chia sẻ SGF. Hoàn toàn offline: `LocalGameStore` trên GoKit, ván đang chơi lưu `local-game.json` trong Application Support và mở lại được từ Home | P1 |
 | Chia sẻ lời mời | Mã QR (CoreImage, chứa `share_url` — universal link — hoặc `sente://j/<mã>` khi server không có URL công khai), mã 8 chữ, nút Chia sẻ. Bên nhận: "Nhập mã lời mời" có nút **Quét mã QR** (AVFoundation, `NSCameraUsageDescription`); ô nhập cũng nhận cả link dán vào (`InviteCode.parse`). Simulator không có camera → màn quét báo rõ, không crash | P0 |
 | Tạo lời mời | Chọn cỡ bàn (9/13/19), thể thức (tính giờ: thời gian chính + byo-yomi; thư tín: ngày/nước), luật, chấp, màu. Ba preset chỉ là nút điền nhanh. Danh sách thời gian cắt theo trần của cỡ bàn (`TimeLimits`, phản chiếu `game.MaxMainTime`); đổi bàn nhỏ hơn thì thời gian đang chọn kẹp về trần | P0 |
@@ -589,9 +590,9 @@ Ba điều lộ ra ngay ở lần chạy đầu trên simulator, đều đã s�
   Ký ad-hoc (`CODE_SIGN_IDENTITY="-"`) là đủ. `TokenStore.save` giờ trả về `Bool` và
   `AppSession` coi thất bại là lỗi, không nuốt.
 
-Năm launch argument phục vụ kiểm thử, script và chụp màn hình: `-openGame <id>`,
+Sáu launch argument phục vụ kiểm thử, script và chụp màn hình: `-openGame <id>`,
 `-inviteCode <code>`, `-createInvite 1` (mở sheet tạo lời mời), `-openSettings 1` (mở Cài đặt),
-`-openLocal 1` (mở chơi trên máy này).
+`-openLocal 1` (mở chơi trên máy này), `-openLearn 1` (mở bài học).
 Cả hai được tiêu thụ trong `onAppear` của Home, không chỉ `onChange` — giá trị đã có sẵn
 trước khi Home xuất hiện nên `onChange` không bao giờ bắt được (đã sập bẫy này hai lần).
 Chuỗi hiển thị thời gian **không** dùng relative formatter của hệ thống: nó theo locale máy
@@ -639,7 +640,7 @@ Entitlements (`App/Resources/Sente.entitlements`): `aps-environment`, `applesign
 `ASC_ISSUER_ID`, `ASC_KEY_FILE` — file `.p8` để trong `deploy/secret/`, không commit) →
 `-exportArchive` với `method: app-store-connect`, `destination: upload`. Build number =
 `git rev-list --count HEAD`, nên mỗi lần upload luôn cao hơn lần trước; phiên bản lấy từ
-`MARKETING_VERSION` trong `project.yml`. Lần đầu nên archive qua Xcode để nó tạo chứng chỉ
+`MARKETING_VERSION` trong `project.yml` — Info.plist phải trỏ `CFBundleShortVersionString`/`CFBundleVersion` vào hai biến này, vì xcodegen mặc định ghi cứng `1.0`/`1` (bản upload đầu đã dính). Lần đầu nên archive qua Xcode để nó tạo chứng chỉ
 Apple Distribution; bản TestFlight là Release nên đăng ký push môi trường `production` và
 `aps-environment` tự thành production theo profile App Store.
 

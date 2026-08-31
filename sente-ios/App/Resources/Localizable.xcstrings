@@ -348,6 +348,16 @@
         }
       }
     },
+    "Bước %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld/%lld"
+          }
+        }
+      }
+    },
     "Bạn bè quét mã trong Sente (Nhập mã lời mời → Quét mã QR) hoặc bằng Camera.\n%lld×%lld · %@ · hết hạn sau 7 ngày": {
       "localizations": {
         "en": {
@@ -364,6 +374,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "You invited"
+          }
+        }
+      }
+    },
+    "Bạn đã xong bài này. Quay lại danh sách để học bài tiếp theo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lesson finished. Head back to the list for the next one."
           }
         }
       }
@@ -524,6 +544,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not your turn."
+          }
+        }
+      }
+    },
+    "Chưa đúng — thử lại.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not quite — try again."
           }
         }
       }
@@ -689,6 +719,16 @@
         }
       }
     },
+    "Hoàn thành!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done!"
+          }
+        }
+      }
+    },
     "Hết giờ": {
       "localizations": {
         "en": {
@@ -739,6 +779,16 @@
         }
       }
     },
+    "Học cờ vây": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn Go"
+          }
+        }
+      }
+    },
     "Hủy lời mời": {
       "localizations": {
         "en": {
@@ -765,6 +815,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No account or network needed. A game in progress is kept when the app closes."
+          }
+        }
+      }
+    },
+    "Không hợp lệ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Illegal"
           }
         }
       }
@@ -837,6 +897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ko: play elsewhere first."
+          }
+        }
+      }
+    },
+    "Làm lại": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
           }
         }
       }
@@ -1477,6 +1547,16 @@
         }
       }
     },
+    "Tiếp tục": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        }
+      }
+    },
     "Tiếp tục ván trên máy này": {
       "localizations": {
         "en": {
@@ -1693,6 +1773,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Decline"
+          }
+        }
+      }
+    },
+    "Từ luật cơ bản đến sống chết · %lld/%lld bài": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From the rules to life and death · %lld/%lld lessons"
           }
         }
       }
@@ -2562,6 +2652,16 @@
         }
       }
     },
+    "Đúng rồi!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct!"
+          }
+        }
+      }
+    },
     "Đưa mã QR của lời mời vào khung": {
       "localizations": {
         "en": {
@@ -2608,6 +2708,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your move · %lld"
+          }
+        }
+      }
+    },
+    "Đến lượt bạn — chạm vào bàn cờ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your move — tap the board"
           }
         }
       }
