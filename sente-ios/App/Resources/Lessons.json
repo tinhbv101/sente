@@ -1165,6 +1165,468 @@
               }
             }
           ]
+        },
+        {
+          "id": "square-four",
+          "title": {
+            "vi": "Vuông bốn thì chết",
+            "en": "The square four is dead"
+          },
+          "steps": [
+            {
+              "kind": "info",
+              "text": {
+                "vi": "Vùng trống VUÔNG BỐN (2×2) không có điểm nào chia được thành hai mắt — đám trắng này đã chết đứng. Trắng có đâm vào chống cự thì vùng còn lại cũng chỉ là cong ba.",
+                "en": "A SQUARE FOUR (2×2) space has no point that splits it into two eyes — this white group is already dead. If white plays inside to resist, what remains is only a bent three."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "bbbb.....",
+                "wwwb.....",
+                "..wb.....",
+                "..wb....."
+              ],
+              "highlight": [
+                "A1",
+                "B1",
+                "A2",
+                "B2"
+              ]
+            },
+            {
+              "kind": "task",
+              "text": {
+                "vi": "Trắng vừa đâm vào B2 hòng tạo mắt. Trừng phạt: chiếm điểm sinh tử của cong ba còn lại.",
+                "en": "White just played B2 hoping for eyes. Punish it: take the vital point of the remaining bent three."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "bbbb.....",
+                "wwwb.....",
+                ".wwb.....",
+                "..wb....."
+              ],
+              "correct": [
+                "A1"
+              ],
+              "captures": 0,
+              "success": {
+                "vi": "A2 và B1 giờ là miai: trắng lấp một điểm là tự atari, đen lấp nốt điểm kia và bắt cả đám. Vuông bốn — chết không cần đánh thêm.",
+                "en": "A2 and B1 are now miai: if white fills one it is self-atari, black fills the other and captures everything. Square four — dead with no extra moves."
+              },
+              "wrong": {
+                "vi": "Sau khi trắng đâm vào, vùng trống còn lại là cong ba — điểm sinh tử nằm ở góc gấp.",
+                "en": "After white's push the space left is a bent three — the vital point sits at the bend."
+              }
+            }
+          ]
+        },
+        {
+          "id": "pyramid-four",
+          "title": {
+            "vi": "Chóp bốn",
+            "en": "The pyramid four"
+          },
+          "steps": [
+            {
+              "kind": "info",
+              "text": {
+                "vi": "Vùng trống hình CHÓP BỐN: ba điểm nằm ngang và một điểm nhô lên ở giữa. Điểm sinh tử là TÂM — điểm chạm cả ba điểm còn lại.",
+                "en": "A PYRAMID FOUR: three points in a row plus one rising from the middle. The vital point is the CENTRE — the one touching all three others."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "...bbbb..",
+                ".bbwwwb..",
+                ".bww.wwb.",
+                ".bw...wb."
+              ],
+              "highlight": [
+                "D1",
+                "E1",
+                "F1",
+                "E2"
+              ]
+            },
+            {
+              "kind": "task",
+              "text": {
+                "vi": "Giết đám trắng: chiếm tâm của chóp bốn.",
+                "en": "Kill the white group: take the centre of the pyramid."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "...bbbb..",
+                ".bbwwwb..",
+                ".bww.wwb.",
+                ".bw...wb."
+              ],
+              "correct": [
+                "E1"
+              ],
+              "captures": 0,
+              "success": {
+                "vi": "Trắng chặn phía nào thì phần còn lại cũng nhỏ hơn cong ba — không thể ra hai mắt. Còn đè vào bắt quân đen thì tự hết khí trước.",
+                "en": "Whichever side white blocks, what remains is smaller than a bent three — two eyes are impossible. And squeezing the black stone runs white out of liberties first."
+              },
+              "wrong": {
+                "vi": "Tìm điểm trống chạm được cả ba điểm trống còn lại.",
+                "en": "Find the empty point that touches all three other empty points."
+              }
+            }
+          ]
+        },
+        {
+          "id": "bulky-five",
+          "title": {
+            "vi": "Năm cục",
+            "en": "The bulky five"
+          },
+          "steps": [
+            {
+              "kind": "info",
+              "text": {
+                "vi": "NĂM CỤC: khối 2×2 cộng một điểm thừa. Trông rộng rãi nhưng vẫn chỉ có MỘT điểm sinh tử — điểm chạm được ba điểm trống khác.",
+                "en": "The BULKY FIVE: a 2×2 block plus one extra point. It looks roomy but still has ONE vital point — the one touching three other empty points."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "bbbbb....",
+                "wwwbb....",
+                "..wwb....",
+                "...wb...."
+              ],
+              "highlight": [
+                "A1",
+                "B1",
+                "C1",
+                "A2",
+                "B2"
+              ]
+            },
+            {
+              "kind": "task",
+              "text": {
+                "vi": "Giết đám trắng.",
+                "en": "Kill the white group."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "bbbbb....",
+                "wwwbb....",
+                "..wwb....",
+                "...wb...."
+              ],
+              "correct": [
+                "B1"
+              ],
+              "captures": 0,
+              "success": {
+                "vi": "B1 chạm A1, C1 và B2. Trắng chống kiểu gì, vùng còn lại cũng quy về cong ba hoặc thẳng ba mà đen đã đứng sẵn giữa nhà.",
+                "en": "B1 touches A1, C1 and B2. However white resists, the rest reduces to a bent or straight three with black already sitting in the middle of it."
+              },
+              "wrong": {
+                "vi": "Đếm xem điểm trống nào chạm được nhiều điểm trống khác nhất.",
+                "en": "Count which empty point touches the most other empty points."
+              }
+            }
+          ]
+        },
+        {
+          "id": "cross-five",
+          "title": {
+            "vi": "Chữ thập năm điểm",
+            "en": "The five-point cross"
+          },
+          "steps": [
+            {
+              "kind": "info",
+              "text": {
+                "vi": "Vùng trống hình CHỮ THẬP: một tâm, bốn cánh. Nếu trắng kịp đi vào tâm, mỗi cánh thành một mắt thật — sống to. Vậy nên tâm là điểm sinh tử của cả hai bên.",
+                "en": "A CROSS-shaped space: one centre, four arms. If white gets the centre, every arm becomes a real eye — thoroughly alive. So the centre is the vital point for both sides."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "bbbbbb...",
+                "wwwwwb...",
+                "ww.wwb...",
+                "w...wb...",
+                "ww.wwb..."
+              ],
+              "highlight": [
+                "C2",
+                "B2",
+                "D2",
+                "C1",
+                "C3"
+              ]
+            },
+            {
+              "kind": "task",
+              "text": {
+                "vi": "Một nước giết cả đám trắng — trước khi trắng kịp đi vào đó.",
+                "en": "One move kills the whole group — before white gets to play there."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "bbbbbb...",
+                "wwwwwb...",
+                "ww.wwb...",
+                "w...wb...",
+                "ww.wwb..."
+              ],
+              "correct": [
+                "C2"
+              ],
+              "captures": 0,
+              "success": {
+                "vi": "Bốn cánh giờ đều chạm quân đen ở tâm — không cánh nào thành mắt thật được nữa. Trắng càng lấp càng tự hết khí.",
+                "en": "Every arm now touches the black stone at the centre — none can become a real eye. The more white fills, the faster white runs out of liberties."
+              },
+              "wrong": {
+                "vi": "Nếu trắng được đi vào tâm chữ thập, trắng có bốn mắt. Hãy chiếm đúng điểm đó.",
+                "en": "If white played the centre of the cross, white would have four eyes. Take that exact point."
+              }
+            }
+          ]
+        },
+        {
+          "id": "extend-to-live",
+          "title": {
+            "vi": "Nong rộng để sống",
+            "en": "Extend to live"
+          },
+          "steps": [
+            {
+              "kind": "info",
+              "text": {
+                "vi": "Đến lượt đen. Vùng sống của đen rộng năm điểm nhưng cửa G1 chưa đóng — trắng có thể bò vào từ H1. Ba thẳng thì chết, bốn thẳng thì sống: khi còn nong rộng được, hãy nong.",
+                "en": "Black to play. Black's space is five points wide but the door at G1 is open — white can crawl in from H1. A straight three dies, a straight four lives: while you can still extend, extend."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "wwwwwwww.",
+                "wbbbbbbw.",
+                "wb.....w."
+              ],
+              "highlight": [
+                "G1"
+              ]
+            },
+            {
+              "kind": "task",
+              "text": {
+                "vi": "Đóng cửa để giữ vùng sống bốn điểm.",
+                "en": "Close the door and keep a four-point space."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "wwwwwwww.",
+                "wbbbbbbw.",
+                "wb.....w."
+              ],
+              "correct": [
+                "G1"
+              ],
+              "captures": 0,
+              "success": {
+                "vi": "C1–F1 là thẳng bốn: trắng điểm D1 thì đen E1, trắng điểm E1 thì đen D1 — kiểu gì cũng đủ hai mắt. Sống.",
+                "en": "C1–F1 is a straight four: white D1 meets black E1, white E1 meets black D1 — two eyes either way. Alive."
+              },
+              "wrong": {
+                "vi": "Trắng sắp bò vào G1. Chặn từ phía quân mình để vùng trống còn lại là thẳng bốn.",
+                "en": "White is about to crawl into G1. Block from your own side so a straight four remains."
+              }
+            },
+            {
+              "kind": "info",
+              "text": {
+                "vi": "Nếu đen bỏ qua, trắng bò G1 rồi F1: vùng của đen co còn ba điểm và chết vì bị điểm giữa. Nhớ: một nước nong rộng cửa sống thường đáng giá cả ván.",
+                "en": "Had black passed, white crawls G1 then F1: the space shrinks to three points and dies to the centre placement. Remember: one space-widening move is often worth the whole game."
+              }
+            }
+          ]
+        },
+        {
+          "id": "hane-kill",
+          "title": {
+            "vi": "Thu hẹp rồi mới điểm",
+            "en": "Narrow it, then strike"
+          },
+          "steps": [
+            {
+              "kind": "info",
+              "text": {
+                "vi": "Muốn giết, đừng vội đâm vào giữa: quân điểm vào phải tự sống được trong lòng địch. Cửa B1 của trắng còn hở — nếu đen điểm E1 ngay, trắng đè D1 và quân đen chết ngạt bên trong.",
+                "en": "Don't rush the placement: the stone you drop inside has to survive in there. White's door at B1 is still open — play E1 at once and white's D1 squeeze suffocates the stone."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "..bbbbbb.",
+                "bbwwwwwb.",
+                "......wb."
+              ],
+              "highlight": [
+                "B1"
+              ]
+            },
+            {
+              "kind": "task",
+              "text": {
+                "vi": "Thu hẹp trước: chặn xuống cửa còn hở.",
+                "en": "Narrow first: block down through the open door."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "..bbbbbb.",
+                "bbwwwwwb.",
+                "......wb."
+              ],
+              "correct": [
+                "B1"
+              ],
+              "reply": "C1",
+              "captures": 0,
+              "success": {
+                "vi": "Trắng phải chặn C1, nếu không đen chui tiếp vào C1 phá sạch. Vùng sống thật của trắng giờ chỉ còn D1–F1.",
+                "en": "White must block at C1, or black slides in and wrecks everything. White's real space is now just D1–F1."
+              },
+              "wrong": {
+                "vi": "Cửa còn hở ở B1 — chặn xuống từ quân đen của bạn.",
+                "en": "The door at B1 is open — block down from your own stones."
+              }
+            },
+            {
+              "kind": "task",
+              "text": {
+                "vi": "Giờ mới điểm vào trọng điểm.",
+                "en": "Now hit the vital point."
+              },
+              "correct": [
+                "E1"
+              ],
+              "captures": 0,
+              "success": {
+                "vi": "D1–F1 là thẳng ba, E1 là tâm. Trắng hết khí ngoài nên đè bên nào cũng tự atari — đen bắt cả đám. Trình tự giết chuẩn: thu hẹp trước, điểm sau.",
+                "en": "D1–F1 is a straight three and E1 its centre. White has no outside liberties, so any squeeze is self-atari — black captures the lot. The killing order: narrow first, strike second."
+              },
+              "wrong": {
+                "vi": "Vùng còn lại là thẳng ba — chiếm điểm giữa.",
+                "en": "The remaining space is a straight three — take the middle."
+              }
+            }
+          ]
+        },
+        {
+          "id": "seki",
+          "title": {
+            "vi": "Sống chung (seki)",
+            "en": "Seki: mutual life"
+          },
+          "steps": [
+            {
+              "kind": "info",
+              "text": {
+                "vi": "Hai quân đen B1–C1 và đám trắng bao quanh cùng chia hai khí A1, D1 — không bên nào có hai mắt. Bên nào lấp khí trước, bên đó tự atari và bị bắt. Không ai dám đi: cả hai CÙNG SỐNG. Đó là seki — cứ để nguyên.",
+                "en": "The black pair B1–C1 and the surrounding white share the two liberties A1 and D1 — neither side has two eyes. Whoever fills first is in self-atari and dies. Nobody dares to play: both groups LIVE. That is seki — leave it alone."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "bbbbbb...",
+                "wwwwwb...",
+                ".bb.wb..."
+              ],
+              "highlight": [
+                "A1",
+                "D1"
+              ]
+            },
+            {
+              "kind": "task",
+              "text": {
+                "vi": "Trắng tham, vừa lấp khí chung A1. Trừng phạt ngay.",
+                "en": "White got greedy and filled the shared liberty at A1. Punish it at once."
+              },
+              "board": [
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                ".........",
+                "bbbbbb...",
+                "wwwwwb...",
+                "wbb.wb..."
+              ],
+              "correct": [
+                "D1"
+              ],
+              "captures": 7,
+              "success": {
+                "vi": "Cả bảy quân trắng hết khí. Trong seki, ai đi trước người đó chết — dù đến lượt, hãy… đi chỗ khác.",
+                "en": "All seven white stones are out of liberties. In a seki, whoever moves first dies — even on your turn, play somewhere else."
+              },
+              "wrong": {
+                "vi": "Trắng chỉ còn đúng một khí — lấp nốt là xong.",
+                "en": "White has exactly one liberty left — fill it and be done."
+              }
+            }
+          ]
         }
       ]
     },
