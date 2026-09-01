@@ -909,6 +909,16 @@
         }
       }
     },
+    "Đang chờ — bạn của bạn vào là ván tự mở" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting — the game opens by itself once your friend joins"
+          }
+        }
+      }
+    },
     "Đang chờ đối thủ · %lld" : {
       "localizations" : {
         "en" : {

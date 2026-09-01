@@ -4,6 +4,7 @@ import SwiftUI
 struct SenteApp: App {
     @State private var session = AppSession()
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         // Before any view resolves a string.
@@ -24,7 +25,16 @@ struct SenteApp: App {
                     AppDelegate.onDeviceToken = { [session] in session.deviceTokenReceived($0) }
                     AppDelegate.onOpenGame = { [session] in session.pendingGameID = $0 }
                     AppDelegate.onOpenInvite = { [session] in session.pendingInviteCode = $0 }
+                    // A push while the app is open means the list is stale right now.
+                    AppDelegate.onForegroundPush = { [session] in Task { await session.refreshQuietly() } }
                     await session.start()
+                }
+                // Whatever happened while the app was away (an accepted invitation,
+                // a move) shows up without a pull-to-refresh.
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active, session.phase == .ready {
+                        Task { await session.refreshQuietly() }
+                    }
                 }
                 // sente://j/<code> from a shared link, or the universal-link path once
                 // the AASA file is in place.

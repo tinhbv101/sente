@@ -128,6 +128,28 @@ final class AppSession {
 
     func refreshQuietly() async { try? await refresh() }
 
+    /// Polls an open invitation until someone accepts it. Returns the new game's
+    /// id (also left in `pendingGameID`, which the home screen navigates to), or
+    /// nil once the invitation can no longer be accepted. `fetch` is injectable
+    /// so tests run without a server.
+    func waitForAcceptance(code: String,
+                           interval: Duration = .seconds(2),
+                           fetch: ((String) async throws -> Challenge)? = nil) async -> String? {
+        let fetch = fetch ?? { [api] in try await api.challenge(code: $0) }
+        while !Task.isCancelled {
+            if let updated = try? await fetch(code) {
+                if updated.status == "accepted", let gameID = updated.gameId {
+                    pendingGameID = gameID
+                    return gameID
+                }
+                // Declined, cancelled or expired can never become a game.
+                if updated.status != "pending" { return nil }
+            }
+            try? await Task.sleep(for: interval)
+        }
+        return nil
+    }
+
     var myTurnGames: [GameSummary] { games.filter { $0.isActive && $0.yourTurn } }
     var waitingGames: [GameSummary] { games.filter { $0.isActive && !$0.yourTurn } }
     var finishedGames: [GameSummary] { games.filter { !$0.isActive } }

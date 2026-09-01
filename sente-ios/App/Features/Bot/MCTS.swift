@@ -146,10 +146,17 @@ struct MCTSBot {
     /// it could sensibly end or concede nothing (late game, or answer a pass).
     private func candidateMoves(_ engine: GameEngine) -> [(move: Move, prior: Double)] {
         let side = engine.toPlay
-        var moves: [(Move, Double)] = engine.legalMoves()
+        let size = engine.state.size
+        // Board-order key for equal priors: sort() is not stable, and Set order
+        // varies per process — without this, a seeded game differs between runs.
+        func key(_ move: Move) -> Int {
+            if case .play(let point) = move { return point.row * size + point.col }
+            return .max
+        }
+        var moves: [(Move, Double)] = GoBot.orderedLegalMoves(engine)
             .filter { !GoBot.isOwnEye($0, board: engine.board, side: side) }
             .map { (.play($0), BotHeuristics.prior(point: $0, in: engine, for: side)) }
-        moves.sort { $0.1 > $1.1 }
+        moves.sort { $0.1 == $1.1 ? key($0.0) < key($1.0) : $0.1 > $1.1 }
         moves = Array(moves.prefix(maxBranch))
         let late = engine.state.moveNumber > engine.state.size * engine.state.size
         if moves.isEmpty || engine.state.consecutivePasses == 1 || late {

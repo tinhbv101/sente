@@ -77,6 +77,8 @@ final class GoBotTests: XCTestCase {
             let strongIsBlack = index % 2 == 0
             var strong = GoBot(level: .thoughtful, seed: seed)
             strong.searchIterations = 320
+            // Iteration-bounded only: the wall-clock deadline made this flaky on a loaded machine.
+            strong.searchDeadline = nil
             let weak = GoBot(level: .greedy, seed: seed &+ 500)
             let end = try play(black: strongIsBlack ? strong : weak,
                                white: strongIsBlack ? weak : strong)

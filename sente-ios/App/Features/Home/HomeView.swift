@@ -97,6 +97,15 @@ struct HomeView: View {
             .onChange(of: session.pendingGameID) { _, id in openPendingGame(id) }
             .onChange(of: session.games) { _, _ in openPendingGame(session.pendingGameID) }
             .task(id: path.count) { if path.isEmpty { await session.refreshQuietly() } }
+            // While one of my invitations is open, someone may accept it any moment:
+            // keep the list fresh so the new game appears without a pull-to-refresh.
+            .task(id: session.invitations.contains(where: \.isMine)) {
+                guard session.invitations.contains(where: \.isMine) else { return }
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(5))
+                    await session.refreshQuietly()
+                }
+            }
         }
     }
 

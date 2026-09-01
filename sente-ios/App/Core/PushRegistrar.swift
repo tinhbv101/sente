@@ -8,6 +8,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     static var onDeviceToken: ((String) -> Void)?
     static var onOpenGame: ((String) -> Void)?
     static var onOpenInvite: ((String) -> Void)?
+    /// A push arriving while the app is in the foreground.
+    static var onForegroundPush: (() -> Void)?
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
@@ -31,7 +33,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
                                             willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
         // A push for the game currently on screen would only be noise.
         let gameID = notification.request.content.userInfo["game_id"] as? String
-        return await MainActor.run { PushRegistrar.visibleGameID == gameID ? [] : [.banner, .sound, .badge] }
+        return await MainActor.run { () -> UNNotificationPresentationOptions in
+            Self.onForegroundPush?()
+            return PushRegistrar.visibleGameID == gameID ? [] : [.banner, .sound, .badge]
+        }
     }
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,

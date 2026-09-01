@@ -165,6 +165,7 @@ struct CreateInviteView: View {
 }
 
 struct ShareInviteView: View {
+    @Environment(AppSession.self) private var session
     let invite: Challenge
     let onDone: () -> Void
 
@@ -194,6 +195,11 @@ struct ShareInviteView: View {
                 .accessibilityLabel("Mã lời mời \(invite.code.map(String.init).joined(separator: " "))")
             Text("Bạn bè quét mã trong Sente (Nhập mã lời mời → Quét mã QR) hoặc bằng Camera.\n\(invite.config.boardSize)×\(invite.config.boardSize) · \(invite.config.timeControl.summary) · hết hạn sau 7 ngày")
                 .font(.footnote).foregroundStyle(Tokens.inkSecondary).multilineTextAlignment(.center)
+            HStack(spacing: 8) {
+                ProgressView()
+                Text("Đang chờ — bạn của bạn vào là ván tự mở")
+                    .font(.footnote.weight(.medium)).foregroundStyle(Tokens.inkSecondary)
+            }
             ShareLink(item: shareText) { Label("Chia sẻ", systemImage: "square.and.arrow.up") }
                 .buttonStyle(PrimaryButton())
             Button("Xong") { onDone() }.buttonStyle(SecondaryButton())
@@ -201,5 +207,13 @@ struct ShareInviteView: View {
         .padding(24)
         .foregroundStyle(Tokens.ink)
         .presentationBackground(Tokens.sheet)
+        // The moment the friend accepts, this sheet gives way to the game itself:
+        // pendingGameID navigates as soon as the refreshed list contains the game.
+        .task {
+            if await session.waitForAcceptance(code: invite.code) != nil {
+                await session.refreshQuietly()
+                onDone()
+            }
+        }
     }
 }

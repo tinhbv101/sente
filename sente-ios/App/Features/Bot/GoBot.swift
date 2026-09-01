@@ -61,7 +61,7 @@ struct GoBot: Sendable {
             return search.chooseMove(engine)
         }
 
-        let candidates = engine.legalMoves().filter { !Self.isOwnEye($0, board: engine.board, side: side) }
+        let candidates = Self.orderedLegalMoves(engine).filter { !Self.isOwnEye($0, board: engine.board, side: side) }
         guard !candidates.isEmpty else { return .pass }
 
         let scored: [(point: Point, score: Double)] = candidates.map { point in
@@ -101,6 +101,12 @@ struct GoBot: Sendable {
             value += Double(rng.next() % 1000) / 1000 * 1.6
         }
         return value
+    }
+
+    /// legalMoves() is a Set, and Set order changes per process launch; iterating
+    /// it directly broke the seeded-replay promise above. Board order instead.
+    static func orderedLegalMoves(_ engine: GameEngine) -> [Point] {
+        engine.legalMoves().sorted { ($0.row, $0.col) < ($1.row, $1.col) }
     }
 
     // MARK: - Shape
