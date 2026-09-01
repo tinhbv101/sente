@@ -58,7 +58,10 @@ targets:
           NSAllowsLocalNetworking: true
         # sente://j/<code> opens an invitation. https://sente.devlord.net/j/<code>
         # does too, through the associated domain in Sente.entitlements.
-        # .sgf files open in Sente as a local replay.
+        # .sgf files open in Sente as a local replay. Opening "in place" (the
+        # handler already takes security-scoped access) satisfies the App Store
+        # rule that document-declaring apps say how they open documents.
+        LSSupportsOpeningDocumentsInPlace: true
         CFBundleDocumentTypes:
           - CFBundleTypeName: Smart Game Format
             LSHandlerRank: Alternate
