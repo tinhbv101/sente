@@ -17,7 +17,7 @@ struct BotWatchView: View {
                 setup
             }
         }
-        .navigationTitle(store == nil ? String(localized: "Máy đấu máy") : "")
+        .navigationTitle(store == nil ? LS(localized: "Máy đấu máy") : "")
         .navigationBarTitleDisplayMode(.inline)
         // `-autoWatch 1` starts a default match on launch, for screenshots.
         .onAppear {
@@ -25,8 +25,8 @@ struct BotWatchView: View {
                 var config = LocalGameConfig(size: 9)
                 config.blackBot = blackLevel.rawValue
                 config.whiteBot = whiteLevel.rawValue
-                config.blackName = String(localized: "Máy") + " · " + blackLevel.title
-                config.whiteName = String(localized: "Máy") + " · " + whiteLevel.title
+                config.blackName = LS(localized: "Máy") + " · " + blackLevel.title
+                config.whiteName = LS(localized: "Máy") + " · " + whiteLevel.title
                 store = LocalGameStore(config: config, storage: NullGameStorage())
             }
         }
@@ -60,8 +60,8 @@ struct BotWatchView: View {
                 var config = LocalGameConfig(size: size)
                 config.blackBot = blackLevel.rawValue
                 config.whiteBot = whiteLevel.rawValue
-                config.blackName = String(localized: "Máy") + " · " + blackLevel.title
-                config.whiteName = String(localized: "Máy") + " · " + whiteLevel.title
+                config.blackName = LS(localized: "Máy") + " · " + blackLevel.title
+                config.whiteName = LS(localized: "Máy") + " · " + whiteLevel.title
                 store = LocalGameStore(config: config, storage: NullGameStorage())
             }
             .buttonStyle(PrimaryButton()).padding(16)
@@ -84,7 +84,7 @@ struct BotWatchView: View {
                 Text("NƯỚC \(store.moveNumber)").font(.system(.caption, design: .monospaced))
                 Spacer()
                 if store.phase == .finished, let result = store.result {
-                    Text(result.winner.map { "\(store.name(of: $0)) thắng" } ?? String(localized: "Ván vô hiệu"))
+                    Text(result.winner.map { "\(store.name(of: $0)) thắng" } ?? LS(localized: "Ván vô hiệu"))
                         .font(.caption.weight(.semibold))
                 }
             }
@@ -125,7 +125,7 @@ struct BotWatchView: View {
                 Button {
                     store.paused.toggle()
                 } label: {
-                    Label(store.paused ? String(localized: "Chạy tiếp") : String(localized: "Tạm dừng"),
+                    Label(store.paused ? LS(localized: "Chạy tiếp") : LS(localized: "Tạm dừng"),
                           systemImage: store.paused ? "play.fill" : "pause.fill")
                 }
                 .buttonStyle(PrimaryButton())

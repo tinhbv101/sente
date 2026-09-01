@@ -9,8 +9,8 @@ struct LocalGameConfig: Codable, Equatable {
     var size = 9
     var rules: RuleSet = .japanese
     var handicap = 0
-    var blackName = String(localized: "Đen")
-    var whiteName = String(localized: "Trắng")
+    var blackName = LS(localized: "Đen")
+    var whiteName = LS(localized: "Trắng")
     /// A seat can be a bot: the level's raw value, nil for a person. Both set =
     /// a bot-versus-bot game to watch.
     var blackBot: Int?
@@ -173,13 +173,13 @@ final class LocalGameStore {
         case .success: return nil
         case .failure(let error):
             switch error {
-            case .occupied: return String(localized: "Đã có quân")
-            case .suicide: return String(localized: "Tự sát")
-            case .ko: return String(localized: "Luật ko")
-            case .superko: return String(localized: "Lặp thế cờ")
-            case .notYourTurn: return String(localized: "Chưa tới lượt")
-            case .outOfBounds: return String(localized: "Ngoài bàn")
-            case .gameNotPlaying: return String(localized: "Ván đã kết thúc")
+            case .occupied: return LS(localized: "Đã có quân")
+            case .suicide: return LS(localized: "Tự sát")
+            case .ko: return LS(localized: "Luật ko")
+            case .superko: return LS(localized: "Lặp thế cờ")
+            case .notYourTurn: return LS(localized: "Chưa tới lượt")
+            case .outOfBounds: return LS(localized: "Ngoài bàn")
+            case .gameNotPlaying: return LS(localized: "Ván đã kết thúc")
             }
         }
     }
@@ -201,7 +201,7 @@ final class LocalGameStore {
     func pass() {
         guard phase == .playing, config.botLevel(for: toPlay) == nil else { return }
         try? apply(.pass)
-        if phase == .scoring { toast = String(localized: "Hai bên cùng nhường lượt — đánh dấu quân chết rồi đếm điểm.") }
+        if phase == .scoring { toast = LS(localized: "Hai bên cùng nhường lượt — đánh dấu quân chết rồi đếm điểm.") }
         scheduleBot()
     }
 
@@ -341,13 +341,13 @@ final class LocalGameStore {
 
     private func legalityText(_ error: MoveError) -> String {
         switch error {
-        case .occupied: String(localized: "Đã có quân ở đó.")
-        case .suicide: String(localized: "Nước tự sát.")
-        case .ko: String(localized: "Luật ko: phải đi chỗ khác trước.")
-        case .superko: String(localized: "Lặp lại thế cờ.")
-        case .notYourTurn: String(localized: "Chưa tới lượt.")
-        case .outOfBounds: String(localized: "Ngoài bàn.")
-        case .gameNotPlaying: String(localized: "Ván đã kết thúc.")
+        case .occupied: LS(localized: "Đã có quân ở đó.")
+        case .suicide: LS(localized: "Nước tự sát.")
+        case .ko: LS(localized: "Luật ko: phải đi chỗ khác trước.")
+        case .superko: LS(localized: "Lặp lại thế cờ.")
+        case .notYourTurn: LS(localized: "Chưa tới lượt.")
+        case .outOfBounds: LS(localized: "Ngoài bàn.")
+        case .gameNotPlaying: LS(localized: "Ván đã kết thúc.")
         }
     }
 }

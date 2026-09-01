@@ -34,7 +34,7 @@ struct JoinView: View {
             .padding(20)
             .foregroundStyle(Tokens.ink)
             .background(Tokens.paper.ignoresSafeArea())
-            .navigationTitle(preview == nil ? String(localized: "Nhập mã lời mời") : String(localized: "Lời mời"))
+            .navigationTitle(preview == nil ? LS(localized: "Nhập mã lời mời") : LS(localized: "Lời mời"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Đóng") { dismiss() } } }
             .task { if code.count == 8 { await lookUp() } else { focused = true } }
@@ -79,15 +79,15 @@ struct JoinView: View {
     private func previewCard(_ invite: Challenge) -> some View {
         VStack(spacing: 16) {
             VStack(spacing: 6) {
-                Text("\(invite.creatorName ?? String(localized: "Ai đó")) mời bạn\nmột ván cờ vây")
+                Text("\(invite.creatorName ?? LS(localized: "Ai đó")) mời bạn\nmột ván cờ vây")
                     .font(.system(size: 28, design: .serif)).multilineTextAlignment(.center)
-                Text(invite.status == "pending" ? expiry(invite.expiresAt) : String(localized: "Lời mời này không còn hiệu lực"))
+                Text(invite.status == "pending" ? expiry(invite.expiresAt) : LS(localized: "Lời mời này không còn hiệu lực"))
                     .font(.footnote).foregroundStyle(invite.status == "pending" ? Tokens.inkSecondary : .red)
             }
             VStack(spacing: 0) {
                 detail("Cỡ bàn", "\(invite.config.boardSize) × \(invite.config.boardSize)")
                 Divider()
-                detail("Hệ luật", invite.config.rules == "japanese" ? String(localized: "Nhật Bản") : String(localized: "Trung Quốc"))
+                detail("Hệ luật", invite.config.rules == "japanese" ? LS(localized: "Nhật Bản") : LS(localized: "Trung Quốc"))
                 Divider()
                 detail("Komi", invite.config.komi.formatted())
                 Divider()
@@ -113,11 +113,11 @@ struct JoinView: View {
     /// device locale and produced "Hết hạn next week" on an English phone.
     private func expiry(_ date: Date) -> String {
         let seconds = date.timeIntervalSinceNow
-        guard seconds > 0 else { return String(localized: "Đã hết hạn") }
+        guard seconds > 0 else { return LS(localized: "Đã hết hạn") }
         let hours = Int(seconds / 3600)
-        if hours < 1 { return String(localized: "Hết hạn trong chưa đầy một giờ") }
-        if hours < 48 { return String(localized: "Hết hạn sau \(hours) giờ") }
-        return String(localized: "Hết hạn sau \(hours / 24) ngày")
+        if hours < 1 { return LS(localized: "Hết hạn trong chưa đầy một giờ") }
+        if hours < 48 { return LS(localized: "Hết hạn sau \(hours) giờ") }
+        return LS(localized: "Hết hạn sau \(hours / 24) ngày")
     }
 
     private func detail(_ label: LocalizedStringKey, _ value: String) -> some View {
@@ -126,7 +126,7 @@ struct JoinView: View {
     }
 
     private func yourColour(_ invite: Challenge) -> String {
-        switch invite.creatorColor { case "black": String(localized: "Trắng"); case "white": String(localized: "Đen"); default: String(localized: "Ngẫu nhiên") }
+        switch invite.creatorColor { case "black": LS(localized: "Trắng"); case "white": LS(localized: "Đen"); default: LS(localized: "Ngẫu nhiên") }
     }
 
     private func lookUp() async {

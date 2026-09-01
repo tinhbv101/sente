@@ -60,15 +60,11 @@ struct SettingsView: View {
                     ForEach(Settings.Appearance.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                // iOS offers a per-app language picker once the bundle carries two.
-                Button {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
-                } label: {
-                    LabeledContent("Ngôn ngữ", value: Locale.current.language.languageCode?.identifier == "vi" ? "Tiếng Việt" : "English")
+                Picker("Ngôn ngữ", selection: $draft.language) {
+                    ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
                 }
-                .foregroundStyle(Tokens.ink)
             } header: { Text("Giao diện") } footer: {
-                Text("Ngôn ngữ theo máy. Đổi riêng cho Sente trong Cài đặt hệ thống.")
+                Text("Mặc định theo ngôn ngữ máy. Đổi ở đây có hiệu lực ngay, chỉ với Sente.")
             }
             Section {
                 Toggle("Hiện tọa độ", isOn: $draft.showCoordinates)
@@ -85,7 +81,7 @@ struct SettingsView: View {
             }
             Section {
                 Link(destination: session.settings.serverURL.appending(path: "/privacy")
-                        .appending(queryItems: [URLQueryItem(name: "lang", value: Locale.current.language.languageCode?.identifier == "vi" ? "vi" : "en")])) {
+                        .appending(queryItems: [URLQueryItem(name: "lang", value: LanguageManager.isVietnamese ? "vi" : "en")])) {
                     Label("Chính sách quyền riêng tư", systemImage: "hand.raised")
                 }
                 .foregroundStyle(Tokens.ink)
@@ -112,7 +108,11 @@ struct SettingsView: View {
         } message: {
             Text("Không thể khôi phục. Bạn sẽ được tạo một tài khoản khách mới.")
         }
-        .onChange(of: draft) { _, new in new.save(); Task { session.settings = new } }
+        .onChange(of: draft) { _, new in
+            new.save()
+            LanguageManager.apply(new.language)
+            Task { session.settings = new }
+        }
         .onSubmit { applyServer() }
         .toolbar {
             if URL(string: serverText) != session.settings.serverURL {

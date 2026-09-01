@@ -19,7 +19,7 @@ struct BotPlayView: View {
                 BotSetupView { config in store = LocalGameStore(config: config, storage: Self.storage) }
             }
         }
-        .navigationTitle(store == nil ? String(localized: "Đấu với máy") : "")
+        .navigationTitle(store == nil ? LS(localized: "Đấu với máy") : "")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if store == nil, let record = Self.storage.load(), !record.moves.isEmpty {
@@ -74,12 +74,12 @@ struct BotSetupView: View {
         .safeAreaInset(edge: .bottom) {
             Button("Bắt đầu") {
                 var config = LocalGameConfig(size: size, rules: rules, handicap: handicap)
-                let botName = String(localized: "Máy") + " · " + level.title
+                let botName = LS(localized: "Máy") + " · " + level.title
                 if myColor == .black {
-                    config.blackName = String(localized: "Bạn"); config.whiteName = botName
+                    config.blackName = LS(localized: "Bạn"); config.whiteName = botName
                     config.whiteBot = level.rawValue
                 } else {
-                    config.whiteName = String(localized: "Bạn"); config.blackName = botName
+                    config.whiteName = LS(localized: "Bạn"); config.blackName = botName
                     config.blackBot = level.rawValue
                 }
                 onStart(config)

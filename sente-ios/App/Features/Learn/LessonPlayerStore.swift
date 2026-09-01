@@ -55,8 +55,8 @@ final class LessonPlayerStore {
     }
 
     func legality(_ point: Point) -> String? {
-        guard awaitingMove else { return String(localized: "Chưa tới lượt") }
-        if case .failure = engine.validate(.play(point), by: mySide) { return String(localized: "Không hợp lệ") }
+        guard awaitingMove else { return LS(localized: "Chưa tới lượt") }
+        if case .failure = engine.validate(.play(point), by: mySide) { return LS(localized: "Không hợp lệ") }
         return nil
     }
 
@@ -65,7 +65,7 @@ final class LessonPlayerStore {
         let text = Coordinate.text(point, size: boardSize)
         guard step.correct?.contains(text) == true,
               let next = try? engine.apply(.play(point), by: mySide) else {
-            feedback = step.wrong?.text ?? String(localized: "Chưa đúng — thử lại.")
+            feedback = step.wrong?.text ?? LS(localized: "Chưa đúng — thử lại.")
             feedbackIsPraise = false
             return
         }
@@ -77,7 +77,7 @@ final class LessonPlayerStore {
             lastMove = replyPoint
         }
         solved = true
-        feedback = step.success?.text ?? String(localized: "Đúng rồi!")
+        feedback = step.success?.text ?? LS(localized: "Đúng rồi!")
         feedbackIsPraise = true
     }
 

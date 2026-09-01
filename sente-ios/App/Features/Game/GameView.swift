@@ -23,7 +23,7 @@ struct GameView: View {
             playerRow(for: store.myColor.opponent, name: summary.opponentName)
             board
             moveBar
-            playerRow(for: store.myColor, name: session.user?.displayName ?? String(localized: "bạn"))
+            playerRow(for: store.myColor, name: session.user?.displayName ?? LS(localized: "bạn"))
             controls
             Spacer(minLength: 0)
         }
@@ -72,7 +72,7 @@ struct GameView: View {
         guard let opponent = summary.opponentId else { return }
         do {
             try await session.api.report(userID: opponent, gameID: summary.gameId, category: category, note: "")
-            moderationNote = String(localized: "Cảm ơn bạn. Báo cáo đã được gửi.")
+            moderationNote = LS(localized: "Cảm ơn bạn. Báo cáo đã được gửi.")
         } catch let error as APIError { moderationNote = error.userMessage } catch { moderationNote = error.localizedDescription }
     }
 
@@ -80,7 +80,7 @@ struct GameView: View {
         guard let opponent = summary.opponentId else { return }
         do {
             try await session.api.block(userID: opponent)
-            moderationNote = String(localized: "Đã chặn \(summary.opponentName). Người này không thể mời bạn nữa; ván này vẫn tiếp tục.")
+            moderationNote = LS(localized: "Đã chặn \(summary.opponentName). Người này không thể mời bạn nữa; ván này vẫn tiếp tục.")
         } catch let error as APIError { moderationNote = error.userMessage } catch { moderationNote = error.localizedDescription }
     }
 
@@ -120,7 +120,7 @@ struct GameView: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(name).font(.callout.weight(.semibold))
-                Text(active ? String(localized: "đang tới lượt") : (player == .black ? String(localized: "Đen") : String(localized: "Trắng")))
+                Text(active ? LS(localized: "đang tới lượt") : (player == .black ? LS(localized: "Đen") : LS(localized: "Trắng")))
                     .font(.caption).foregroundStyle(active ? Tokens.seal : Tokens.inkSecondary)
             }
             Spacer()
@@ -145,11 +145,11 @@ struct GameView: View {
             Text("NƯỚC \(store.moveNumber)").font(.system(.caption, design: .monospaced))
             Spacer()
             if let last = store.lastMove {
-                Text("\(store.toPlay == .black ? String(localized: "Trắng") : String(localized: "Đen")) đi \(Coordinate.text(last, size: store.boardSize))")
+                Text("\(store.toPlay == .black ? LS(localized: "Trắng") : LS(localized: "Đen")) đi \(Coordinate.text(last, size: store.boardSize))")
                     .font(.caption.weight(.semibold))
             }
             Spacer()
-            Text(store.rules == .japanese ? String(localized: "Nhật · komi \(store.komi.formatted())") : String(localized: "Trung · komi \(store.komi.formatted())"))
+            Text(store.rules == .japanese ? LS(localized: "Nhật · komi \(store.komi.formatted())") : LS(localized: "Trung · komi \(store.komi.formatted())"))
                 .font(.caption).foregroundStyle(Tokens.inkSecondary)
         }
         .foregroundStyle(Tokens.inkSecondary)
@@ -235,14 +235,14 @@ struct ScoringControls: View {
                 }.font(.footnote)
             }
             HStack(spacing: 8) {
-                Label(store.opponentAccepted ? String(localized: "Đối thủ đã đồng ý") : String(localized: "Đối thủ đang xem"),
+                Label(store.opponentAccepted ? LS(localized: "Đối thủ đã đồng ý") : LS(localized: "Đối thủ đang xem"),
                       systemImage: store.opponentAccepted ? "checkmark" : "clock")
                     .font(.caption).foregroundStyle(store.opponentAccepted ? .green : Tokens.inkTertiary)
                 Spacer()
             }
             HStack(spacing: 9) {
                 Button("Chơi tiếp") { store.resumePlay() }.buttonStyle(SecondaryButton())
-                Button(store.iAccepted ? String(localized: "Rút lại") : String(localized: "Đồng ý kết quả")) { store.accept(!store.iAccepted) }
+                Button(store.iAccepted ? LS(localized: "Rút lại") : LS(localized: "Đồng ý kết quả")) { store.accept(!store.iAccepted) }
                     .buttonStyle(PrimaryButton())
             }
         }
@@ -278,16 +278,16 @@ struct ResultView: View {
 
     private var title: String {
         guard let result = store.result else { return "" }
-        guard let winner = result.winner else { return String(localized: "Ván vô hiệu") }
-        return winner == "black" ? String(localized: "Đen thắng") : String(localized: "Trắng thắng")
+        guard let winner = result.winner else { return LS(localized: "Ván vô hiệu") }
+        return winner == "black" ? LS(localized: "Đen thắng") : LS(localized: "Trắng thắng")
     }
 
     private var reasonLabel: String {
         switch store.result?.reason {
-        case "counting": String(localized: "Đếm điểm · nước \(store.moveNumber)")
-        case "resignation": String(localized: "Xin thua")
-        case "timeout": String(localized: "Hết giờ")
-        case "repetition": String(localized: "Lặp thế cờ")
+        case "counting": LS(localized: "Đếm điểm · nước \(store.moveNumber)")
+        case "resignation": LS(localized: "Xin thua")
+        case "timeout": LS(localized: "Hết giờ")
+        case "repetition": LS(localized: "Lặp thế cờ")
         default: store.result?.reason ?? ""
         }
     }

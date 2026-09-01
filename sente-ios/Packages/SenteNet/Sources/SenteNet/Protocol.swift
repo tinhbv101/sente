@@ -65,7 +65,7 @@ public struct TimeControl: Codable, Sendable, Equatable {
         case .absolute: return main
         case .fischer: return "\(main) + \((incrementMs ?? 0) / 1000)″"
         case .byoyomi: return "\(main) + \(periods ?? 0)×\((periodTimeMs ?? 0) / 1000)″"
-        case .correspondence: return String(localized: "\(daysPerMove ?? 0) ngày/nước", bundle: .main)
+        case .correspondence: return String(localized: "\(daysPerMove ?? 0) ngày/nước", bundle: SenteNetL10n.bundle())
         }
     }
 }

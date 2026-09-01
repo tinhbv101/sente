@@ -68,9 +68,9 @@ public struct ConnectionBanner: View {
 
     private var text: String {
         switch kind {
-        case .reconnecting: String(localized: "Đang kết nối lại…", bundle: .main)
-        case .offline: String(localized: "Mất kết nối. Nước đi sẽ được gửi khi có mạng.", bundle: .main)
-        case .syncing: String(localized: "Đang đồng bộ ván…", bundle: .main)
+        case .reconnecting: String(localized: "Đang kết nối lại…", bundle: SenteUIL10n.bundle())
+        case .offline: String(localized: "Mất kết nối. Nước đi sẽ được gửi khi có mạng.", bundle: SenteUIL10n.bundle())
+        case .syncing: String(localized: "Đang đồng bộ ván…", bundle: SenteUIL10n.bundle())
         }
     }
     private var background: Color {

@@ -9,10 +9,10 @@ enum BotLevel: Int, Codable, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .novice: String(localized: "Mới tập")
-        case .greedy: String(localized: "Biết bắt quân")
-        case .thoughtful: String(localized: "Suy tính")
-        case .deep: String(localized: "Cao thủ")
+        case .novice: LS(localized: "Mới tập")
+        case .greedy: LS(localized: "Biết bắt quân")
+        case .thoughtful: LS(localized: "Suy tính")
+        case .deep: LS(localized: "Cao thủ")
         }
     }
 }

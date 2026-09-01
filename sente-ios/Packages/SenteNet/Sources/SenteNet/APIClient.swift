@@ -11,9 +11,9 @@ public enum APIError: Error, Equatable, Sendable {
     public var userMessage: String {
         switch self {
         case .server(_, let message, _): return message
-        case .unauthorized: return String(localized: "Phiên đăng nhập đã hết hạn.", bundle: .main)
-        case .transport: return String(localized: "Không kết nối được máy chủ.", bundle: .main)
-        case .decoding: return String(localized: "Máy chủ trả về dữ liệu không đọc được.", bundle: .main)
+        case .unauthorized: return String(localized: "Phiên đăng nhập đã hết hạn.", bundle: SenteNetL10n.bundle())
+        case .transport: return String(localized: "Không kết nối được máy chủ.", bundle: SenteNetL10n.bundle())
+        case .decoding: return String(localized: "Máy chủ trả về dữ liệu không đọc được.", bundle: SenteNetL10n.bundle())
         }
     }
 }
@@ -258,7 +258,7 @@ public actor APIClient {
             if let envelope = try? ProtocolDecoder.json.decode(ErrorEnvelope.self, from: data) {
                 throw APIError.server(code: envelope.error.code, message: envelope.error.message, status: status)
             }
-            throw APIError.server(code: "http_\(status)", message: String(localized: "Máy chủ trả về lỗi \(status).", bundle: .main), status: status)
+            throw APIError.server(code: "http_\(status)", message: String(localized: "Máy chủ trả về lỗi \(status).", bundle: SenteNetL10n.bundle()), status: status)
         }
         return (data, status)
     }

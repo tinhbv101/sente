@@ -27,9 +27,9 @@ public enum TimeLimits {
         let totalMinutes = ms / 60_000
         let hours = totalMinutes / 60, minutes = totalMinutes % 60
         switch (hours, minutes) {
-        case (0, _): return String(localized: "\(minutes) phút", bundle: .main)
-        case (_, 0): return String(localized: "\(hours) giờ", bundle: .main)
-        default: return String(localized: "\(hours) giờ \(minutes) phút", bundle: .main)
+        case (0, _): return String(localized: "\(minutes) phút", bundle: SenteNetL10n.bundle())
+        case (_, 0): return String(localized: "\(hours) giờ", bundle: SenteNetL10n.bundle())
+        default: return String(localized: "\(hours) giờ \(minutes) phút", bundle: SenteNetL10n.bundle())
         }
     }
 }

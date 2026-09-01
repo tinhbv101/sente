@@ -5,7 +5,7 @@ import UIKit
 
 enum AppleSignInError: LocalizedError {
     case noIdentityToken
-    var errorDescription: String? { String(localized: "Apple không trả về thông tin đăng nhập. Thử lại sau.") }
+    var errorDescription: String? { LS(localized: "Apple không trả về thông tin đăng nhập. Thử lại sau.") }
 }
 
 extension AppSession {

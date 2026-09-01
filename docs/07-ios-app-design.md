@@ -514,8 +514,16 @@ Trường hợp phải xử lý đúng:
 
 ## 10.1 Ngôn ngữ (tiếng Việt, tiếng Anh)
 
-Mặc định theo ngôn ngữ máy; iOS tự thêm mục chọn ngôn ngữ riêng cho Sente trong Cài đặt hệ
-thống khi bundle có hai ngôn ngữ, và Cài đặt của app có hàng "Ngôn ngữ" mở thẳng tới đó.
+Mặc định theo ngôn ngữ máy; Cài đặt của app có bộ chọn **Theo hệ thống / Tiếng Việt /
+English**, đổi là **áp dụng ngay** không cần mở lại app. Cơ chế (đã đo bằng probe lúc chạy,
+không đoán): `Text`/`Button`/… (LocalizedStringKey) đổi theo `\.locale` đặt ở root — probe
+render từng byte khớp bản verbatim; `String(localized:)` KHÔNG theo `locale:` cũng không theo
+swizzle `localizedString(forKey:)` (đường String Catalog bỏ qua nó) mà chỉ theo `bundle:` trỏ
+thẳng vào `.lproj` — nên mọi call site đi qua `LS(localized:)` (`AppLanguage.swift`), hai
+package qua `SenteNetL10n.bundle`/`SenteUIL10n.bundle` do app tiêm. Root view `.id(language)`
+để cây rebuild và mọi chuỗi resolve lại một lượt. Chọn tiếng Việt khi thiếu bảng dịch vẫn đúng
+vì khóa chính là câu tiếng Việt. `AppleLanguages` được ghi/xóa kèm để lần mở sau (và các UI hệ
+thống như hộp xin quyền) nhất quán. Launch arg `-appLanguage vi|en` phục vụ chụp màn hình.
 
 Cách làm — **String Catalog, khóa là tiếng Việt**:
 - `developmentLanguage: vi` trong `project.yml`; chuỗi trong code giữ nguyên tiếng Việt và là

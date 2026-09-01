@@ -9,7 +9,7 @@ import GoKit
 struct LText: Decodable, Hashable {
     let vi: String
     let en: String
-    var text: String { Bundle.main.preferredLocalizations.first == "vi" ? vi : en }
+    var text: String { LanguageManager.isVietnamese ? vi : en }
 }
 
 struct LessonLibrary: Decodable {

@@ -1204,6 +1204,16 @@
         }
       }
     },
+    "Mặc định theo ngôn ngữ máy. Đổi ở đây có hiệu lực ngay, chỉ với Sente.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follows the device language by default. Changing it here applies immediately, to Sente only."
+          }
+        }
+      }
+    },
     "Mỗi bên": {
       "localizations": {
         "en": {
@@ -1320,16 +1330,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Language"
-          }
-        }
-      }
-    },
-    "Ngôn ngữ theo máy. Đổi riêng cho Sente trong Cài đặt hệ thống.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Follows the device language. Change it for Sente alone in the system Settings."
           }
         }
       }

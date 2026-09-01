@@ -16,7 +16,7 @@ struct QRScanSheet: View {
                 switch permission {
                 case .authorized:
                     if AVCaptureDevice.default(for: .video) == nil {
-                        message(String(localized: "Máy này không có camera."), systemImage: "camera.fill")
+                        message(LS(localized: "Máy này không có camera."), systemImage: "camera.fill")
                     } else {
                         QRScannerView { payload in
                             // The camera keeps reporting the same code many times a second.
@@ -28,7 +28,7 @@ struct QRScanSheet: View {
                         frame
                     }
                 case .denied, .restricted:
-                    message(String(localized: "Sente chưa được phép dùng camera."), systemImage: "camera.badge.ellipsis") {
+                    message(LS(localized: "Sente chưa được phép dùng camera."), systemImage: "camera.badge.ellipsis") {
                         Button("Mở Cài đặt") {
                             if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                         }.buttonStyle(PrimaryButton())

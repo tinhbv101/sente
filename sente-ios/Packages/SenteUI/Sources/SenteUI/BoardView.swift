@@ -233,7 +233,7 @@ public struct BoardView: View {
                         .position(g.center(of: point))
                         .accessibilityLabel(accessibilityLabel(for: point, size: g.size))
                         .accessibilityHint(interactive && snapshot.board.isEmpty(point) && legality(point) == nil
-                                           ? String(localized: "Chạm hai lần để đặt quân", bundle: .main) : "")
+                                           ? String(localized: "Chạm hai lần để đặt quân", bundle: SenteUIL10n.bundle()) : "")
                         .accessibilityAddTraits(snapshot.lastMove == point ? .isSelected : [])
                         .accessibilityAction { if interactive { onPlace(point) } }
                 }
@@ -243,9 +243,9 @@ public struct BoardView: View {
     private func accessibilityLabel(for point: Point, size: Int) -> String {
         let name = Coordinate.text(point, size: size)
         switch snapshot.board[point] {
-        case .black: return String(localized: "\(name), quân đen", bundle: .main)
-        case .white: return String(localized: "\(name), quân trắng", bundle: .main)
-        case nil: return String(localized: "\(name), trống", bundle: .main)
+        case .black: return String(localized: "\(name), quân đen", bundle: SenteUIL10n.bundle())
+        case .white: return String(localized: "\(name), quân trắng", bundle: SenteUIL10n.bundle())
+        case nil: return String(localized: "\(name), trống", bundle: SenteUIL10n.bundle())
         }
     }
 }

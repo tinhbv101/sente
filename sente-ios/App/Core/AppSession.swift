@@ -173,12 +173,13 @@ struct Settings: Equatable {
     /// useful on 19×19 where a finger hides the intersection.
     var offsetPlacement: Bool
     var appearance: Appearance
+    var language: AppLanguage
 
     enum Appearance: String, CaseIterable, Identifiable {
         case system, light, dark
         var id: String { rawValue }
         var title: String {
-            switch self { case .system: String(localized: "Theo hệ thống"); case .light: String(localized: "Sáng"); case .dark: String(localized: "Tối") }
+            switch self { case .system: LS(localized: "Theo hệ thống"); case .light: LS(localized: "Sáng"); case .dark: LS(localized: "Tối") }
         }
         /// nil defers to the system setting.
         var colorScheme: ColorScheme? {
@@ -195,7 +196,8 @@ struct Settings: Equatable {
             showCoordinates: defaults.object(forKey: "showCoordinates") as? Bool ?? true,
             colourBlindSymbols: defaults.bool(forKey: "colourBlindSymbols"),
             offsetPlacement: defaults.bool(forKey: "offsetPlacement"),
-            appearance: Appearance(rawValue: defaults.string(forKey: "appearance") ?? "") ?? .system)
+            appearance: Appearance(rawValue: defaults.string(forKey: "appearance") ?? "") ?? .system,
+            language: AppLanguage(rawValue: defaults.string(forKey: "appLanguage") ?? "") ?? .system)
     }
 
     func save() {
@@ -205,5 +207,6 @@ struct Settings: Equatable {
         defaults.set(colourBlindSymbols, forKey: "colourBlindSymbols")
         defaults.set(offsetPlacement, forKey: "offsetPlacement")
         defaults.set(appearance.rawValue, forKey: "appearance")
+        defaults.set(language.rawValue, forKey: "appLanguage")
     }
 }
