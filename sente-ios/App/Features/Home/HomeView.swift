@@ -42,6 +42,12 @@ struct HomeView: View {
             }
             // One sheet for both, so an invitation arriving while another sheet is up
             // replaces it instead of being silently dropped (SwiftUI presents one).
+            .sheet(isPresented: Binding(get: { session.pendingSGF != nil },
+                                        set: { if !$0 { session.pendingSGF = nil } })) {
+                if let record = session.pendingSGF {
+                    NavigationStack { LocalReplayView(record: record) }
+                }
+            }
             .sheet(item: $sheet) { item in
                 switch item {
                 case .create:
@@ -58,6 +64,7 @@ struct HomeView: View {
             .navigationDestination(isPresented: $showSettings) { SettingsView() }
             .navigationDestination(isPresented: $showLocal) { LocalGameView() }
             .navigationDestination(for: LearnRoute.self) { _ in LearnView() }
+            .navigationDestination(for: PuzzleRoute.self) { _ in DailyPuzzleView() }
             .navigationDestination(for: BotRoute.self) { route in
                 switch route {
                 case .play: BotPlayView()
@@ -77,6 +84,7 @@ struct HomeView: View {
                 if UserDefaults.standard.bool(forKey: "openLocal") { showLocal = true }
                 if UserDefaults.standard.bool(forKey: "openLearn") { path.append(LearnRoute.list) }
                 if UserDefaults.standard.bool(forKey: "openBot") { path.append(BotRoute.play) }
+                if UserDefaults.standard.bool(forKey: "openPuzzle") { path.append(PuzzleRoute.today) }
                 if UserDefaults.standard.bool(forKey: "openWatch") { path.append(BotRoute.watch) }
                 if let id = UserDefaults.standard.string(forKey: "openLesson"),
                    let lesson = LessonLibrary.shared.chapters.flatMap(\.lessons).first(where: { $0.id == id }) {
@@ -225,6 +233,18 @@ struct HomeView: View {
                 }
             }
             .foregroundStyle(Tokens.ink)
+            Button { path.append(PuzzleRoute.today) } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "flame.fill").foregroundStyle(Tokens.seal)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Tsumego hôm nay").font(.callout.weight(.semibold))
+                        puzzleSubtitle
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Tokens.inkTertiary)
+                }
+            }
+            .foregroundStyle(Tokens.ink)
             Button { path.append(BotRoute.play) } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "cpu").foregroundStyle(Tokens.indigo)
@@ -249,6 +269,17 @@ struct HomeView: View {
                 }
             }
             .foregroundStyle(Tokens.ink)
+        }
+    }
+
+    @ViewBuilder private var puzzleSubtitle: some View {
+        let status = DailyPuzzles.status(day: DailyPuzzles.dayNumber())
+        if status.doneToday {
+            Text("Hôm nay đã giải ✓ · chuỗi \(status.streak) ngày").font(.caption).foregroundStyle(Tokens.inkSecondary)
+        } else if status.streak > 0 {
+            Text("Giữ chuỗi \(status.streak) ngày!").font(.caption).foregroundStyle(Tokens.inkSecondary)
+        } else {
+            Text("Một bài mỗi ngày, giải để tạo chuỗi").font(.caption).foregroundStyle(Tokens.inkSecondary)
         }
     }
 
@@ -283,6 +314,8 @@ enum LearnRoute: Hashable { case list }
 
 /// The two bot screens, pushed through the same path.
 enum BotRoute: Hashable { case play, watch }
+
+enum PuzzleRoute: Hashable { case today }
 
 /// What the home screen can present. `Identifiable` by content, so switching from
 /// one invitation code to another re-presents rather than reuses.

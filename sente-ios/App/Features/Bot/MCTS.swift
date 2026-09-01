@@ -54,6 +54,16 @@ struct MCTSBot {
         }
     }
 
+    /// chooseMove plus the win rate of the best branch, for the replay analysis.
+    mutating func analyze(_ engine: GameEngine) -> (move: Move, winRate: Double)? {
+        analysisRate = nil
+        let move = chooseMove(engine)
+        guard let rate = analysisRate else { return nil }
+        return (move, rate)
+    }
+
+    private var analysisRate: Double?
+
     mutating func chooseMove(_ engine: GameEngine) -> Move {
         guard engine.state.phase == .playing else { return .pass }
         let side = engine.toPlay
@@ -73,6 +83,7 @@ struct MCTSBot {
 
         guard let best = root.children.max(by: { $0.visits < $1.visits }),
               let move = best.move else { return .pass }
+        if best.visits > 0 { analysisRate = best.wins / best.visits }
 
         if canResign, engine.state.moveNumber > 20, best.visits > 40,
            best.wins / best.visits < 0.06,

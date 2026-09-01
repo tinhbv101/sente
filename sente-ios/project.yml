@@ -58,6 +58,17 @@ targets:
           NSAllowsLocalNetworking: true
         # sente://j/<code> opens an invitation. https://sente.devlord.net/j/<code>
         # does too, through the associated domain in Sente.entitlements.
+        # .sgf files open in Sente as a local replay.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Smart Game Format
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [com.red-bean.sgf]
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.red-bean.sgf
+            UTTypeDescription: Smart Game Format
+            UTTypeConformsTo: [public.text]
+            UTTypeTagSpecification:
+              public.filename-extension: [sgf]
         CFBundleURLTypes:
           - CFBundleURLName: app.sente.go
             CFBundleURLSchemes: [sente]

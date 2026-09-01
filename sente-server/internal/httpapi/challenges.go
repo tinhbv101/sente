@@ -60,12 +60,12 @@ func (s *Server) challengeResponse(challenge store.Challenge, viewer string) cha
 func (s *Server) handleCreateChallenge(w http.ResponseWriter, r *http.Request) {
 	var request createChallengeRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&request); err != nil {
-		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
 	config, err := configFromRequest(request.createGameRequest)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid_config", err.Error())
+		writeError(w, r, http.StatusBadRequest, "invalid_config", err.Error())
 		return
 	}
 	claims := userFrom(r.Context())
@@ -75,8 +75,14 @@ func (s *Server) handleCreateChallenge(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		s.config.Logger.Warn("creating invitation", "error", err)
-		writeError(w, http.StatusBadRequest, "invalid_config", err.Error())
+		writeError(w, r, http.StatusBadRequest, "invalid_config", err.Error())
 		return
+	}
+	// A directed invitation (a rematch) reaches the other person's phone.
+	if request.InviteeUserID != "" && s.config.Notifier.Enabled() {
+		if creator, err := s.users.Get(r.Context(), claims.UserID); err == nil {
+			s.config.Notifier.ChallengeReceived(request.InviteeUserID, creator.DisplayName, challenge.Code)
+		}
 	}
 	writeJSON(w, http.StatusCreated, s.challengeResponse(challenge, claims.UserID))
 }
@@ -88,7 +94,7 @@ func (s *Server) handleGetChallenge(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Unknown and used look the same, so the endpoint cannot be used to find
 		// out which codes exist (docs/08 §4.2).
-		writeError(w, http.StatusNotFound, "challenge_gone",
+		writeError(w, r, http.StatusNotFound, "challenge_gone",
 			"Lời mời này không còn hiệu lực.")
 		return
 	}
@@ -104,22 +110,22 @@ func (s *Server) handleAcceptChallenge(w http.ResponseWriter, r *http.Request) {
 	accepted, err := s.challenges.Accept(r.Context(), r.PathValue("code"), claims.UserID)
 	switch {
 	case errors.Is(err, store.ErrOwnChallenge):
-		writeError(w, http.StatusConflict, "own_challenge",
+		writeError(w, r, http.StatusConflict, "own_challenge",
 			"Đây là lời mời của chính bạn.")
 		return
 	case errors.Is(err, store.ErrChallengeGone):
-		writeError(w, http.StatusConflict, "challenge_gone",
+		writeError(w, r, http.StatusConflict, "challenge_gone",
 			"Lời mời này không còn hiệu lực.")
 		return
 	case err != nil:
 		s.config.Logger.Error("accepting invitation", "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không nhận được lời mời.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không nhận được lời mời.")
 		return
 	}
 
 	loaded, err := s.games.Load(r.Context(), accepted.GameID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "Không mở được ván.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không mở được ván.")
 		return
 	}
 	colour := "white"
@@ -139,7 +145,7 @@ func (s *Server) handleAcceptChallenge(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDeclineChallenge(w http.ResponseWriter, r *http.Request) {
 	claims := userFrom(r.Context())
 	if err := s.challenges.Decline(r.Context(), r.PathValue("code"), claims.UserID); err != nil {
-		writeError(w, http.StatusConflict, "challenge_gone", "Lời mời này không còn hiệu lực.")
+		writeError(w, r, http.StatusConflict, "challenge_gone", "Lời mời này không còn hiệu lực.")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -148,7 +154,7 @@ func (s *Server) handleDeclineChallenge(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleCancelChallenge(w http.ResponseWriter, r *http.Request) {
 	claims := userFrom(r.Context())
 	if err := s.challenges.Cancel(r.Context(), r.PathValue("code"), claims.UserID); err != nil {
-		writeError(w, http.StatusConflict, "challenge_gone", "Lời mời này không còn hiệu lực.")
+		writeError(w, r, http.StatusConflict, "challenge_gone", "Lời mời này không còn hiệu lực.")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -158,7 +164,7 @@ func (s *Server) handleListChallenges(w http.ResponseWriter, r *http.Request) {
 	claims := userFrom(r.Context())
 	list, err := s.challenges.ListForUser(r.Context(), claims.UserID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "Không đọc được danh sách.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đọc được danh sách.")
 		return
 	}
 	items := make([]challengeResponse, 0, len(list))
@@ -166,4 +172,49 @@ func (s *Server) handleListChallenges(w http.ResponseWriter, r *http.Request) {
 		items = append(items, s.challengeResponse(challenge, claims.UserID))
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+// handleRematch turns a finished game into a directed invitation with the same
+// settings and swapped colours. The client never re-sends a config it might
+// have reconstructed wrong; the stored game is the source.
+func (s *Server) handleRematch(w http.ResponseWriter, r *http.Request) {
+	claims := userFrom(r.Context())
+	loaded, err := s.games.Load(r.Context(), r.PathValue("id"))
+	if errors.Is(err, store.ErrNotFound) {
+		writeError(w, r, http.StatusNotFound, "not_found", "Không tìm thấy ván cờ.")
+		return
+	}
+	if err != nil {
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đọc được ván.")
+		return
+	}
+	var opponent, myNewColor string
+	switch claims.UserID {
+	case loaded.BlackUserID:
+		opponent, myNewColor = loaded.WhiteUserID, "white"
+	case loaded.WhiteUserID:
+		opponent, myNewColor = loaded.BlackUserID, "black"
+	default:
+		writeError(w, r, http.StatusForbidden, "not_found", "Bạn không ở trong ván này.")
+		return
+	}
+	if opponent == "" {
+		writeError(w, r, http.StatusConflict, "challenge_gone", "Đối thủ không còn tài khoản.")
+		return
+	}
+	challenge, err := s.challenges.Create(r.Context(), store.CreateChallengeParams{
+		CreatorID: claims.UserID, InviteeID: opponent,
+		Config: loaded.Session.Config, CreatorColor: myNewColor,
+	})
+	if err != nil {
+		s.config.Logger.Warn("creating rematch", "error", err)
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không tạo được lời mời.")
+		return
+	}
+	if s.config.Notifier.Enabled() {
+		if creator, err := s.users.Get(r.Context(), claims.UserID); err == nil {
+			s.config.Notifier.ChallengeReceived(opponent, creator.DisplayName, challenge.Code)
+		}
+	}
+	writeJSON(w, http.StatusCreated, s.challengeResponse(challenge, claims.UserID))
 }

@@ -15,6 +15,13 @@ struct BotPlayView: View {
         Group {
             if let store {
                 LocalBoardView(store: store, confirmResign: $confirmResign, confirmNew: $confirmNew)
+                    .onChange(of: store.phase) { _, phase in
+                        guard phase == .finished, let winner = store.result?.winner,
+                              store.config.botLevel(for: winner) == nil,
+                              let botSide = [Player.black, .white].first(where: { store.config.botLevel(for: $0) != nil }),
+                              let level = store.config.botLevel(for: botSide) else { return }
+                        BotLadder.recordWin(over: level)
+                    }
             } else {
                 BotSetupView { config in store = LocalGameStore(config: config, storage: Self.storage) }
             }
@@ -43,6 +50,12 @@ struct BotSetupView: View {
     @State private var rules: RuleSet = .japanese
     @State private var handicap = 0
 
+    private func label(for option: BotLevel) -> String {
+        if BotLadder.highestBeaten() >= option.rawValue { return option.title + " ✓" }
+        if !BotLadder.isUnlocked(option) { return option.title + " 🔒" }
+        return option.title
+    }
+
     var body: some View {
         Form {
             Section("Bàn cờ") {
@@ -60,13 +73,20 @@ struct BotSetupView: View {
             }
             Section {
                 Picker("Cấp độ máy", selection: $level) {
-                    ForEach(BotLevel.allCases) { Text($0.title).tag($0) }
+                    ForEach(BotLevel.allCases) { option in
+                        Text(label(for: option)).tag(option)
+                    }
+                }
+                .onChange(of: level) { _, chosen in
+                    if !BotLadder.isUnlocked(chosen) {
+                        level = BotLevel(rawValue: max(BotLadder.highestBeaten() + 1, BotLevel.greedy.rawValue)) ?? .greedy
+                    }
                 }
                 Picker("Màu quân của bạn", selection: $myColor) {
                     Text("Đen").tag(Player.black); Text("Trắng").tag(Player.white)
                 }
             } header: { Text("Đối thủ") } footer: {
-                Text("Máy chạy ngay trên điện thoại, không cần mạng. Cấp cao nghĩ lâu hơn một chút.")
+                Text("Máy chạy ngay trên điện thoại, không cần mạng. Thắng một cấp để mở cấp tiếp theo.")
             }
         }
         .scrollContentBackground(.hidden)

@@ -18,11 +18,11 @@ struct LessonLibrary: Decodable {
     /// Loaded once; the file ships in the bundle and never changes at runtime.
     static let shared = load()
 
-    static func load(bundle: Bundle = .main) -> LessonLibrary {
-        guard let url = bundle.url(forResource: "Lessons", withExtension: "json"),
+    static func load(resource: String = "Lessons", bundle: Bundle = .main) -> LessonLibrary {
+        guard let url = bundle.url(forResource: resource, withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let library = try? JSONDecoder().decode(LessonLibrary.self, from: data) else {
-            assertionFailure("Lessons.json is missing or malformed")
+            assertionFailure("\(resource).json is missing or malformed")
             return LessonLibrary(chapters: [])
         }
         return library

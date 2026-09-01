@@ -149,6 +149,22 @@ public actor APIClient {
         _ = try await perform("POST", "/v1/blocks", body: Body(userId: userID), authenticated: true, allowRefresh: true)
     }
 
+    /// The same settings, colours swapped, straight to the old opponent.
+    public func rematch(gameID: String) async throws -> Challenge {
+        try await request("POST", "/v1/games/\(gameID)/rematch", as: Challenge.self)
+    }
+
+    public func stats() async throws -> PlayerStats {
+        try await request("GET", "/v1/me/stats")
+    }
+
+    /// Partial toggle, e.g. ["turn": false]. Returns the merged preferences.
+    public func setDevicePrefs(token: String, _ patch: [String: Bool]) async throws -> [String: Bool] {
+        struct Reply: Decodable { let prefs: [String: Bool] }
+        let reply: Reply = try await request("PATCH", "/v1/devices/\(token)", body: patch)
+        return reply.prefs
+    }
+
     public func myGames() async throws -> [GameSummary] {
         struct Envelope: Decodable { let items: [GameSummary] }
         return try await request("GET", "/v1/games", as: Envelope.self).items

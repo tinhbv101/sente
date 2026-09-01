@@ -416,3 +416,40 @@ func TestListingMyGamesLeadsWithMyMove(t *testing.T) {
 		t.Errorf("Binh is white and waiting: %+v", list.Items)
 	}
 }
+
+// Rematch: the finished game's settings come back as a directed invitation
+// with the colours swapped, and only for someone who was in the game.
+func TestRematchInvitesTheOpponentWithSwappedColours(t *testing.T) {
+	server := newTestServer(t)
+	black, white := signUp(t, server), signUp(t, server)
+	gameID := createGame(t, server, black, blitz)
+	blackConn, whiteConn := connect(t, server, black, gameID), connect(t, server, white, gameID)
+	readUntil(t, blackConn, "game_state")
+	readUntil(t, whiteConn, "game_state")
+	send(t, blackConn, "move", incomingMove{Kind: "play", Point: "e5", ExpectedMoveNumber: 0})
+	readMoveMade(t, whiteConn, 1)
+	send(t, whiteConn, "move", incomingMove{Kind: "resign", ExpectedMoveNumber: 1})
+	readUntil(t, blackConn, "game_over")
+
+	response, raw := do(t, server, http.MethodPost, "/v1/games/"+gameID+"/rematch", black.token, "")
+	if response.StatusCode != http.StatusCreated {
+		t.Fatalf("rematch: %d %s", response.StatusCode, raw)
+	}
+	var invite challengeResponse
+	_ = json.Unmarshal(raw, &invite)
+	if invite.CreatorColor != "white" {
+		t.Errorf("colours should swap: creator was black, now %q", invite.CreatorColor)
+	}
+	if invite.Config.BoardSize != 9 {
+		t.Errorf("settings should carry over: %+v", invite.Config)
+	}
+	// The opponent sees it; a stranger cannot ask for one.
+	_, listRaw := do(t, server, http.MethodGet, "/v1/challenges", white.token, "")
+	if !strings.Contains(string(listRaw), invite.Code) {
+		t.Errorf("invitee should see the rematch: %s", listRaw)
+	}
+	stranger := signUp(t, server)
+	if response, _ := do(t, server, http.MethodPost, "/v1/games/"+gameID+"/rematch", stranger.token, ""); response.StatusCode != http.StatusForbidden {
+		t.Errorf("stranger: %d", response.StatusCode)
+	}
+}

@@ -141,3 +141,54 @@ func TestAcceptingAnInvitationPushesItsCreator(t *testing.T) {
 		t.Errorf("got %+v", got)
 	}
 }
+
+func TestDevicePrefsEndpointTogglesKinds(t *testing.T) {
+	server := newTestServer(t)
+	p := signUp(t, server)
+	token := strings.Repeat("ba", 32)
+	do(t, server, http.MethodPost, "/v1/devices", p.token,
+		fmt.Sprintf(`{"apns_token":%q,"environment":"production"}`, token))
+
+	response, raw := do(t, server, http.MethodPatch, "/v1/devices/"+token, p.token, `{"turn":false}`)
+	if response.StatusCode != http.StatusOK || !strings.Contains(string(raw), `"turn":false`) {
+		t.Fatalf("patch: %d %s", response.StatusCode, raw)
+	}
+	devices := store.NewDevices(testPool)
+	if list, _ := devices.ForUser(context.Background(), p.userID, notify.KindTurn); len(list) != 0 {
+		t.Error("muted kind still delivers")
+	}
+	if list, _ := devices.ForUser(context.Background(), p.userID, notify.KindGameEnd); len(list) != 1 {
+		t.Error("other kinds must keep working")
+	}
+	if response, _ := do(t, server, http.MethodPatch, "/v1/devices/"+token, p.token, `{"sound":true}`); response.StatusCode != http.StatusBadRequest {
+		t.Errorf("unknown kind: %d", response.StatusCode)
+	}
+	if response, _ := do(t, server, http.MethodPatch, "/v1/devices/"+strings.Repeat("cc", 32), p.token, `{"turn":true}`); response.StatusCode != http.StatusNotFound {
+		t.Errorf("unknown token: %d", response.StatusCode)
+	}
+}
+
+// The rematch path: a directed invitation lands on the invitee's phone and in
+// their invitation list.
+func TestADirectedInvitationReachesTheInvitee(t *testing.T) {
+	sender := &recordingSender{got: make(chan pushed, 8)}
+	server := newTestServer(t, withPush(sender))
+	creator, friend := signUp(t, server), signUp(t, server)
+	friendToken := strings.Repeat("dd", 32)
+	do(t, server, http.MethodPost, "/v1/devices", friend.token,
+		fmt.Sprintf(`{"apns_token":%q,"environment":"production"}`, friendToken))
+
+	response, raw := do(t, server, http.MethodPost, "/v1/challenges", creator.token,
+		fmt.Sprintf(`{"board_size":9,"creator_color":"black","invitee_user_id":%q,"time_control":{"kind":"absolute","main_time_ms":600000}}`, friend.userID))
+	if response.StatusCode != http.StatusCreated {
+		t.Fatalf("create: %d %s", response.StatusCode, raw)
+	}
+	got := awaitPush(t, sender)
+	if got.token != friendToken || got.note.BodyKey != "push.challenge.body" {
+		t.Errorf("push: %+v", got)
+	}
+	_, listRaw := do(t, server, http.MethodGet, "/v1/challenges", friend.token, "")
+	if !strings.Contains(string(listRaw), `"is_mine":false`) {
+		t.Errorf("the invitee should see the invitation: %s", listRaw)
+	}
+}

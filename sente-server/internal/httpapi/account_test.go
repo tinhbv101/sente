@@ -246,3 +246,59 @@ func TestRenamingYourself(t *testing.T) {
 		t.Errorf("anonymous: %d", response.StatusCode)
 	}
 }
+
+func TestErrorsFollowAcceptLanguage(t *testing.T) {
+	server := newTestServer(t)
+	get := func(language string) string {
+		request, _ := http.NewRequest(http.MethodGet, server.URL+"/v1/me", nil)
+		if language != "" {
+			request.Header.Set("Accept-Language", language)
+		}
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(readAll(t, response))
+	}
+	if body := get(""); !strings.Contains(body, "Phiên đăng nhập") {
+		t.Errorf("default should be Vietnamese: %s", body)
+	}
+	if body := get("en-US,en;q=0.9"); !strings.Contains(body, "Your session has expired.") {
+		t.Errorf("English readers get English: %s", body)
+	}
+	if body := get("vi-VN"); !strings.Contains(body, "Phiên đăng nhập") {
+		t.Errorf("Vietnamese stays Vietnamese: %s", body)
+	}
+}
+
+func TestStatsEndpointCountsAResignedGame(t *testing.T) {
+	server := newTestServer(t)
+	black, white := signUp(t, server), signUp(t, server)
+	gameID := createGame(t, server, black, blitz)
+	blackConn, whiteConn := connect(t, server, black, gameID), connect(t, server, white, gameID)
+	readUntil(t, blackConn, "game_state")
+	readUntil(t, whiteConn, "game_state")
+	send(t, blackConn, "move", incomingMove{Kind: "play", Point: "e5", ExpectedMoveNumber: 0})
+	readMoveMade(t, whiteConn, 1)
+	send(t, whiteConn, "move", incomingMove{Kind: "resign", ExpectedMoveNumber: 1})
+	readUntil(t, blackConn, "game_over")
+
+	_, raw := do(t, server, http.MethodGet, "/v1/me/stats", black.token, "")
+	var stats struct {
+		Games, Wins, Losses int
+		BySize              map[string]map[string]int `json:"by_size"`
+	}
+	if err := json.Unmarshal(raw, &stats); err != nil {
+		t.Fatal(err)
+	}
+	if stats.Games != 1 || stats.Wins != 1 || stats.Losses != 0 {
+		t.Errorf("black resigned against should win: %s", raw)
+	}
+	if stats.BySize["9"]["wins"] != 1 {
+		t.Errorf("per-size: %s", raw)
+	}
+	_, raw = do(t, server, http.MethodGet, "/v1/me/stats", white.token, "")
+	if !strings.Contains(string(raw), `"losses":1`) {
+		t.Errorf("white lost: %s", raw)
+	}
+}

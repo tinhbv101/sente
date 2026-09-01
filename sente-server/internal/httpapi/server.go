@@ -108,18 +108,21 @@ func (s *Server) routes() {
 
 	s.mux.HandleFunc("GET /v1/me", s.authed(ratelimit.Read, s.handleMe))
 	s.mux.HandleFunc("PATCH /v1/me", s.authed(ratelimit.Read, s.handleUpdateMe))
+	s.mux.HandleFunc("GET /v1/me/stats", s.authed(ratelimit.Read, s.handleStats))
 	s.mux.HandleFunc("DELETE /v1/me", s.authed(ratelimit.Read, s.handleDeleteAccount))
 	s.mux.HandleFunc("POST /v1/reports", s.authed(ratelimit.CreateInvite, s.handleReport))
 	s.mux.HandleFunc("POST /v1/blocks", s.authed(ratelimit.Read, s.handleBlock))
 	s.mux.HandleFunc("DELETE /v1/blocks/{id}", s.authed(ratelimit.Read, s.handleUnblock))
 	s.mux.HandleFunc("POST /v1/devices", s.authed(ratelimit.Read, s.handleRegisterDevice))
 	s.mux.HandleFunc("DELETE /v1/devices/{token}", s.authed(ratelimit.Read, s.handleUnregisterDevice))
+	s.mux.HandleFunc("PATCH /v1/devices/{token}", s.authed(ratelimit.Read, s.handleDevicePrefs))
 
 	s.mux.HandleFunc("POST /v1/games", s.authed(ratelimit.CreateGame, s.handleCreateGame))
 	s.mux.HandleFunc("GET /v1/games", s.authed(ratelimit.Read, s.handleListGames))
 	s.mux.HandleFunc("GET /v1/games/{id}", s.authed(ratelimit.Read, s.handleGetGame))
 	s.mux.HandleFunc("GET /v1/games/{id}/moves", s.authed(ratelimit.Read, s.handleMoves))
 	s.mux.HandleFunc("GET /v1/games/{id}/sgf", s.authed(ratelimit.Read, s.handleSGF))
+	s.mux.HandleFunc("POST /v1/games/{id}/rematch", s.authed(ratelimit.CreateInvite, s.handleRematch))
 
 	// The preview needs no token: a link has to be readable before signing up.
 	s.mux.HandleFunc("GET /v1/challenges/{code}", s.limit(ratelimit.Read, s.handleGetChallenge))
@@ -151,11 +154,11 @@ type apiError struct {
 
 // Every failure has the same shape, 4xx and 5xx alike, so a client only ever
 // needs one branch for errors (docs/06 §1.1).
-func writeError(w http.ResponseWriter, status int, code, message string) {
+func writeError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]apiError{
-		"error": {Code: code, Message: message},
+		"error": {Code: code, Message: errorText(r, code, message)},
 	})
 }
 
@@ -172,7 +175,7 @@ func withRecovery(logger *slog.Logger, next http.Handler) http.Handler {
 				// A panic in one request must not take the process down: the other
 				// games running on this node have nothing to do with it.
 				logger.Error("panic serving request", "path", r.URL.Path, "panic", recovered)
-				writeError(w, http.StatusInternalServerError, "internal",
+				writeError(w, r, http.StatusInternalServerError, "internal",
 					"Có lỗi xảy ra. Vui lòng thử lại.")
 			}
 		}()
@@ -190,7 +193,7 @@ func (s *Server) authed(rule ratelimit.Rule, next http.HandlerFunc) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		claims, err := s.claimsFrom(r)
 		if err != nil {
-			writeError(w, http.StatusUnauthorized, "unauthorized", "Phiên đăng nhập đã hết hạn.")
+			writeError(w, r, http.StatusUnauthorized, "unauthorized", "Phiên đăng nhập đã hết hạn.")
 			return
 		}
 		s.limit(rule, next)(w, r.WithContext(context.WithValue(r.Context(), userKey, claims)))
@@ -270,7 +273,7 @@ func (s *Server) handleGuest(w http.ResponseWriter, r *http.Request) {
 	user, err := s.users.CreateGuest(r.Context())
 	if err != nil {
 		s.config.Logger.Error("creating guest", "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không tạo được tài khoản.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không tạo được tài khoản.")
 		return
 	}
 	session, ok := s.issueSession(w, r, user.ID, true)
@@ -309,12 +312,12 @@ type createGameRequest struct {
 func (s *Server) handleCreateGame(w http.ResponseWriter, r *http.Request) {
 	var request createGameRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&request); err != nil {
-		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
 	config, err := configFromRequest(request)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid_config", err.Error())
+		writeError(w, r, http.StatusBadRequest, "invalid_config", err.Error())
 		return
 	}
 	claims := userFrom(r.Context())
@@ -324,7 +327,7 @@ func (s *Server) handleCreateGame(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		s.config.Logger.Error("creating game", "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không tạo được ván.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không tạo được ván.")
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"game_id": id, "your_color": "black"})
@@ -394,12 +397,12 @@ func (s *Server) handleGetGame(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	loaded, err := s.games.Load(r.Context(), id)
 	if errors.Is(err, store.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "not_found", "Không tìm thấy ván cờ.")
+		writeError(w, r, http.StatusNotFound, "not_found", "Không tìm thấy ván cờ.")
 		return
 	}
 	if err != nil {
 		s.config.Logger.Error("loading game", "game_id", id, "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không đọc được ván.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đọc được ván.")
 		return
 	}
 	writeJSON(w, http.StatusOK, gameStateOf(id, store.RulesVersion, loaded.Session))
@@ -430,7 +433,7 @@ func (s *Server) handleListGames(w http.ResponseWriter, r *http.Request) {
 	list, err := s.games.ListForUser(r.Context(), claims.UserID, 50)
 	if err != nil {
 		s.config.Logger.Error("listing games", "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không đọc được danh sách ván.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đọc được danh sách ván.")
 		return
 	}
 	items := make([]gameSummaryJSON, 0, len(list))

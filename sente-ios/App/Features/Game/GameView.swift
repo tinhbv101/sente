@@ -35,7 +35,8 @@ struct GameView: View {
         .overlay(alignment: .top) { banner }
         .overlay(alignment: .bottom) { toastView }
         .sheet(isPresented: Binding(get: { store.phase == .finished && store.result != nil }, set: { _ in })) {
-            ResultView(store: store, opponentName: summary.opponentName) { dismiss() }
+            ResultView(store: store, opponentName: summary.opponentName,
+                       rematch: summary.opponentId == nil ? nil : { try await session.api.rematch(gameID: summary.gameId) }) { dismiss() }
                 .presentationDetents([.medium, .large])
                 .interactiveDismissDisabled()
         }
@@ -252,7 +253,10 @@ struct ScoringControls: View {
 struct ResultView: View {
     let store: GameStore
     let opponentName: String
+    var rematch: (() async throws -> Challenge)? = nil
     let onClose: () -> Void
+    @State private var rematchSent = false
+    @State private var rematchError: String?
 
     var body: some View {
         VStack(spacing: 14) {
@@ -269,6 +273,22 @@ struct ResultView: View {
                 }.font(.subheadline).padding(.top, 6)
             }
             Spacer(minLength: 8)
+            if let rematch {
+                if rematchSent {
+                    Label("Đã gửi lời mời đấu lại", systemImage: "checkmark")
+                        .font(.callout.weight(.semibold)).foregroundStyle(.green)
+                } else {
+                    Button("Mời đấu lại") {
+                        Task {
+                            do { _ = try await rematch(); rematchSent = true }
+                            catch let error as APIError { rematchError = error.userMessage }
+                            catch { rematchError = error.localizedDescription }
+                        }
+                    }
+                    .buttonStyle(SecondaryButton())
+                }
+                if let rematchError { Text(rematchError).font(.footnote).foregroundStyle(.red) }
+            }
             Button("Đóng") { onClose() }.buttonStyle(PrimaryButton())
         }
         .padding(24)

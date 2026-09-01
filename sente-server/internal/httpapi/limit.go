@@ -58,7 +58,7 @@ func (s *Server) limit(rule ratelimit.Rule, next http.HandlerFunc) http.HandlerF
 		result, err := s.config.Limiter.Allow(r.Context(), rule, key)
 		if err != nil {
 			s.config.Logger.Error("rate limiter unavailable", "rule", rule.Name, "error", err)
-			writeError(w, http.StatusServiceUnavailable, "unavailable",
+			writeError(w, r, http.StatusServiceUnavailable, "unavailable",
 				"Dịch vụ đang bận. Vui lòng thử lại.")
 			return
 		}
@@ -73,7 +73,7 @@ func (s *Server) limit(rule ratelimit.Rule, next http.HandlerFunc) http.HandlerF
 				retry = 1
 			}
 			w.Header().Set("Retry-After", strconv.Itoa(retry))
-			writeError(w, http.StatusTooManyRequests, "rate_limited",
+			writeError(w, r, http.StatusTooManyRequests, "rate_limited",
 				"Bạn thao tác quá nhanh. Vui lòng chờ một lát.")
 			return
 		}

@@ -3,6 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -28,13 +29,13 @@ type sessionResponse struct {
 func (s *Server) issueSession(w http.ResponseWriter, r *http.Request, userID string, guest bool) (sessionResponse, bool) {
 	access, expiry, err := s.config.Issuer.Issue(userID, guest)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "Không tạo được phiên.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không tạo được phiên.")
 		return sessionResponse{}, false
 	}
 	refresh, err := s.refresh.Issue(r.Context(), userID)
 	if err != nil {
 		s.config.Logger.Error("issuing refresh token", "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không tạo được phiên.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không tạo được phiên.")
 		return sessionResponse{}, false
 	}
 	return sessionResponse{
@@ -48,28 +49,28 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	var request refreshRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&request); err != nil ||
 		request.RefreshToken == "" {
-		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
 	userID, next, err := s.refresh.Rotate(r.Context(), request.RefreshToken)
 	switch {
 	case errors.Is(err, store.ErrRefreshReused):
 		s.config.Logger.Warn("refresh token reuse detected", "user_id", userID)
-		writeError(w, http.StatusUnauthorized, "session_revoked", "Phiên đăng nhập đã bị thu hồi. Vui lòng đăng nhập lại.")
+		writeError(w, r, http.StatusUnauthorized, "session_revoked", "Phiên đăng nhập đã bị thu hồi. Vui lòng đăng nhập lại.")
 		return
 	case err != nil:
-		writeError(w, http.StatusUnauthorized, "unauthorized", "Phiên đăng nhập đã hết hạn.")
+		writeError(w, r, http.StatusUnauthorized, "unauthorized", "Phiên đăng nhập đã hết hạn.")
 		return
 	}
 	user, err := s.users.Get(r.Context(), userID)
 	if err != nil {
 		// Deleted accounts keep their row but lose their sessions.
-		writeError(w, http.StatusUnauthorized, "unauthorized", "Tài khoản không còn tồn tại.")
+		writeError(w, r, http.StatusUnauthorized, "unauthorized", "Tài khoản không còn tồn tại.")
 		return
 	}
 	access, expiry, err := s.config.Issuer.Issue(user.ID, user.IsGuest)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "Không tạo được phiên.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không tạo được phiên.")
 		return
 	}
 	writeJSON(w, http.StatusOK, sessionResponse{
@@ -90,7 +91,7 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 	claims := userFrom(r.Context())
 	user, err := s.users.Get(r.Context(), claims.UserID)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, "unauthorized", "Tài khoản không còn tồn tại.")
+		writeError(w, r, http.StatusUnauthorized, "unauthorized", "Tài khoản không còn tồn tại.")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -108,21 +109,40 @@ type updateMeRequest struct {
 func (s *Server) handleUpdateMe(w http.ResponseWriter, r *http.Request) {
 	var request updateMeRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&request); err != nil {
-		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
 	name := strings.TrimSpace(request.DisplayName)
 	if length := utf8.RuneCountInString(name); length < 2 || length > 24 {
-		writeError(w, http.StatusBadRequest, "invalid_name", "Tên cần từ 2 đến 24 ký tự.")
+		writeError(w, r, http.StatusBadRequest, "invalid_name", "Tên cần từ 2 đến 24 ký tự.")
 		return
 	}
 	claims := userFrom(r.Context())
 	if err := s.users.SetDisplayName(r.Context(), claims.UserID, name); err != nil {
 		s.config.Logger.Error("renaming user", "user_id", claims.UserID, "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không đổi được tên.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đổi được tên.")
 		return
 	}
 	s.handleMe(w, r)
+}
+
+// handleStats backs the profile's record section.
+func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
+	claims := userFrom(r.Context())
+	stats, err := s.games.StatsForUser(r.Context(), claims.UserID)
+	if err != nil {
+		s.config.Logger.Error("reading stats", "error", err)
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đọc được thống kê.")
+		return
+	}
+	bySize := map[string]map[string]int{}
+	for size, item := range stats.BySize {
+		bySize[fmt.Sprint(size)] = map[string]int{"games": item.Games, "wins": item.Wins, "losses": item.Losses}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"games": stats.Games, "wins": stats.Wins, "losses": stats.Losses, "draws": stats.Draws,
+		"by_size": bySize,
+	})
 }
 
 // handleDeleteAccount is the in-app deletion App Store guideline 5.1.1(v) demands.
@@ -131,7 +151,7 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	claims := userFrom(r.Context())
 	if err := s.users.DeleteAccount(r.Context(), claims.UserID); err != nil {
 		s.config.Logger.Error("deleting account", "user_id", claims.UserID, "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không xóa được tài khoản.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không xóa được tài khoản.")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -147,7 +167,7 @@ type reportRequest struct {
 func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	var request reportRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&request); err != nil {
-		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
 	claims := userFrom(r.Context())
@@ -155,10 +175,10 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		request.Category, request.Note)
 	switch {
 	case errors.Is(err, store.ErrSelfTarget), errors.Is(err, store.ErrUnknownCategory):
-		writeError(w, http.StatusBadRequest, "invalid_report", "Báo cáo không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "invalid_report", "Báo cáo không hợp lệ.")
 		return
 	case err != nil:
-		writeError(w, http.StatusInternalServerError, "internal", "Không gửi được báo cáo.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không gửi được báo cáo.")
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
@@ -172,16 +192,16 @@ func (s *Server) handleBlock(w http.ResponseWriter, r *http.Request) {
 	var request blockRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&request); err != nil ||
 		request.UserID == "" {
-		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
 	claims := userFrom(r.Context())
 	if err := s.moderation.Block(r.Context(), claims.UserID, request.UserID); err != nil {
 		if errors.Is(err, store.ErrSelfTarget) {
-			writeError(w, http.StatusBadRequest, "invalid_block", "Không thể chặn chính mình.")
+			writeError(w, r, http.StatusBadRequest, "invalid_block", "Không thể chặn chính mình.")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "internal", "Không chặn được.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không chặn được.")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -190,7 +210,7 @@ func (s *Server) handleBlock(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUnblock(w http.ResponseWriter, r *http.Request) {
 	claims := userFrom(r.Context())
 	if err := s.moderation.Unblock(r.Context(), claims.UserID, r.PathValue("id")); err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "Không bỏ chặn được.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không bỏ chặn được.")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -202,11 +222,11 @@ func (s *Server) handleSGF(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	loaded, err := s.games.Load(r.Context(), id)
 	if errors.Is(err, store.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "not_found", "Không tìm thấy ván cờ.")
+		writeError(w, r, http.StatusNotFound, "not_found", "Không tìm thấy ván cờ.")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "Không đọc được ván.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đọc được ván.")
 		return
 	}
 	names := s.playerNames(r, loaded)
@@ -246,11 +266,11 @@ func (s *Server) handleMoves(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	loaded, err := s.games.Load(r.Context(), id)
 	if errors.Is(err, store.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "not_found", "Không tìm thấy ván cờ.")
+		writeError(w, r, http.StatusNotFound, "not_found", "Không tìm thấy ván cờ.")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "Không đọc được ván.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đọc được ván.")
 		return
 	}
 	size := loaded.Session.Config.Size

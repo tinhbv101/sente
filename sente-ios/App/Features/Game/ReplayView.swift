@@ -13,6 +13,7 @@ struct ReplayView: View {
     @State private var positions: [GameEngine] = []
     @State private var index = 0
     @State private var error: String?
+    @State private var analysis: ReplayAnalysis?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -21,6 +22,7 @@ struct ReplayView: View {
                 BoardView(snapshot: snapshot, interactive: false,
                           showsCoordinates: session.settings.showCoordinates,
                           colourBlindSymbols: session.settings.colourBlindSymbols)
+                ReplayAnalysisBar(positions: positions, index: index, analysis: $analysis)
                 controls(moves)
             } else if let error {
                 ContentUnavailableView("Không tải được ván", systemImage: "exclamationmark.triangle", description: Text(error))
@@ -42,6 +44,7 @@ struct ReplayView: View {
             }
         }
         .task { await load() }
+        .onChange(of: index) { _, _ in analysis = nil }
     }
 
     private var snapshot: BoardSnapshot {
@@ -51,7 +54,11 @@ struct ReplayView: View {
            let text = move.point, let point = Coordinate.point(text, size: engine.board.size) {
             last = point
         }
-        return BoardSnapshot(board: engine.board, lastMove: last)
+        var built = BoardSnapshot(board: engine.board, lastMove: last)
+        if let analysis, analysis.forIndex == index, case .play(let point) = analysis.move {
+            built.pending = point
+        }
+        return built
     }
 
     private func header(_ moves: GameMoves) -> some View {

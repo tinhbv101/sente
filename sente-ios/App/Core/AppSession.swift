@@ -1,4 +1,5 @@
 import Foundation
+import GoKit
 import Observation
 import SenteNet
 import SwiftUI
@@ -19,6 +20,8 @@ final class AppSession {
     /// A game to open as soon as the home screen can navigate: from a push, or a
     /// `sente://g/<id>` link (docs/07 §9.1).
     var pendingGameID: String?
+    /// A .sgf handed to the app from Files, AirDrop, or another app.
+    var pendingSGF: GameRecord?
     private(set) var keychainUnavailable = false
     var settings = Settings.load()
     /// Push permission is asked for once per launch, and only once there is a
@@ -130,6 +133,10 @@ final class AppSession {
     var finishedGames: [GameSummary] { games.filter { !$0.isActive } }
 
     func handle(url: URL) {
+        if url.isFileURL {
+            openSGF(url)
+            return
+        }
         // sente://j/CODE, sente://g/ID and https://<host>/{j,g}/… all put the kind
         // and the value in the last two path components; the custom scheme puts
         // the kind in the host instead.
@@ -141,6 +148,15 @@ final class AppSession {
         case "g": pendingGameID = parts[parts.count - 1]
         default: break
         }
+    }
+
+    private func openSGF(_ url: URL) {
+        guard url.pathExtension.lowercased() == "sgf" else { return }
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        guard let text = try? String(contentsOf: url, encoding: .utf8),
+              let record = try? SGF.decode(text) else { return }
+        pendingSGF = record
     }
 
     /// `-openGame <id>` and `-inviteCode <code>` on the launch command line, for UI

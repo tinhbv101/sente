@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"sente.app/server/internal/game"
 	"sente.app/server/internal/push"
@@ -44,6 +45,7 @@ const (
 	KindTurn    = "turn"
 	KindGameEnd = "game_end"
 	KindInvite  = "invite"
+	KindLowTime = "low_time"
 )
 
 type job struct {
@@ -108,6 +110,43 @@ func (n *Notifier) InvitationAccepted(creatorID, byName, gameID string) {
 		TitleKey: "push.invite.title", BodyKey: "push.invite.body", Args: []string{byName},
 		CollapseID: "game:" + gameID, ThreadID: gameID,
 		Payload: map[string]any{"game_id": gameID, "kind": KindInvite},
+	}}})
+}
+
+// LowTime warns the player to move that their correspondence clock is nearly out.
+func (n *Notifier) LowTime(userID, gameID string, remaining time.Duration) {
+	if !n.Enabled() {
+		return
+	}
+	var bodyKey, viBody string
+	var amount int
+	if remaining >= time.Hour {
+		amount = int((remaining + time.Hour - 1) / time.Hour)
+		bodyKey = "push.lowtime.hours"
+		viBody = fmt.Sprintf("Còn dưới %d giờ cho nước đi của bạn.", amount)
+	} else {
+		amount = int((remaining + time.Minute - 1) / time.Minute)
+		bodyKey = "push.lowtime.minutes"
+		viBody = fmt.Sprintf("Còn khoảng %d phút cho nước đi của bạn.", amount)
+	}
+	n.enqueue(job{gameID: gameID, direct: &directJob{userID: userID, kind: KindLowTime, note: push.Notification{
+		Title: "Sắp hết giờ", Body: viBody,
+		TitleKey: "push.lowtime.title", BodyKey: bodyKey, Args: []string{fmt.Sprint(amount)},
+		CollapseID: "game:" + gameID, ThreadID: gameID,
+		Payload: map[string]any{"game_id": gameID, "kind": KindLowTime},
+	}}})
+}
+
+// ChallengeReceived tells someone they were invited by name (a rematch, mostly).
+func (n *Notifier) ChallengeReceived(inviteeID, fromName, code string) {
+	if !n.Enabled() {
+		return
+	}
+	n.enqueue(job{gameID: code, direct: &directJob{userID: inviteeID, kind: KindInvite, note: push.Notification{
+		Title: "Lời mời mới", Body: fmt.Sprintf("%s mời bạn một ván cờ.", fromName),
+		TitleKey: "push.challenge.title", BodyKey: "push.challenge.body", Args: []string{fromName},
+		CollapseID: "invite:" + code, ThreadID: code,
+		Payload: map[string]any{"invite_code": code, "kind": KindInvite},
 	}}})
 }
 

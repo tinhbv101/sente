@@ -2,7 +2,11 @@ package store
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -71,4 +75,29 @@ func (d *Devices) ForUser(ctx context.Context, userID, kind string) ([]Device, e
 		out = append(out, device)
 	}
 	return out, rows.Err()
+}
+
+// SetPrefs merges a partial preference patch ({"turn": false, …}) into the
+// device's push_prefs and returns the result. Scoped to the owner.
+func (d *Devices) SetPrefs(ctx context.Context, userID, token string, patch map[string]bool) (map[string]bool, error) {
+	encoded, err := json.Marshal(patch)
+	if err != nil {
+		return nil, err
+	}
+	var merged []byte
+	err = d.pool.QueryRow(ctx, `
+		UPDATE devices SET push_prefs = push_prefs || $3::jsonb, last_seen_at = now()
+		 WHERE apns_token = $1 AND user_id = $2
+		 RETURNING push_prefs`, token, userID, encoded).Scan(&merged)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("store: updating push prefs: %w", err)
+	}
+	var prefs map[string]bool
+	if err := json.Unmarshal(merged, &prefs); err != nil {
+		return nil, err
+	}
+	return prefs, nil
 }

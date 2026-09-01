@@ -94,9 +94,9 @@ var landingTemplate = template.Must(template.New("landing").Parse(`<!doctype htm
 // handleAASA lets iOS open https://<host>/j/… and /g/… in the app. Apple fetches
 // it from the domain; it must be served at exactly this path, as JSON, with no
 // redirect. Empty when no Team ID is configured, so nothing wrong is claimed.
-func (s *Server) handleAASA(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) handleAASA(w http.ResponseWriter, r *http.Request) {
 	if s.config.AppleTeamID == "" {
-		writeError(w, http.StatusNotFound, "not_configured", "Universal links are not configured.")
+		writeError(w, r, http.StatusNotFound, "not_configured", "Universal links are not configured.")
 		return
 	}
 	appID := s.config.AppleTeamID + ".app.sente.go"

@@ -706,3 +706,84 @@ func (g *Games) Participants(ctx context.Context, id string) (Participants, erro
 	}
 	return p, nil
 }
+
+// LowTimeGame is a correspondence game whose player to move is close to losing
+// on time (docs/01 FR-N1: under 10%% of the per-move allowance).
+type LowTimeGame struct {
+	ID       string
+	UserID   string
+	MoveNo   int
+	Deadline time.Time
+}
+
+func (g *Games) ListLowTime(ctx context.Context, now time.Time, limit int) ([]LowTimeGame, error) {
+	rows, err := g.pool.Query(ctx, `
+		SELECT id,
+		       CASE WHEN to_play = 'black' THEN black_user_id ELSE white_user_id END,
+		       current_move_no, move_deadline
+		  FROM games
+		 WHERE phase = 'playing' AND is_correspondence AND move_deadline IS NOT NULL
+		   AND move_deadline > $1
+		   AND move_deadline <= $1 + make_interval(secs =>
+		         (time_control->>'days_per_move')::numeric * 86400 * 0.1)
+		 LIMIT $2`, now, limit)
+	if err != nil {
+		return nil, fmt.Errorf("store: listing low-time games: %w", err)
+	}
+	defer rows.Close()
+	var out []LowTimeGame
+	for rows.Next() {
+		var item LowTimeGame
+		var user *string
+		if err := rows.Scan(&item.ID, &user, &item.MoveNo, &item.Deadline); err != nil {
+			return nil, err
+		}
+		if user == nil {
+			continue // an empty seat cannot be warned
+		}
+		item.UserID = *user
+		out = append(out, item)
+	}
+	return out, rows.Err()
+}
+
+// Stats is a person's record, straight from the games table.
+type Stats struct {
+	Games, Wins, Losses, Draws int
+	BySize                     map[int]SizeStats
+}
+
+type SizeStats struct {
+	Games, Wins, Losses int
+}
+
+func (g *Games) StatsForUser(ctx context.Context, userID string) (Stats, error) {
+	// The stored result keeps rules.Color numerically: 1 black, 2 white, 0 none.
+	rows, err := g.pool.Query(ctx, `
+		SELECT board_size, count(*),
+		       count(*) FILTER (WHERE result->>'Winner' = me),
+		       count(*) FILTER (WHERE result->>'Winner' NOT IN (me, '0'))
+		  FROM (SELECT board_size, result,
+		               CASE WHEN black_user_id = $1 THEN '1' ELSE '2' END AS me
+		          FROM games
+		         WHERE phase = 'finished' AND result IS NOT NULL
+		           AND (black_user_id = $1 OR white_user_id = $1)) mine
+		 GROUP BY board_size ORDER BY board_size`, userID)
+	if err != nil {
+		return Stats{}, fmt.Errorf("store: reading stats: %w", err)
+	}
+	defer rows.Close()
+	stats := Stats{BySize: map[int]SizeStats{}}
+	for rows.Next() {
+		var size, games, wins, losses int
+		if err := rows.Scan(&size, &games, &wins, &losses); err != nil {
+			return Stats{}, err
+		}
+		stats.BySize[size] = SizeStats{Games: games, Wins: wins, Losses: losses}
+		stats.Games += games
+		stats.Wins += wins
+		stats.Losses += losses
+	}
+	stats.Draws = stats.Games - stats.Wins - stats.Losses
+	return stats, rows.Err()
+}

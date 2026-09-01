@@ -1,0 +1,77 @@
+{
+  "chapters": [
+    {
+      "id": "daily",
+      "icon": "flame",
+      "title": { "vi": "Tsumego mỗi ngày", "en": "Daily tsumego" },
+      "lessons": [
+        { "id": "p-capture-mid", "title": { "vi": "Bắt quân giữa bàn", "en": "Capture in the middle" }, "steps": [
+          { "kind": "task", "text": { "vi": "Đen đi: bắt quân trắng.", "en": "Black to play: capture the white stone." },
+            "board": [".........",".........","......b..",".....bwb.",".........",".........",".........",".........","........."],
+            "correct": ["G5"], "captures": 1,
+            "success": { "vi": "Một khí cuối cùng — một nước.", "en": "One last liberty — one move." } } ] },
+        { "id": "p-corner", "title": { "vi": "Góc trên phải", "en": "The far corner" }, "steps": [
+          { "kind": "task", "text": { "vi": "Đen đi: bắt quân trắng trong góc.", "en": "Black to play: capture the corner stone." },
+            "board": [".......bw",".........",".........",".........",".........",".........",".........",".........","........."],
+            "correct": ["J8"], "captures": 1,
+            "success": { "vi": "Góc chỉ có hai khí.", "en": "A corner stone has just two liberties." } } ] },
+        { "id": "p-escape", "title": { "vi": "Cứu quân", "en": "Save the stone" }, "steps": [
+          { "kind": "task", "text": { "vi": "Quân đen D3 đang atari. Cứu nó.", "en": "The black stone at D3 is in atari. Save it." },
+            "board": [".........",".........",".........",".........",".........","...w.....","..wbw....",".........","........."],
+            "correct": ["D2"], "captures": 0,
+            "success": { "vi": "Nối dài xuống — ba khí mới.", "en": "Extend downward — three fresh liberties." } } ] },
+        { "id": "p-eye-capture", "title": { "vi": "Vào giữa mà bắt", "en": "Right into the middle" }, "steps": [
+          { "kind": "task", "text": { "vi": "Quân trắng F5 chỉ còn một khí — đi vào giữa.", "en": "The white stone at F5 has one liberty — play into the middle." },
+            "board": [".........",".........",".........",".....w...","....w.w..","....bwb..",".....b...",".........","........."],
+            "correct": ["F5"], "captures": 1,
+            "success": { "vi": "Bắt được quân thì không phải tự sát.", "en": "It is not suicide when it captures." } } ] },
+        { "id": "p-ko", "title": { "vi": "Nhấc quân ko", "en": "Take the ko" }, "steps": [
+          { "kind": "task", "text": { "vi": "Bắt quân trắng đang atari.", "en": "Capture the white stone in atari." },
+            "board": [".........",".........","....bw...","...bw.w..","....bw...",".........",".........",".........","........."],
+            "correct": ["F6"], "captures": 1,
+            "success": { "vi": "Và nhớ: trắng không được bắt lại ngay.", "en": "And remember: white may not recapture at once." } } ] },
+        { "id": "p-double-atari", "title": { "vi": "Một nước hai mối", "en": "One move, two threats" }, "steps": [
+          { "kind": "task", "text": { "vi": "Đánh đôi hai quân trắng.", "en": "Double-atari the two white stones." },
+            "board": [".........",".........",".........","...b.b...","..bw.wb..",".........",".........",".........","........."],
+            "correct": ["E5"], "captures": 0, "reply": "D4",
+            "success": { "vi": "Trắng chỉ cứu được một bên…", "en": "White can only save one side…" } },
+          { "kind": "task", "text": { "vi": "Lấy phần còn lại.", "en": "Take what is left." },
+            "correct": ["F4"], "captures": 1,
+            "success": { "vi": "Đánh đôi: ép chọn, rồi thu quân.", "en": "Fork, force the choice, collect." } } ] },
+        { "id": "p-snapback", "title": { "vi": "Thí một lấy năm", "en": "One for five" }, "steps": [
+          { "kind": "task", "text": { "vi": "Đám trắng còn hai khí. Thí quân vào F1.", "en": "The white group has two liberties. Throw in at F1." },
+            "board": [".........",".........",".........",".........",".........",".........","....bbb..","...bwwwb.","...b..wb."],
+            "correct": ["F1"], "captures": 0, "reply": "E1",
+            "success": { "vi": "Trắng bắt quân thí — và tự còn một khí.", "en": "White takes the bait — and is left with one liberty." } },
+          { "kind": "task", "text": { "vi": "Bắt lại cả đám.", "en": "Capture the whole group back." },
+            "correct": ["F1"], "captures": 5,
+            "success": { "vi": "Bắt hồi kinh điển.", "en": "A classic snapback." } } ] },
+        { "id": "p-three", "title": { "vi": "Điểm giữa ba thẳng", "en": "Centre of the three" }, "steps": [
+          { "kind": "task", "text": { "vi": "Giết đám trắng: một nước duy nhất.", "en": "Kill the white group: there is only one move." },
+            "board": [".........",".........",".........",".........",".........",".........","...bbbbb.","..bwwwwwb","..bw...wb"],
+            "correct": ["F1"], "captures": 0,
+            "success": { "vi": "Ba thẳng chết ở điểm giữa.", "en": "A straight three dies at its centre." } } ] },
+        { "id": "p-false-eye", "title": { "vi": "Phá mắt giả", "en": "Break the false eye" }, "steps": [
+          { "kind": "task", "text": { "vi": "Mắt của trắng tại F1 là giả — chứng minh điều đó.", "en": "White's eye at F1 is false — prove it." },
+            "board": [".........",".........",".........",".........",".........",".........",".........",".....wb..","....w.wb."],
+            "correct": ["F1"], "captures": 1,
+            "success": { "vi": "Quân vây mắt bị bắt thì mắt tan.", "en": "Capture the surrounding stone and the eye is gone." } } ] },
+        { "id": "p-two-eyes", "title": { "vi": "Sống bằng hai mắt", "en": "Live with two eyes" }, "steps": [
+          { "kind": "task", "text": { "vi": "Đen đi: làm hai mắt để sống.", "en": "Black to play: make two eyes and live." },
+            "board": [".........",".........",".........",".........",".........",".........","...wwwww.","..wbbbbbw","..wb...bw"],
+            "correct": ["F1"], "captures": 0,
+            "success": { "vi": "Hai mắt — trắng hết cách.", "en": "Two eyes — nothing white can do." } } ] },
+        { "id": "p-counter", "title": { "vi": "Bắt ngược cứu quân", "en": "Counter-capture" }, "steps": [
+          { "kind": "task", "text": { "vi": "Đừng chạy — quân trắng đè khí bạn cũng đang atari.", "en": "Do not run — the pressing white stone is in atari too." },
+            "board": [".........",".........",".........",".........","....wb...","...wbwb..",".........",".........","........."],
+            "correct": ["F3"], "captures": 1,
+            "success": { "vi": "Bắt ngược: cứu quân bằng cách ăn quân.", "en": "Counter-capture: rescue by eating." } } ] },
+        { "id": "p-liberties", "title": { "vi": "Đọc khí ở biên", "en": "Count edge liberties" }, "steps": [
+          { "kind": "task", "text": { "vi": "Cặp trắng dưới biên còn mấy khí? Bắt nó.", "en": "How many liberties has the white pair? Capture it." },
+            "board": [".........",".........",".........",".........",".........",".........",".........","....bb...","...bww..."],
+            "correct": ["G1"], "captures": 2,
+            "success": { "vi": "Đọc khí trước, đánh sau.", "en": "Count first, play second." } } ] }
+      ]
+    }
+  ]
+}

@@ -23,6 +23,7 @@ struct SenteApp: App {
                 .task {
                     AppDelegate.onDeviceToken = { [session] in session.deviceTokenReceived($0) }
                     AppDelegate.onOpenGame = { [session] in session.pendingGameID = $0 }
+                    AppDelegate.onOpenInvite = { [session] in session.pendingInviteCode = $0 }
                     await session.start()
                 }
                 // sente://j/<code> from a shared link, or the universal-link path once

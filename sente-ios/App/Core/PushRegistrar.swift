@@ -7,6 +7,7 @@ import UserNotifications
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     static var onDeviceToken: ((String) -> Void)?
     static var onOpenGame: ((String) -> Void)?
+    static var onOpenInvite: ((String) -> Void)?
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
@@ -35,8 +36,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                             didReceive response: UNNotificationResponse) async {
-        guard let gameID = response.notification.request.content.userInfo["game_id"] as? String else { return }
-        await MainActor.run { Self.onOpenGame?(gameID) }
+        let info = response.notification.request.content.userInfo
+        if let code = info["invite_code"] as? String {
+            await MainActor.run { Self.onOpenInvite?(code) }
+        } else if let gameID = info["game_id"] as? String {
+            await MainActor.run { Self.onOpenGame?(gameID) }
+        }
     }
 }
 

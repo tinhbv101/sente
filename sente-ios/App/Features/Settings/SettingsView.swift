@@ -54,6 +54,7 @@ struct SettingsView: View {
                     }
                 }
                 notificationsSection
+                recordSection
             }
             Section {
                 Picker("Chế độ màu", selection: $draft.appearance) {
@@ -97,6 +98,7 @@ struct SettingsView: View {
         .navigationTitle("Cài đặt")
         // The field follows the account: a fresh guest or a just-linked Apple ID.
         .task(id: session.user?.displayName) { nameDraft = session.user?.displayName ?? "" }
+        .task { stats = try? await session.api.stats() }
         .confirmationDialog("Xóa tài khoản này?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Xóa vĩnh viễn", role: .destructive) {
                 Task {
@@ -121,11 +123,45 @@ struct SettingsView: View {
         }
     }
 
+    /// Kept on-device and pushed as a patch; the server filters per kind.
+    @AppStorage("pushPrefTurn") private var prefTurn = true
+    @AppStorage("pushPrefLowTime") private var prefLowTime = true
+    @AppStorage("pushPrefGameEnd") private var prefGameEnd = true
+    @AppStorage("pushPrefInvite") private var prefInvite = true
+
+    private func pushPref(_ key: String, _ value: Bool) {
+        guard let token = session.deviceToken else { return }
+        Task { _ = try? await session.api.setDevicePrefs(token: token, [key: value]) }
+    }
+
+    @State private var stats: PlayerStats?
+
+    @ViewBuilder private var recordSection: some View {
+        if let stats, stats.games > 0 {
+            Section("Thành tích") {
+                LabeledContent("Số ván online", value: "\(stats.games)")
+                LabeledContent("Thắng / Thua", value: "\(stats.wins) / \(stats.losses)")
+                ForEach(stats.bySize.keys.sorted(), id: \.self) { size in
+                    if let line = stats.bySize[size] {
+                        LabeledContent("Bàn \(size)×\(size)", value: "\(line.wins)/\(line.games) thắng")
+                    }
+                }
+            }
+        }
+    }
+
     @ViewBuilder private var notificationsSection: some View {
         Section {
             switch pushStatus {
             case .granted:
-                Label("Đã bật", systemImage: "bell.badge.fill").foregroundStyle(Tokens.inkSecondary)
+                Toggle("Đến lượt bạn (ván chậm)", isOn: $prefTurn)
+                    .onChange(of: prefTurn) { _, new in pushPref("turn", new) }
+                Toggle("Sắp hết giờ", isOn: $prefLowTime)
+                    .onChange(of: prefLowTime) { _, new in pushPref("low_time", new) }
+                Toggle("Ván kết thúc", isOn: $prefGameEnd)
+                    .onChange(of: prefGameEnd) { _, new in pushPref("game_end", new) }
+                Toggle("Lời mời", isOn: $prefInvite)
+                    .onChange(of: prefInvite) { _, new in pushPref("invite", new) }
             case .denied:
                 Button("Mở Cài đặt để bật thông báo") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }

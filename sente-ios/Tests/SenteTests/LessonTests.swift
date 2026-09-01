@@ -20,7 +20,7 @@ final class LessonContentTests: XCTestCase {
     }
 
     func testEveryStepReplaysCleanlyThroughTheEngine() throws {
-        for chapter in library.chapters {
+        for chapter in library.chapters + DailyPuzzles.library.chapters {
             for lesson in chapter.lessons {
                 var engine = GameEngine.position(size: 9)
                 XCTAssertFalse(lesson.steps.isEmpty, lesson.id)

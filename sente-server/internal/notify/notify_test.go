@@ -275,3 +275,32 @@ func TestMissingPlayerOrDeviceIsSkipped(t *testing.T) {
 		t.Errorf("nothing should be sent, got %+v", sender.sent)
 	}
 }
+
+func TestLowTimeAndDirectedInvitePushes(t *testing.T) {
+	devices := &fakeDevices{byUser: map[string][]store.Device{
+		"u1": {{Token: "t1", Environment: "production"}},
+	}}
+	n, _, production := start(t, fakeDir{players}, devices)
+
+	n.LowTime("u1", "g1", 90*time.Minute)
+	warned := receive(t, production)
+	if warned.note.TitleKey != "push.lowtime.title" || warned.note.BodyKey != "push.lowtime.hours" ||
+		len(warned.note.Args) != 1 || warned.note.Args[0] != "2" {
+		t.Errorf("hours warning: %+v", warned.note)
+	}
+	if devices.kinds[0] != KindLowTime {
+		t.Errorf("kind filter: %q", devices.kinds[0])
+	}
+
+	n.LowTime("u1", "g1", 30*time.Minute)
+	minutes := receive(t, production)
+	if minutes.note.BodyKey != "push.lowtime.minutes" || minutes.note.Args[0] != "30" {
+		t.Errorf("minutes warning: %+v", minutes.note)
+	}
+
+	n.ChallengeReceived("u1", "an", "R4TN8KMP")
+	invited := receive(t, production)
+	if invited.note.BodyKey != "push.challenge.body" || invited.note.Payload["invite_code"] != "R4TN8KMP" {
+		t.Errorf("directed invite: %+v", invited.note)
+	}
+}

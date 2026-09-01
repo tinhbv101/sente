@@ -116,6 +116,9 @@ Trả về cùng hình dạng với `POST /v1/auth/guest` (`user` + cặp token 
 **gốc** app sinh ra; Apple để SHA-256 của nó trong token và server so khớp. `full_name` chỉ
 có ở lần đăng nhập đầu — Apple không trả lại lần sau — nên server dùng ngay để đặt tên.
 
+Mọi thông điệp lỗi (REST và WebSocket) trả tiếng Anh khi `Accept-Language` nghiêng về `en`;
+mặc định tiếng Việt.
+
 Quy tắc chọn tài khoản:
 - Có `Authorization` của khách và `sub` chưa gắn với ai → **liên kết vào khách hiện tại**,
   `is_guest` thành `false`, giữ nguyên ván và mã bạn bè.
@@ -142,6 +145,7 @@ trong App ID → Sign in with Apple → *Server-to-Server Notification Endpoint*
 |--------|------|-------|
 | `GET` | `/v1/me` | Hồ sơ, cài đặt, số ván đang chờ mình đi |
 | `PATCH` | `/v1/me` | Đổi `display_name` (2–24 ký tự sau khi cắt khoảng trắng, sai → `400 invalid_name`); trả hồ sơ mới. `locale`, `settings` chưa làm |
+| `GET` | `/v1/me/stats` | Số ván/thắng/thua, chia theo cỡ bàn |
 | `DELETE` | `/v1/me` | Xóa tài khoản ([FR-A5](01-requirements.md#41-tài-khoản--danh-tính)) — bất đồng bộ, phản hồi `202` |
 | `GET` | `/v1/users/by-code/{friend_code}` | Tra người chơi theo mã bạn bè |
 
@@ -162,6 +166,7 @@ trong App ID → Sign in with Apple → *Server-to-Server Notification Endpoint*
 | Method | Path | Mô tả |
 |--------|------|-------|
 | `POST` | `/v1/challenges` | Tạo lời mời |
+| `POST` | `/v1/games/{id}/rematch` | Lời mời đấu lại đích danh: config copy từ ván, màu đảo; đối thủ nhận push |
 | `GET` | `/v1/challenges` | Lời mời tôi tạo + lời mời gửi tới tôi |
 | `GET` | `/v1/challenges/{code}` | Xem trước (**không cần đăng nhập** — dùng cho landing page) |
 | `POST` | `/v1/challenges/{code}/accept` | Chấp nhận → tạo ván |
@@ -248,7 +253,7 @@ Gửi lại cùng `client_move_id` trả về **đúng response cũ** với `200
 | Method | Path | Mô tả |
 |--------|------|-------|
 | `POST` | `/v1/devices` | Đăng ký APNs token: `{ "apns_token": "<hex>", "environment": "sandbox"\|"production", "app_version": "0.1.0" }` → `204`. Gọi lại mỗi lần mở app; token đổi chủ thì theo người mới |
-| `PATCH` | `/v1/devices/{id}` | Cập nhật `push_prefs` — **chưa làm**; cột `push_prefs` đã có, mặc định bật cả |
+| `PATCH` | `/v1/devices/{token}` | Bật/tắt từng loại thông báo: `{"turn":false,…}` (turn, low_time, game_end, invite) → trả prefs đã gộp |
 | `DELETE` | `/v1/devices/{token}` | Hủy đăng ký, chỉ token của chính mình |
 | `POST` | `/v1/reports` | Báo cáo người chơi |
 | `GET` | `/v1/config` | **Không cần auth.** Cấu hình client |

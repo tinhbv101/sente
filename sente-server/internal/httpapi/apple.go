@@ -20,19 +20,19 @@ type appleSignInRequest struct {
 
 func (s *Server) handleAppleSignIn(w http.ResponseWriter, r *http.Request) {
 	if s.config.Apple == nil {
-		writeError(w, http.StatusNotFound, "not_available", "Máy chủ chưa bật đăng nhập Apple.")
+		writeError(w, r, http.StatusNotFound, "not_available", "Máy chủ chưa bật đăng nhập Apple.")
 		return
 	}
 	var request appleSignInRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&request); err != nil ||
 		request.IdentityToken == "" {
-		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
 	identity, err := s.config.Apple.Verify(r.Context(), request.IdentityToken, request.Nonce)
 	if err != nil {
 		s.config.Logger.Warn("apple sign-in rejected", "error", err)
-		writeError(w, http.StatusUnauthorized, "invalid_identity_token", "Apple không xác nhận được đăng nhập này.")
+		writeError(w, r, http.StatusUnauthorized, "invalid_identity_token", "Apple không xác nhận được đăng nhập này.")
 		return
 	}
 
@@ -51,7 +51,7 @@ func (s *Server) handleAppleSignIn(w http.ResponseWriter, r *http.Request) {
 			user, err := s.users.CreateGuest(r.Context())
 			if err != nil {
 				s.config.Logger.Error("creating account for apple sign-in", "error", err)
-				writeError(w, http.StatusInternalServerError, "internal", "Không tạo được tài khoản.")
+				writeError(w, r, http.StatusInternalServerError, "internal", "Không tạo được tài khoản.")
 				return
 			}
 			userID = user.ID
@@ -59,11 +59,11 @@ func (s *Server) handleAppleSignIn(w http.ResponseWriter, r *http.Request) {
 		if err := s.identities.Link(r.Context(), userID, store.ProviderApple, identity.Subject, identity.Email); err != nil {
 			if errors.Is(err, store.ErrIdentityTaken) {
 				// Only reachable in a race with another sign-in of the same Apple ID.
-				writeError(w, http.StatusConflict, "identity_taken", "Apple ID này vừa được dùng ở nơi khác. Thử lại.")
+				writeError(w, r, http.StatusConflict, "identity_taken", "Apple ID này vừa được dùng ở nơi khác. Thử lại.")
 				return
 			}
 			s.config.Logger.Error("linking apple identity", "user_id", userID, "error", err)
-			writeError(w, http.StatusInternalServerError, "internal", "Không liên kết được tài khoản.")
+			writeError(w, r, http.StatusInternalServerError, "internal", "Không liên kết được tài khoản.")
 			return
 		}
 		if request.FullName != "" {
@@ -71,13 +71,13 @@ func (s *Server) handleAppleSignIn(w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		s.config.Logger.Error("looking up apple identity", "error", err)
-		writeError(w, http.StatusInternalServerError, "internal", "Không đăng nhập được.")
+		writeError(w, r, http.StatusInternalServerError, "internal", "Không đăng nhập được.")
 		return
 	}
 
 	user, err := s.users.Get(r.Context(), userID)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, "unauthorized", "Tài khoản không còn tồn tại.")
+		writeError(w, r, http.StatusUnauthorized, "unauthorized", "Tài khoản không còn tồn tại.")
 		return
 	}
 	session, ok := s.issueSession(w, r, user.ID, user.IsGuest)
@@ -100,19 +100,19 @@ func (s *Server) handleAppleSignIn(w http.ResponseWriter, r *http.Request) {
 // as a guest, so the games are not lost (docs/08 §2.4).
 func (s *Server) handleAppleNotification(w http.ResponseWriter, r *http.Request) {
 	if s.config.Apple == nil {
-		writeError(w, http.StatusNotFound, "not_available", "Máy chủ chưa bật đăng nhập Apple.")
+		writeError(w, r, http.StatusNotFound, "not_available", "Máy chủ chưa bật đăng nhập Apple.")
 		return
 	}
 	var body struct {
 		Payload string `json:"payload"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&body); err != nil || body.Payload == "" {
-		writeError(w, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
 	event, err := s.config.Apple.VerifyNotification(r.Context(), body.Payload)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid_payload", "Thông báo không hợp lệ.")
+		writeError(w, r, http.StatusBadRequest, "invalid_payload", "Thông báo không hợp lệ.")
 		return
 	}
 	switch event.Type {

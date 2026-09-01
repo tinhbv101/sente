@@ -194,6 +194,16 @@
         }
       }
     },
+    "%lld/%lld thắng": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld won"
+          }
+        }
+      }
+    },
     "%lld×%lld": {},
     "%lld×%lld · %@ · komi %@": {},
     "%lld×%lld · %@ · mã %@": {
@@ -287,6 +297,16 @@
       }
     },
     "Byo-yomi": {},
+    "Bàn %@×%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@×%@ board"
+          }
+        }
+      }
+    },
     "Bàn cờ": {
       "localizations": {
         "en": {
@@ -749,6 +769,16 @@
         }
       }
     },
+    "Giữ chuỗi %lld ngày!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the %lld-day streak!"
+          }
+        }
+      }
+    },
     "Gửi lời mời": {
       "localizations": {
         "en": {
@@ -795,6 +825,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Done!"
+          }
+        }
+      }
+    },
+    "Hôm nay đã giải ✓ · chuỗi %lld ngày": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solved today ✓ · %lld-day streak"
           }
         }
       }
@@ -875,6 +915,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "None"
+          }
+        }
+      }
+    },
+    "Không có bài hôm nay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No puzzle today"
           }
         }
       }
@@ -1016,7 +1066,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Invitation"
+            "value": "Invitations"
           }
         }
       }
@@ -1081,6 +1131,16 @@
         }
       }
     },
+    "Máy chạy ngay trên điện thoại, không cần mạng. Thắng một cấp để mở cấp tiếp theo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs right on the phone, no network needed. Beat a level to unlock the next."
+          }
+        }
+      }
+    },
     "Máy chủ": {
       "localizations": {
         "en": {
@@ -1133,6 +1193,26 @@
         }
       }
     },
+    "Máy phân tích thế cờ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask the bot"
+          }
+        }
+      }
+    },
+    "Máy sẽ nhường lượt · %@ thắng khoảng %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The bot would pass · %1$@ wins about %2$@"
+          }
+        }
+      }
+    },
     "Máy đang nghĩ…": {
       "localizations": {
         "en": {
@@ -1143,12 +1223,32 @@
         }
       }
     },
+    "Máy đang phân tích…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The bot is analysing…"
+          }
+        }
+      }
+    },
     "Máy đấu máy": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Bot vs bot"
+          }
+        }
+      }
+    },
+    "Máy đề xuất %@ · %@ thắng khoảng %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The bot suggests %1$@ · %2$@ wins about %3$@"
           }
         }
       }
@@ -1244,6 +1344,16 @@
         }
       }
     },
+    "Một bài mỗi ngày, giải để tạo chuỗi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One puzzle a day; solve it to build a streak"
+          }
+        }
+      }
+    },
     "Mới tập": {
       "localizations": {
         "en": {
@@ -1270,6 +1380,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Invite a friend, or enter a code you were sent."
+          }
+        }
+      }
+    },
+    "Mời đấu lại": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite to a rematch"
           }
         }
       }
@@ -1537,6 +1657,26 @@
         }
       }
     },
+    "Sắp hết giờ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Low on time"
+          }
+        }
+      }
+    },
+    "Số ván online": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Online games"
+          }
+        }
+      }
+    },
     "Theo hệ thống": {
       "localizations": {
         "en": {
@@ -1583,6 +1723,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Loss (resigned)"
+          }
+        }
+      }
+    },
+    "Thành tích": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record"
           }
         }
       }
@@ -1643,6 +1793,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Win (opponent resigned)"
+          }
+        }
+      }
+    },
+    "Thắng / Thua": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wins / Losses"
           }
         }
       }
@@ -1763,6 +1923,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "White wins"
+          }
+        }
+      }
+    },
+    "Tsumego hôm nay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's tsumego"
           }
         }
       }
@@ -1947,12 +2117,32 @@
         }
       }
     },
+    "Ván kết thúc": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Game over"
+          }
+        }
+      }
+    },
     "Ván mới": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "New game"
+          }
+        }
+      }
+    },
+    "Ván nhập từ SGF": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported SGF game"
           }
         }
       }
@@ -2144,6 +2334,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "passed"
+          }
+        }
+      }
+    },
+    "push.challenge.body": {
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ mời bạn một ván cờ."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ invites you to a game."
+          }
+        }
+      }
+    },
+    "push.challenge.title": {
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lời mời mới"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New invitation"
           }
         }
       }
@@ -2556,6 +2778,54 @@
         }
       }
     },
+    "push.lowtime.hours": {
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Còn dưới %1$@ giờ cho nước đi của bạn."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Under %1$@ hours left for your move."
+          }
+        }
+      }
+    },
+    "push.lowtime.minutes": {
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Còn khoảng %1$@ phút cho nước đi của bạn."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %1$@ minutes left for your move."
+          }
+        }
+      }
+    },
+    "push.lowtime.title": {
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sắp hết giờ"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Low on time"
+          }
+        }
+      }
+    },
     "push.turn.body": {
       "extractionState": "stale",
       "localizations": {
@@ -2762,6 +3032,16 @@
         }
       }
     },
+    "Đã gửi lời mời đấu lại": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rematch invitation sent"
+          }
+        }
+      }
+    },
     "Đã hoãn một nước.": {
       "localizations": {
         "en": {
@@ -2868,6 +3148,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Counted · move %lld"
+          }
+        }
+      }
+    },
+    "Đến lượt bạn (ván chậm)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your move (slow games)"
           }
         }
       }

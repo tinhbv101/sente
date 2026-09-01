@@ -7,11 +7,15 @@ package sweep
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+
 	"sente.app/server/internal/game"
 	"sente.app/server/internal/hub"
+	"sente.app/server/internal/notify"
 	"sente.app/server/internal/rules"
 	"sente.app/server/internal/store"
 )
@@ -21,6 +25,10 @@ type Sweeper struct {
 	Hub    *hub.Hub
 	Logger *slog.Logger
 	Now    func() time.Time
+	// Optional: with these set, players close to a correspondence timeout get
+	// one warning per move (docs/01 FR-N1).
+	Notifier *notify.Notifier
+	Redis    *redis.Client
 }
 
 // Once expires every overdue game it can find. Going through the hub means the
@@ -31,6 +39,7 @@ func (s *Sweeper) Once(ctx context.Context) (ended int) {
 	if s.Now != nil {
 		now = s.Now
 	}
+	s.warnLowTime(ctx, now())
 	ids, err := s.Games.ListExpired(ctx, now(), 100)
 	if err != nil {
 		s.Logger.Warn("listing expired games", "error", err)
@@ -74,5 +83,26 @@ func (s *Sweeper) Run(ctx context.Context, every time.Duration) {
 				s.Logger.Info("expired games", "count", ended)
 			}
 		}
+	}
+}
+
+// warnLowTime pushes at most one warning per (game, move): redis SETNX is the
+// memory, sized to outlive any correspondence move.
+func (s *Sweeper) warnLowTime(ctx context.Context, now time.Time) {
+	if s.Notifier == nil || s.Redis == nil || !s.Notifier.Enabled() {
+		return
+	}
+	games, err := s.Games.ListLowTime(ctx, now, 200)
+	if err != nil {
+		s.Logger.Warn("listing low-time games", "error", err)
+		return
+	}
+	for _, g := range games {
+		key := fmt.Sprintf("lowtime:%s:%d", g.ID, g.MoveNo)
+		set, err := s.Redis.SetNX(ctx, key, 1, 14*24*time.Hour).Result()
+		if err != nil || !set {
+			continue
+		}
+		s.Notifier.LowTime(g.UserID, g.ID, g.Deadline.Sub(now))
 	}
 }

@@ -259,7 +259,8 @@ func run(logger *slog.Logger) error {
 
 	// Games whose clock ran out while no node was running them -- correspondence
 	// games, mostly -- are ended by looking at the database (docs/04 §4.4).
-	go (&sweep.Sweeper{Games: store.NewGames(pool), Hub: messageHub, Logger: logger}).
+	go (&sweep.Sweeper{Games: store.NewGames(pool), Hub: messageHub, Logger: logger,
+		Notifier: notifier, Redis: redisClient}).
 		Run(background, time.Minute)
 
 	// Invitations nobody answered are closed once an hour. Reads already treat them

@@ -785,3 +785,129 @@ func TestAnAppleIDIsFreeAgainAfterItsAccountIsDeleted(t *testing.T) {
 		t.Error("devices of a deleted account should be gone")
 	}
 }
+
+func TestPushPrefsPatchAndFiltering(t *testing.T) {
+	skipIfShort(t)
+	ctx := context.Background()
+	users, devices := NewUsers(testPool), NewDevices(testPool)
+	user, _ := users.CreateGuest(ctx)
+	token := strings.Repeat("aa", 32)
+	if err := devices.Register(ctx, user.ID, token, "production", ""); err != nil {
+		t.Fatal(err)
+	}
+
+	prefs, err := devices.SetPrefs(ctx, user.ID, token, map[string]bool{"turn": false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prefs["turn"] || !prefs["game_end"] {
+		t.Errorf("patch should merge, got %v", prefs)
+	}
+	if list, _ := devices.ForUser(ctx, user.ID, "turn"); len(list) != 0 {
+		t.Error("a muted kind must not be delivered")
+	}
+	if list, _ := devices.ForUser(ctx, user.ID, "game_end"); len(list) != 1 {
+		t.Error("other kinds keep flowing")
+	}
+	// Only the owner can change it.
+	other, _ := users.CreateGuest(ctx)
+	if _, err := devices.SetPrefs(ctx, other.ID, token, map[string]bool{"turn": true}); !errors.Is(err, ErrNotFound) {
+		t.Errorf("a stranger's patch: %v", err)
+	}
+}
+
+func TestLowTimeListsOnlyImminentCorrespondenceDeadlines(t *testing.T) {
+	games := newGames(t)
+	ctx := context.Background()
+	corr := game.Config{Size: 9, Rules: rules.Japanese, Komi: 6.5, MaxUndos: 3,
+		TimeControl: game.TimeControl{Kind: game.Correspondence, PerMove: 24 * time.Hour}}
+	users := NewUsers(testPool)
+	an, _ := users.CreateGuest(ctx)
+
+	imminent, _ := games.Create(ctx, CreateParams{Config: corr, BlackUserID: an.ID, StartedAt: epoch})
+	comfortable, _ := games.Create(ctx, CreateParams{Config: corr, BlackUserID: an.ID, StartedAt: epoch})
+	blitzID, _ := games.Create(ctx, CreateParams{Config: blitzConfig(), BlackUserID: an.ID, StartedAt: epoch})
+
+	now := time.Now()
+	set := func(id string, deadline time.Time) {
+		if _, err := testPool.Exec(ctx, `UPDATE games SET move_deadline = $2 WHERE id = $1`, id, deadline); err != nil {
+			t.Fatal(err)
+		}
+	}
+	set(imminent, now.Add(time.Hour))      // 1h left of a 2.4h threshold
+	set(comfortable, now.Add(5*time.Hour)) // outside the 10% window
+	set(blitzID, now.Add(30*time.Second))  // live game: the actor owns this one
+
+	list, err := games.ListLowTime(ctx, now, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := map[string]LowTimeGame{}
+	for _, item := range list {
+		ids[item.ID] = item
+	}
+	if item, ok := ids[imminent]; !ok || item.UserID != an.ID {
+		t.Errorf("the imminent game should be listed for its player, got %v", list)
+	}
+	if _, ok := ids[comfortable]; ok {
+		t.Error("a comfortable deadline must not warn")
+	}
+	if _, ok := ids[blitzID]; ok {
+		t.Error("live games are not the sweeper's business")
+	}
+}
+
+func TestStatsCountWinsBySeatAndSize(t *testing.T) {
+	games := newGames(t)
+	ctx := context.Background()
+	users := NewUsers(testPool)
+	me, _ := users.CreateGuest(ctx)
+	other, _ := users.CreateGuest(ctx)
+
+	finish := func(size int, black, white string, resignBy rules.Color) {
+		config := game.Config{Size: size, Rules: rules.Japanese, Komi: 6.5, MaxUndos: 3,
+			TimeControl: game.TimeControl{Kind: game.Absolute, MainTime: 10 * time.Minute}}
+		id, err := games.Create(ctx, CreateParams{Config: config, BlackUserID: black, WhiteUserID: white, StartedAt: epoch})
+		if err != nil {
+			t.Fatal(err)
+		}
+		loaded, _ := games.Load(ctx, id)
+		session := loaded.Session
+		session, _ = playAndStore(t, games, id, session, rules.Black, rules.Play(coord(t, "E5")), NewID(), epoch)
+		if resignBy == rules.White {
+			session, _ = playAndStore(t, games, id, session, rules.White, rules.Play(coord(t, "D5")), NewID(), epoch.Add(time.Second))
+			// Black to move resigns? No: we want the given side to resign on their turn.
+		}
+		next, _, err := session.Apply(game.PlayCommand{By: session.ToPlay(), Move: rules.Resign,
+			ClientMoveID: NewID(), ExpectedMoveNumber: session.MoveNumber()}, epoch.Add(2*time.Second))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := games.Finish(ctx, id, next, epoch.Add(2*time.Second)); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// me as black, white resigns → win (white was to move after E5... craft):
+	finish(9, me.ID, other.ID, rules.White)  // after two plays, black resigns?! see assertion below
+	finish(9, other.ID, me.ID, rules.Black)  // black (them) resigns on move 2 → my win as white
+	finish(13, me.ID, other.ID, rules.Black) // white to move resigns? black played then white resigns → my win
+
+	stats, err := games.StatsForUser(ctx, me.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stats.Games != 3 {
+		t.Fatalf("games: %+v", stats)
+	}
+	if stats.Wins+stats.Losses != 3 || stats.Draws != 0 {
+		t.Errorf("every resignation has a winner: %+v", stats)
+	}
+	if stats.BySize[9].Games != 2 || stats.BySize[13].Games != 1 {
+		t.Errorf("per-size split: %+v", stats.BySize)
+	}
+	empty, _ := games.StatsForUser(ctx, NewID())
+	if empty.Games != 0 {
+		t.Errorf("a stranger has no games: %+v", empty)
+	}
+}

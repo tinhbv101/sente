@@ -38,20 +38,20 @@ const (
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	claims, err := s.claimsFrom(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, "unauthorized", "Phiên đăng nhập đã hết hạn.")
+		writeError(w, r, http.StatusUnauthorized, "unauthorized", "Phiên đăng nhập đã hết hạn.")
 		return
 	}
 	if version := r.URL.Query().Get("pv"); version != "" {
 		parsed, convErr := strconv.Atoi(version)
 		if convErr != nil || parsed != ProtocolVersion {
-			writeError(w, http.StatusBadRequest, "protocol_unsupported",
+			writeError(w, r, http.StatusBadRequest, "protocol_unsupported",
 				"Phiên bản ứng dụng quá cũ. Vui lòng cập nhật.")
 			return
 		}
 	}
 	gameID := r.URL.Query().Get("game_id")
 	if gameID == "" {
-		writeError(w, http.StatusBadRequest, "malformed", "Thiếu game_id.")
+		writeError(w, r, http.StatusBadRequest, "malformed", "Thiếu game_id.")
 		return
 	}
 
@@ -68,6 +68,8 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	c := &connection{
 		server: s, conn: conn, gameID: gameID, userID: claims.UserID,
 		outgoing: make(chan Message, sendBuffer),
+
+		english: wantsEnglish(r),
 	}
 	c.run(ctx)
 }
@@ -80,6 +82,7 @@ type connection struct {
 	colour rules.Color
 	// size is read once at connect time; the board never changes size mid-game.
 	size     int
+	english  bool
 	outgoing chan Message
 }
 
@@ -168,7 +171,7 @@ func (c *connection) handle(ctx context.Context, message Message) {
 	}
 	if _, err := c.server.config.Hub.Execute(ctx, c.gameID, command); err != nil {
 		// The rules engine's own code is what the client branches on (docs/06 §3.6).
-		c.sendError(message.ID, err.Error(), messageForCode(err.Error()))
+		c.sendError(message.ID, err.Error(), c.messageForCode(err.Error()))
 		return
 	}
 	// The result is not echoed here: it arrives through the subscription, the same
@@ -311,6 +314,13 @@ func (c *connection) send(message Message) {
 }
 
 func (c *connection) sendError(replyTo, code, message string) {
+	if c.english {
+		if english, ok := englishWSText[code]; ok {
+			message = english
+		} else if english, ok := englishErrorText[code]; ok {
+			message = english
+		}
+	}
 	out := newMessageOrDrop("error", errorPayload{Code: code, Message: message})
 	out.Re = replyTo
 	c.send(out)
@@ -402,7 +412,12 @@ func moveKindName(move rules.Move) string {
 }
 
 // messageForCode turns a wire code into something a player can read.
-func messageForCode(code string) string {
+func (c *connection) messageForCode(code string) string {
+	if c.english {
+		if english, found := englishWSText[code]; found {
+			return english
+		}
+	}
 	switch code {
 	case string(rules.ErrOccupied):
 		return "Đã có quân ở đó."

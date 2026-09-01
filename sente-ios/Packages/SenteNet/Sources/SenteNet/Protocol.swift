@@ -396,3 +396,17 @@ public enum JSONValue: Codable, Sendable, Equatable {
         self = try JSONDecoder().decode(JSONValue.self, from: data)
     }
 }
+
+/// GET /v1/me/stats — the personal record.
+public struct PlayerStats: Decodable, Sendable {
+    public struct Line: Decodable, Sendable {
+        public let games: Int
+        public let wins: Int
+        public let losses: Int
+    }
+    public let games: Int
+    public let wins: Int
+    public let losses: Int
+    public let draws: Int
+    public let bySize: [String: Line]
+}
