@@ -41,7 +41,7 @@ struct GoBot: Sendable {
     var searchIterations = 700
     var searchDeadline: TimeInterval? = 1.2
     var deepIterations = 20000
-    var deepDeadline: TimeInterval? = 3.0
+    var deepDeadline: TimeInterval? = 4.0
 
     init(level: BotLevel, seed: UInt64 = .random(in: 0 ... .max)) {
         self.level = level

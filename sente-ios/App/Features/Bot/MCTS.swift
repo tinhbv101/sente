@@ -64,6 +64,9 @@ struct MCTSBot {
 
     private var analysisRate: Double?
 
+    /// Root statistics of the last search, for tests and tuning.
+    private(set) var rootStats: [(move: Move, prior: Double, visits: Double, mean: Double)] = []
+
     mutating func chooseMove(_ engine: GameEngine) -> Move {
         guard engine.state.phase == .playing else { return .pass }
         let side = engine.toPlay
@@ -81,8 +84,14 @@ struct MCTSBot {
             runOnce(root: root, engine: engine)
         }
 
-        guard let best = root.children.max(by: { $0.visits < $1.visits }),
-              let move = best.move else { return .pass }
+        rootStats = root.children.map {
+            ($0.move ?? .pass, $0.prior, $0.visits, $0.visits > 0 ? $0.wins / $0.visits : 0)
+        }
+        // Most visits wins; ties fall to the better score, then the better prior
+        // (visit counts flatten out when the position is already decided).
+        guard let best = root.children.max(by: {
+            ($0.visits, $0.wins, $0.prior) < ($1.visits, $1.wins, $1.prior)
+        }), let move = best.move else { return .pass }
         if best.visits > 0 { analysisRate = best.wins / best.visits }
 
         if canResign, engine.state.moveNumber > 20, best.visits > 40,
@@ -134,7 +143,14 @@ struct MCTSBot {
         // probability: a two-point lead and a twenty-point lead should not look
         // identical to the tree.
         let margin = playout(from: sim)
-        let blackWinChance = 1 / (1 + exp(-margin / 5))
+        // Mostly the squeezed win chance, plus a linear sliver so a decided game
+        // still prefers the bigger margin — pure sigmoid saturates and every
+        // branch of a won (or lost) position looks identical.
+        let squeeze = 1 / (1 + exp(-margin / 5))
+        // 200 keeps the whole 9×9 margin range inside the clamp; at 120 the
+        // clamp bit exactly where a one-sided position needed the gradient.
+        let spread = min(max(margin / 200, -0.5), 0.5)
+        let blackWinChance = 0.75 * squeeze + 0.25 * (0.5 + spread)
         for visited in path {
             visited.visits += 1
             guard let mover = visited.mover else { continue }
@@ -153,9 +169,14 @@ struct MCTSBot {
             if case .play(let point) = move { return point.row * size + point.col }
             return .max
         }
+        // Vital points of small eye spaces carry their stake into the prior.
+        var vitalBonus: [Point: Double] = [:]
+        for vital in BotHeuristics.lifeDeathVitals(engine) {
+            vitalBonus[vital.point, default: 0] += vital.value
+        }
         var moves: [(Move, Double)] = GoBot.orderedLegalMoves(engine)
             .filter { !GoBot.isOwnEye($0, board: engine.board, side: side) }
-            .map { (.play($0), BotHeuristics.prior(point: $0, in: engine, for: side)) }
+            .map { (.play($0), BotHeuristics.prior(point: $0, in: engine, for: side) + (vitalBonus[$0] ?? 0)) }
         moves.sort { $0.1 == $1.1 ? key($0.0) < key($1.0) : $0.1 > $1.1 }
         moves = Array(moves.prefix(maxBranch))
         let late = engine.state.moveNumber > engine.state.size * engine.state.size
@@ -169,6 +190,14 @@ struct MCTSBot {
     private mutating func playout(from start: GameEngine) -> Double {
         var engine = start
         var passes = engine.state.consecutivePasses
+        // The life-and-death fights standing at the leaf: resolve them inside the
+        // playout, or the evaluation never learns what the vital point was worth.
+        let vitals = BotHeuristics.lifeDeathVitals(start)
+            .filter { $0.value >= 6 }
+            .sorted { $0.value == $1.value
+                ? ($0.point.row, $0.point.col) < ($1.point.row, $1.point.col)
+                : $0.value > $1.value }
+            .map(\.point)
         for _ in 0..<playoutDepth {
             guard engine.state.phase == .playing else { break }
             let side = engine.toPlay
@@ -177,6 +206,13 @@ struct MCTSBot {
             // Tactical reflexes first: a capture or an escape, if one is visible.
             if rng.next() % 8 != 0 {
                 move = BotHeuristics.urgentMove(in: engine, for: side)
+            }
+            if move == nil, !vitals.isEmpty, rng.next() % 4 != 0 {
+                for candidate in vitals where engine.board.isEmpty(candidate) {
+                    guard case .success = engine.validate(.play(candidate), by: side) else { continue }
+                    move = .play(candidate)
+                    break
+                }
             }
             if move == nil {
                 for _ in 0..<10 {
@@ -199,6 +235,6 @@ struct MCTSBot {
                 break
             }
         }
-        return BotHeuristics.areaMargin(engine, for: .black)
+        return BotHeuristics.deadAwareMargin(engine, for: .black)
     }
 }
