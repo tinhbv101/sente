@@ -68,6 +68,7 @@ func TestEveryEventRoundTrips(t *testing.T) {
 			Score: &score}},
 		game.ClockAdjusted{Player: rules.Black, Delta: 21 * time.Second,
 			Reason: "server_interruption"},
+		game.ChatSaid{By: rules.White, Code: "gg"},
 	}
 	for _, event := range events {
 		encoded, err := EncodeEvent(event)
@@ -163,7 +164,7 @@ func TestMistypedPayloadsAreRefusedForEveryType(t *testing.T) {
 		}
 	}
 	for _, kind := range []string{"scoring_opened", "scoring_changed", "play_resumed",
-		"undo_requested", "undo_resolved", "game_ended", "clock_adjusted"} {
+		"undo_requested", "undo_resolved", "game_ended", "clock_adjusted", "chat_said"} {
 		if _, err := DecodeEvent([]byte(`{"type":"` + kind + `","data":"nope"}`)); err == nil {
 			t.Errorf("%s: a mistyped payload must be refused", kind)
 		}

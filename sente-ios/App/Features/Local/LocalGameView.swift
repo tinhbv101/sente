@@ -107,6 +107,9 @@ struct LocalBoardView: View {
         .padding(.horizontal, 12)
         .background(Tokens.paper.ignoresSafeArea())
         .overlay(alignment: .bottom) { toastView }
+        .onChange(of: store.moveNumber) { old, new in if new > old { Feedback.stone() } }
+        .onChange(of: store.captures.black + store.captures.white) { old, new in if new > old { Feedback.capture() } }
+        .onChange(of: store.phase) { _, new in if new == .finished { Feedback.gameEnd() } }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 ShareLink(item: sgfFile, preview: SharePreview("Ván cờ \(store.config.size)×\(store.config.size)")) {

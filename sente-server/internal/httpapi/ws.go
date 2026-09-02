@@ -27,6 +27,12 @@ const (
 	sendBuffer = 64
 )
 
+// The quick-chat vocabulary. The client renders its own localisation for each
+// code; anything not listed here is refused.
+var allowedChat = map[string]bool{
+	"hi": true, "gg": true, "thanks": true, "good_move": true, "oops": true, "gl": true,
+}
+
 // Close codes from docs/06 §3.10. The client branches on these, so they are part
 // of the contract, not an implementation detail.
 const (
@@ -161,6 +167,22 @@ func (c *connection) handle(ctx context.Context, message Message) {
 	if message.Type == "resume" {
 		// A client that lost track asks for the whole picture (docs/06 §3.3).
 		c.sendState(ctx, message.ID)
+		return
+	}
+
+	if message.Type == "chat" {
+		// Quick chat is broadcast-only: it skips the actor, changes no state and
+		// is never persisted. Codes, not text, so no free-form content is carried.
+		var payload struct {
+			Code string `json:"code"`
+		}
+		_ = json.Unmarshal(message.Payload, &payload)
+		if !allowedChat[payload.Code] {
+			c.sendError(message.ID, "malformed", "Tin nhắn không hợp lệ.")
+			return
+		}
+		c.server.config.Hub.Broadcast(c.gameID,
+			[]game.Event{game.ChatSaid{By: c.colour, Code: payload.Code}})
 		return
 	}
 
@@ -377,6 +399,9 @@ func protocolMessage(gameID string, size int, event game.Event) (Message, bool) 
 	case game.UndoRequested:
 		return newMessageOrDrop("undo_requested", map[string]string{
 			"game_id": gameID, "by": e.By.String()}), true
+	case game.ChatSaid:
+		return newMessageOrDrop("chat", map[string]string{
+			"game_id": gameID, "by": e.By.String(), "code": e.Code}), true
 	case game.UndoResolved:
 		return newMessageOrDrop("undo_result", map[string]any{
 			"game_id": gameID, "accepted": e.Accepted, "move_no": e.MoveNumber}), true

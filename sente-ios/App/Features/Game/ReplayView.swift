@@ -14,6 +14,7 @@ struct ReplayView: View {
     @State private var index = 0
     @State private var error: String?
     @State private var analysis: ReplayAnalysis?
+    @State private var recorded: [RecordedMove] = []
 
     var body: some View {
         VStack(spacing: 12) {
@@ -23,6 +24,7 @@ struct ReplayView: View {
                           showsCoordinates: session.settings.showCoordinates,
                           colourBlindSymbols: session.settings.colourBlindSymbols)
                 ReplayAnalysisBar(positions: positions, index: index, analysis: $analysis)
+                GameReviewSection(positions: positions, moves: recorded, index: $index)
                 controls(moves)
             } else if let error {
                 ContentUnavailableView("Không tải được ván", systemImage: "exclamationmark.triangle", description: Text(error))
@@ -125,6 +127,7 @@ struct ReplayView: View {
                                             rules: fetched.rules == "chinese" ? .chinese : .japanese,
                                             komi: fetched.komi, handicap: fetched.handicap)
             var built = [engine]
+            var history: [RecordedMove] = []
             for item in fetched.items {
                 let move: Move
                 switch item.kind {
@@ -134,11 +137,14 @@ struct ReplayView: View {
                     guard let text = item.point, let point = Coordinate.point(text, size: fetched.boardSize) else { continue }
                     move = .play(point)
                 }
-                guard let next = try? engine.apply(move, by: item.color == "white" ? .white : .black) else { break }
+                let by: Player = item.color == "white" ? .white : .black
+                guard let next = try? engine.apply(move, by: by) else { break }
                 engine = next
                 built.append(next)
+                history.append(RecordedMove(player: by, move: move))
             }
             positions = built
+            recorded = history
             moves = fetched
             index = built.count - 1
         } catch let apiError as APIError { error = apiError.userMessage } catch { self.error = error.localizedDescription }

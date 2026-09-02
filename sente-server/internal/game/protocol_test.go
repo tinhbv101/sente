@@ -21,6 +21,7 @@ func TestEventNamesMatchTheWireProtocol(t *testing.T) {
 		"undo_resolved":   UndoResolved{},
 		"game_ended":      GameEnded{},
 		"clock_adjusted":  ClockAdjusted{},
+		"chat_said":       ChatSaid{},
 	}
 	seen := make(map[string]bool, len(expected))
 	for name, event := range expected {

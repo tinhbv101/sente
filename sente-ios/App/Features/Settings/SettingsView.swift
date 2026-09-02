@@ -75,6 +75,12 @@ struct SettingsView: View {
                 Text("Tắt: quân rơi đúng chỗ bạn chạm. Bật: quân ma hiện cao hơn ngón tay một chút để không bị che — hữu ích trên bàn 19×19, kéo xuống dưới mép bàn để đặt hàng cuối.")
             }
             Section {
+                Toggle("Âm thanh", isOn: $soundOn)
+                Toggle("Rung phản hồi", isOn: $hapticsOn)
+            } header: { Text("Âm thanh & rung") } footer: {
+                Text("Tiếng đặt quân và rung nhẹ khi có nước đi, bắt quân hoặc tin nhắn nhanh. Âm thanh theo công tắc im lặng của máy.")
+            }
+            Section {
                 Button("Xóa tài khoản", role: .destructive) { confirmDelete = true }
                 if let deleteError { Text(deleteError).font(.footnote).foregroundStyle(.red) }
             } footer: {
@@ -122,6 +128,9 @@ struct SettingsView: View {
             }
         }
     }
+
+    @AppStorage("soundOn") private var soundOn = true
+    @AppStorage("hapticsOn") private var hapticsOn = true
 
     /// Kept on-device and pushed as a patch; the server filters per kind.
     @AppStorage("pushPrefTurn") private var prefTurn = true

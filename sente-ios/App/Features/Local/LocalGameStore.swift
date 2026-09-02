@@ -85,6 +85,9 @@ final class LocalGameStore {
     private(set) var counted: (score: Score, result: GameResult)?
     private let startedAt: Date
     private let storage: any LocalGameStorage
+    private let library: any KifuStoring
+    /// The finished game is archived once, whichever path ended it.
+    private var archived = false
     /// Bots keep their RNG state across moves, one per seat.
     private var bots: [Player: GoBot] = [:]
     private(set) var thinking = false
@@ -92,11 +95,13 @@ final class LocalGameStore {
         didSet { if !paused { scheduleBot() } }
     }
 
-    init(config: LocalGameConfig, storage: any LocalGameStorage = FileLocalGameStorage()) {
+    init(config: LocalGameConfig, storage: any LocalGameStorage = FileLocalGameStorage(),
+         library: any KifuStoring = FileKifuLibrary()) {
         self.config = config
         self.engine = GameEngine.newGame(size: config.size, rules: config.rules, handicap: config.handicap)
         self.startedAt = Date()
         self.storage = storage
+        self.library = library
         save()
         makeBots()
         scheduleBot()
@@ -104,11 +109,13 @@ final class LocalGameStore {
 
     /// Rebuilds a saved game by replaying it. A move that no longer applies ends
     /// the replay there rather than throwing the whole game away.
-    init(record: LocalGameRecord, storage: any LocalGameStorage = FileLocalGameStorage()) {
+    init(record: LocalGameRecord, storage: any LocalGameStorage = FileLocalGameStorage(),
+         library: any KifuStoring = FileKifuLibrary()) {
         self.config = record.config
         self.engine = GameEngine.newGame(size: record.config.size, rules: record.config.rules, handicap: record.config.handicap)
         self.startedAt = record.startedAt
         self.storage = storage
+        self.library = library
         for stored in record.moves {
             let move: Move
             switch stored.kind {
@@ -236,6 +243,7 @@ final class LocalGameStore {
         let score = engine.score(deadStones: deadStones)
         counted = (score, GameResult(winner: score.winner, reason: .counting))
         storage.clear()
+        archive()
     }
 
     /// Disagreement over life and death: drop the passes and play it out.
@@ -309,6 +317,18 @@ final class LocalGameStore {
             result: result, moves: moves))
     }
 
+    /// A finished human game lands in the on-device library; bot-versus-bot
+    /// watch games do not — they are generated scenery, not someone's record.
+    private func archive() {
+        guard !archived, !config.isWatch, let result else { return }
+        archived = true
+        library.add(KifuEntry(
+            id: UUID(), date: startedAt,
+            mode: config.blackBot != nil || config.whiteBot != nil ? "bot" : "local",
+            blackName: config.blackName, whiteName: config.whiteName,
+            size: config.size, resultText: KifuEntry.verdict(result), sgf: sgf))
+    }
+
     // MARK: - Internals
 
     private func apply(_ move: Move) throws {
@@ -316,7 +336,7 @@ final class LocalGameStore {
         engine = try engine.apply(move, by: player)
         moves.append(RecordedMove(player: player, move: move))
         toast = nil
-        if engine.state.phase == .finished { storage.clear() } else { save() }
+        if engine.state.phase == .finished { storage.clear(); archive() } else { save() }
     }
 
     private func replay(_ kept: [RecordedMove]) {

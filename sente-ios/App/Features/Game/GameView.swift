@@ -33,7 +33,12 @@ struct GameView: View {
         // Pushes about the game on screen are held back (PushRegistrar).
         .onAppear { PushRegistrar.visibleGameID = summary.gameId }
         .overlay(alignment: .top) { banner }
+        .overlay(alignment: .top) { chatBubble }
         .overlay(alignment: .bottom) { toastView }
+        .onChange(of: store.moveNumber) { old, new in if new > old { Feedback.stone() } }
+        .onChange(of: store.captures.black + store.captures.white) { old, new in if new > old { Feedback.capture() } }
+        .onChange(of: store.incomingChat?.at) { _, new in if new != nil { Feedback.chat() } }
+        .onChange(of: store.phase) { _, new in if new == .finished { Feedback.gameEnd() } }
         .sheet(isPresented: Binding(get: { store.phase == .finished && store.result != nil }, set: { _ in })) {
             ResultView(store: store, opponentName: summary.opponentName,
                        rematch: summary.opponentId == nil ? nil : { try await session.api.rematch(gameID: summary.gameId) }) { dismiss() }
@@ -169,6 +174,15 @@ struct GameView: View {
                 Button("Nhường lượt") { store.pass() }
                     .buttonStyle(SecondaryButton()).disabled(!store.isMyTurn)
                 Menu {
+                    ForEach(QuickChat.codes, id: \.self) { code in
+                        Button(QuickChat.text(code)) { store.sendChat(code) }
+                    }
+                } label: {
+                    Image(systemName: "bubble.left").frame(width: 56, height: 50)
+                }
+                .buttonStyle(SecondaryButton())
+                .accessibilityLabel("Tin nhắn nhanh")
+                Menu {
                     Button("Xin hoãn một nước") { store.requestUndo() }
                     if summary.opponentId != nil {
                         Divider()
@@ -196,6 +210,22 @@ struct GameView: View {
             ConnectionBanner(kind: .syncing).padding(.top, 6)
         default:
             EmptyView()
+        }
+    }
+
+    /// A quick-chat line floats in briefly and removes itself.
+    @ViewBuilder
+    private var chatBubble: some View {
+        if let chat = store.incomingChat {
+            let name = chat.by == store.myColor ? LS(localized: "Bạn") : summary.opponentName
+            Text("\(name): \(QuickChat.text(chat.code))")
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 13).padding(.vertical, 8)
+                .background(Tokens.indigoSoft, in: Capsule())
+                .foregroundStyle(Tokens.ink)
+                .padding(.top, 44)
+                .id(chat.at)
+                .task { try? await Task.sleep(for: .seconds(3)); store.dismissChat() }
         }
     }
 
@@ -309,6 +339,22 @@ struct ResultView: View {
         case "timeout": LS(localized: "Hết giờ")
         case "repetition": LS(localized: "Lặp thế cờ")
         default: store.result?.reason ?? ""
+        }
+    }
+}
+
+/// The canned quick-chat vocabulary; codes match the server whitelist.
+enum QuickChat {
+    static let codes = ["hi", "gl", "good_move", "oops", "thanks", "gg"]
+    static func text(_ code: String) -> String {
+        switch code {
+        case "hi": LS(localized: "👋 Chào bạn")
+        case "gl": LS(localized: "🍀 Chúc may mắn")
+        case "good_move": LS(localized: "👍 Nước hay!")
+        case "oops": LS(localized: "😅 Nhầm tay rồi")
+        case "thanks": LS(localized: "🙏 Cảm ơn ván đấu")
+        case "gg": LS(localized: "🤝 Ván hay quá")
+        default: code
         }
     }
 }

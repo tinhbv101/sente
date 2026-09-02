@@ -18,6 +18,7 @@ struct LocalReplayView: View {
                       showsCoordinates: session.settings.showCoordinates,
                       colourBlindSymbols: session.settings.colourBlindSymbols)
             ReplayAnalysisBar(positions: positions, index: index, analysis: $analysis)
+            GameReviewSection(positions: positions, moves: record.moves, index: $index)
             controls
             Spacer(minLength: 0)
         }
@@ -26,8 +27,23 @@ struct LocalReplayView: View {
         .foregroundStyle(Tokens.ink)
         .navigationTitle("Xem lại")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                ShareLink(item: sgfFile, preview: SharePreview("Ván cờ \(record.size)×\(record.size)")) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .accessibilityLabel("Chia sẻ SGF")
+            }
+        }
         .onAppear { build() }
         .onChange(of: index) { _, _ in analysis = nil }
+    }
+
+    /// SGF goes out as a file so other Go apps can open it directly.
+    private var sgfFile: URL {
+        let url = FileManager.default.temporaryDirectory.appending(path: "sente-replay.sgf")
+        try? SGF.encode(record).write(to: url, atomically: true, encoding: .utf8)
+        return url
     }
 
     private var snapshot: BoardSnapshot {

@@ -17,6 +17,8 @@ public enum ClientCommand: Sendable {
     case undoResponse(accept: Bool)
     /// Ask for the full position again; the server answers with `game_state`.
     case resume
+    /// One canned quick-chat code; the server echoes it to both players.
+    case chat(code: String)
 
     var type: String {
         switch self {
@@ -27,6 +29,7 @@ public enum ClientCommand: Sendable {
         case .undoRequest: "undo_request"
         case .undoResponse: "undo_response"
         case .resume: "resume"
+        case .chat: "chat"
         }
     }
 
@@ -38,6 +41,7 @@ public enum ClientCommand: Sendable {
         case .scoringAccept(let accepted): return try JSONValue(encoding: AcceptPayload(accepted: accepted))
         case .scoringResume, .undoRequest, .resume: return .object([:])
         case .undoResponse(let accept): return try JSONValue(encoding: UndoResponsePayload(accept: accept))
+        case .chat(let code): return try JSONValue(encoding: ChatPayload(code: code))
         }
     }
 }

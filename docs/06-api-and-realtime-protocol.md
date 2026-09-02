@@ -336,7 +336,7 @@ Server trả `hello` ngay sau khi upgrade:
 | `scoring_resume` | `{ game_id }` | "Chơi tiếp" — không đồng ý kết quả |
 | `undo_request` | `{ game_id }` | |
 | `undo_response` | `{ game_id, accept }` | |
-| `chat` | `{ game_id, body }` | |
+| `chat` | `{ code }` | Chat nhanh: chỉ nhận mã trong bộ soạn sẵn (`hi`, `gl`, `good_move`, `oops`, `thanks`, `gg`) — không có text tự do trên đường truyền |
 | `ping` | `{ client_time }` | Mỗi 20 giây |
 
 **Server → Client**
@@ -356,7 +356,7 @@ Server trả `hello` ngay sau khi upgrade:
 | `undo_requested` | `{ game_id, by }` | |
 | `undo_result` | `{ game_id, accepted, move_no }` | Nếu `accepted` thì **`game_state` đi ngay sau**: client không tự lùi được (quân bị bắt đã mất), nên khóa thao tác cho tới khi nhận bàn cờ mới |
 | `resync_required` | `{ game_id, move_no }` | Sau "chơi tiếp" từ đếm điểm; `game_state` đi ngay sau |
-| `chat` | `{ game_id, message_id, user_id, display_name, body, move_no, ts }` | |
+| `chat` | `{ game_id, by, code }` | Chat nhanh, broadcast-only: không lưu, không qua actor; client tự dịch `code` ra câu chữ |
 | `presence` | `{ game_id, user_id, online }` | Đối thủ vào/rời |
 | `error` | `{ code, message, re? }` | Lỗi cho một message cụ thể hoặc lỗi phiên |
 | `pong` | `{ client_time, server_time }` | Trả lời `ping`; dùng để tính clock offset |

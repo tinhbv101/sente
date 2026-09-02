@@ -253,6 +253,11 @@ type clockAdjustedPayload struct {
 	Reason  string `json:"reason"`
 }
 
+type chatSaidPayload struct {
+	By   string `json:"by"`
+	Code string `json:"code"`
+}
+
 func EncodeEvent(event game.Event) ([]byte, error) {
 	switch e := event.(type) {
 	case game.MoveMade:
@@ -282,6 +287,8 @@ func EncodeEvent(event game.Event) ([]byte, error) {
 	case game.ClockAdjusted:
 		return wrap("clock_adjusted", clockAdjustedPayload{
 			Player: e.Player.String(), DeltaMs: e.Delta.Milliseconds(), Reason: e.Reason})
+	case game.ChatSaid:
+		return wrap("chat_said", chatSaidPayload{By: e.By.String(), Code: e.Code})
 	default:
 		return nil, fmt.Errorf("wire: cannot encode event %T", event)
 	}
@@ -361,6 +368,12 @@ func DecodeEvent(data []byte) (game.Event, error) {
 		return game.ClockAdjusted{
 			Player: colour(p.Player), Delta: time.Duration(p.DeltaMs) * time.Millisecond,
 			Reason: p.Reason}, nil
+	case "chat_said":
+		var p chatSaidPayload
+		if err := json.Unmarshal(outer.Data, &p); err != nil {
+			return nil, err
+		}
+		return game.ChatSaid{By: colour(p.By), Code: p.Code}, nil
 	default:
 		return nil, fmt.Errorf("wire: unknown event type %q", outer.Type)
 	}

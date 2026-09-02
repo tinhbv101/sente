@@ -33,6 +33,9 @@ final class GameStore {
     /// Set between an accepted undo and the `game_state` that follows it: the
     /// board on screen is stale, so no move may be built on it.
     private(set) var awaitingState = false
+    /// The last quick-chat line, shown as a transient bubble. `at` re-triggers
+    /// the bubble when the same code arrives twice.
+    private(set) var incomingChat: (by: Player, code: String, at: Date)?
 
     // Scoring phase
     private(set) var deadStones: Set<Point> = []
@@ -147,6 +150,8 @@ final class GameStore {
     func resumePlay() { send(.scoringResume) }
     func requestUndo() { send(.undoRequest) }
     func answerUndo(_ accept: Bool) { undoRequestedByOpponent = false; send(.undoResponse(accept: accept)) }
+    func sendChat(_ code: String) { send(.chat(code: code)) }
+    func dismissChat() { incomingChat = nil }
     func dismissToast() { toast = nil }
 
     private func send(_ command: ClientCommand) {
@@ -205,6 +210,8 @@ final class GameStore {
             } else {
                 toast = LS(localized: "Đối thủ không đồng ý hoãn.")
             }
+        case .chat(let by, let code):
+            incomingChat = (by == "white" ? .white : .black, code, Date())
         case .resyncRequired:
             // A rewind changes more than the client can patch; the server follows
             // with game_state, so only drop what is on screen.

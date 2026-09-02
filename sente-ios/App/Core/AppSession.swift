@@ -3,6 +3,7 @@ import GoKit
 import Observation
 import SenteNet
 import SwiftUI
+import WidgetKit
 
 /// Everything the app knows outside a game: who I am, where the server is, and
 /// which games and invitations I have. Guest sign-up happens silently on first
@@ -123,7 +124,17 @@ final class AppSession {
         async let invitations = api.myChallenges()
         self.games = try await games
         self.invitations = try await invitations
+        publishWidgetSummary()
         await registerForPushIfUseful()
+    }
+
+    /// The home-screen widget reads this from the app group after every refresh.
+    private func publishWidgetSummary() {
+        let mine = myTurnGames
+        WidgetSummary(myTurn: mine.count, waiting: waitingGames.count,
+                      nextDeadline: mine.compactMap(\.moveDeadline).min(),
+                      nextOpponent: mine.first?.opponentName).save()
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSummary.widgetKind)
     }
 
     func refreshQuietly() async { try? await refresh() }

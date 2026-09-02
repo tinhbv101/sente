@@ -189,6 +189,14 @@ type ClockAdjusted struct {
 	Reason string
 }
 
+// ChatSaid relays one canned quick-chat message between the players. It is
+// broadcast-only: no state, nothing persisted, and only whitelisted codes ever
+// reach it (ws.go validates before broadcasting).
+type ChatSaid struct {
+	By   rules.Color
+	Code string
+}
+
 func (MoveMade) eventName() string       { return "move_made" }
 func (ScoringOpened) eventName() string  { return "scoring_opened" }
 func (ScoringChanged) eventName() string { return "scoring_changed" }
@@ -197,6 +205,7 @@ func (UndoRequested) eventName() string  { return "undo_requested" }
 func (UndoResolved) eventName() string   { return "undo_resolved" }
 func (GameEnded) eventName() string      { return "game_ended" }
 func (ClockAdjusted) eventName() string  { return "clock_adjusted" }
+func (ChatSaid) eventName() string       { return "chat_said" }
 
 // ── the state machine ───────────────────────────────────────────────────────
 

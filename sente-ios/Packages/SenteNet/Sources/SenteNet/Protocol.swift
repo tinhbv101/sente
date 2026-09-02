@@ -270,6 +270,7 @@ public struct MovePayload: Encodable, Sendable {
 }
 
 public struct MarkDeadPayload: Encodable, Sendable { public let point: String }
+public struct ChatPayload: Encodable, Sendable { public let code: String }
 public struct AcceptPayload: Encodable, Sendable { public let accepted: Bool }
 public struct UndoResponsePayload: Encodable, Sendable { public let accept: Bool }
 public struct PingPayload: Encodable, Sendable { public let clientTime: Date }
@@ -287,6 +288,8 @@ public enum ServerEvent: Sendable {
     case clockAdjusted(ClockAdjustedPayload)
     case undoRequested(by: String)
     case undoResult(accepted: Bool, moveNo: Int)
+    /// A canned quick-chat message from either player (including our own echo).
+    case chat(by: String, code: String)
     case resyncRequired(moveNo: Int)
     case error(ErrorPayload, replyTo: String?)
     case pong(PongPayload)
@@ -354,6 +357,10 @@ public enum ProtocolDecoder {
         case "resync_required":
             struct P: Decodable { let moveNo: Int }
             return .resyncRequired(moveNo: try decode(P.self).moveNo)
+        case "chat":
+            struct P: Decodable { let by: String; let code: String }
+            let p = try decode(P.self)
+            return .chat(by: p.by, code: p.code)
         case "error": return .error(try decode(ErrorPayload.self), replyTo: message.re)
         case "pong": return .pong(try decode(PongPayload.self))
         default: return nil

@@ -40,6 +40,8 @@ targets:
       - package: GoKit
       - package: SenteNet
       - package: SenteUI
+      - target: SenteWidgets
+        embed: true
     info:
       path: App/Resources/Info.plist
       properties:
@@ -82,6 +84,24 @@ targets:
         INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
         TARGETED_DEVICE_FAMILY: "1"
         ENABLE_PREVIEWS: YES
+  SenteWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+      # The summary type is shared with the app; the app group is the channel.
+      - path: App/Core/WidgetSummary.swift
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Sente
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.sente.go.widgets
+        CODE_SIGN_ENTITLEMENTS: Widgets/SenteWidgets.entitlements
+        SKIP_INSTALL: YES
   SenteTests:
     type: bundle.unit-test
     platform: iOS

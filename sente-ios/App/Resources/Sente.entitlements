@@ -14,5 +14,10 @@
 	<array>
 		<string>applinks:sente.devlord.net</string>
 	</array>
+	<!-- Shares the widget summary with the SenteWidgets extension. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.app.sente.go</string>
+	</array>
 </dict>
 </plist>

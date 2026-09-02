@@ -1,10 +1,13 @@
 import SwiftUI
+import GoKit
 import SenteNet
 import SenteUI
 
 struct HomeView: View {
     @Environment(AppSession.self) private var session
     @State private var sheet: HomeSheet?
+    /// Versioned so a future, richer onboarding can show itself again.
+    @AppStorage("welcomedV1") private var welcomed = false
     @State private var showSettings = false
     @State private var showLocal = false
     @State private var path = NavigationPath()
@@ -15,6 +18,7 @@ struct HomeView: View {
                 gameSections
                 inviteSection
                 localSection
+                kifuSection
                 learnSection
                 emptyState
             }
@@ -42,11 +46,18 @@ struct HomeView: View {
             }
             // One sheet for both, so an invitation arriving while another sheet is up
             // replaces it instead of being silently dropped (SwiftUI presents one).
-            .sheet(isPresented: Binding(get: { session.pendingSGF != nil },
-                                        set: { if !$0 { session.pendingSGF = nil } })) {
+            .sheet(isPresented: sgfPresented) {
                 if let record = session.pendingSGF {
                     NavigationStack { LocalReplayView(record: record) }
                 }
+            }
+            .sheet(isPresented: welcomePresented) {
+                WelcomeView(
+                    onLearn: { path.append(LearnRoute.list) },
+                    onBot: { path.append(BotRoute.play) },
+                    // The welcome sheet is still animating out; presenting the next
+                    // sheet immediately would be silently dropped.
+                    onInvite: { Task { try? await Task.sleep(for: .milliseconds(450)); sheet = .create } })
             }
             .sheet(item: $sheet) { item in
                 switch item {
@@ -72,6 +83,14 @@ struct HomeView: View {
                 }
             }
             .navigationDestination(for: Lesson.self) { LessonPlayerView(lesson: $0) }
+            .navigationDestination(for: KifuRoute.self) { _ in KifuLibraryView() }
+            .navigationDestination(for: KifuEntry.self) { entry in
+                if let record = try? SGF.decode(entry.sgf) {
+                    LocalReplayView(record: record)
+                } else {
+                    ContentUnavailableView("Không đọc được ván", systemImage: "exclamationmark.triangle")
+                }
+            }
             .onChange(of: session.pendingInviteCode) { _, code in openPendingInvite(code) }
             // The id may already be set when this view first appears (a launch
             // argument, or a link opened while the app was starting), and onChange
@@ -147,6 +166,17 @@ struct HomeView: View {
             }
             .listRowBackground(Color.clear)
         }
+    }
+
+    /// Extracted bindings: inline closures in the body send the type-checker
+    /// into the weeds once the modifier chain gets this long.
+    private var sgfPresented: Binding<Bool> {
+        Binding(get: { session.pendingSGF != nil },
+                set: { if !$0 { session.pendingSGF = nil } })
+    }
+
+    private var welcomePresented: Binding<Bool> {
+        Binding(get: { !welcomed }, set: { if !$0 { welcomed = true } })
     }
 
     private func openPendingInvite(_ code: String?) {
@@ -289,6 +319,28 @@ struct HomeView: View {
             Text("Giữ chuỗi \(status.streak) ngày!").font(.caption).foregroundStyle(Tokens.inkSecondary)
         } else {
             Text("Một bài mỗi ngày, giải để tạo chuỗi").font(.caption).foregroundStyle(Tokens.inkSecondary)
+        }
+    }
+
+    /// Finished on-device games: replayable, analysable, exportable.
+    @ViewBuilder private var kifuSection: some View {
+        let count = FileKifuLibrary().load().count
+        if count > 0 {
+            Section {
+                Button { path.append(KifuRoute.list) } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "books.vertical.fill").foregroundStyle(Tokens.indigo)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Ván đã lưu").font(.callout.weight(.semibold))
+                            Text("\(count) ván trên máy này · xem lại và phân tích")
+                                .font(.caption).foregroundStyle(Tokens.inkSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Tokens.inkTertiary)
+                    }
+                }
+                .foregroundStyle(Tokens.ink)
+            }
         }
     }
 

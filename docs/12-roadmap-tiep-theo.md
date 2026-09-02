@@ -21,7 +21,17 @@
 | B1 | Tsumego mỗi ngày: 12 bài xoay vòng theo ngày (Puzzles.json, validator engine canh như bài học), chuỗi ngày, hàng riêng trên Home | ☑ 2026-09-01 |
 | B2 | Thống kê cá nhân: `GET /v1/me/stats` + mục Thành tích trong Cài đặt | ☑ 2026-09-01 |
 | B3 | Thang bot: hai cấp đầu mở sẵn, thắng để mở cấp sau (✓/🔒 trong màn chọn) | ☑ 2026-09-01 |
-| B4 | Widget/Live Activity "đến lượt bạn" — *để sau: cần target WidgetKit + App Group, đổi cấu hình ký* | ☐ hoãn |
+| B4 | Widget "đến lượt bạn" (WidgetKit + App Group `group.app.sente.go`; app ghi tóm tắt sau mỗi refresh) — Live Activity vẫn để sau vì cần push token riêng | ☑ 2026-09-02 |
+
+## Phase E — Đợt 2026-09-02 ("những thứ đáng làm ngay")
+
+| # | Hạng mục | Trạng thái |
+|---|---|---|
+| E1 | Bot thầy giáo: "Máy soát cả ván" trong hai màn xem lại — MCTS chấm từng thế, liệt kê 3 nước tụt tỷ lệ thắng nặng nhất, chạm để nhảy tới | ☑ 2026-09-02 |
+| E2 | Chat nhanh trong ván online: bộ câu soạn sẵn (mã, không phải text tự do — không kéo theo nghĩa vụ kiểm duyệt), WS `chat` broadcast-only qua hub, bong bóng hiện 3 giây | ☑ 2026-09-02 |
+| E3 | Thư viện kifu: ván local/bot kết thúc tự lưu (SGF + metadata, tối đa 200), mục "Ván đã lưu" trên Home → xem lại/phân tích/xuất SGF/xoá | ☑ 2026-09-02 |
+| E4 | Âm thanh đặt quân + haptic (toggle trong Cài đặt, theo công tắc im lặng), màn chào lần đầu mở app (3 cửa: học/bot/mời bạn) | ☑ 2026-09-02 |
+| E5 | Widget = B4 ở trên | ☑ 2026-09-02 |
 
 ## Phase C — Mở rộng online (khi có người chơi đều)
 
