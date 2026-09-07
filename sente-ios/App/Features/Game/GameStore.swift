@@ -72,6 +72,14 @@ final class GameStore {
     }
 
     var isMyTurn: Bool { phase == .playing && toPlay == myColor && pending == nil && !awaitingState }
+
+    /// The full arithmetic behind the server's totals, computed locally from the
+    /// same engine and dead set (the rules spec pins both engines to identical
+    /// results). This is what shows that marked dead stones do count as prisoners.
+    var scoreDetail: Score? {
+        guard phase == .scoring || phase == .finished, let confirmed else { return nil }
+        return confirmed.score(deadStones: deadStones)
+    }
     var iAccepted: Bool { myColor == .black ? blackAccepted : whiteAccepted }
     var opponentAccepted: Bool { myColor == .black ? whiteAccepted : blackAccepted }
     var ghostPlayer: StonePlayer { myColor == .black ? .black : .white }

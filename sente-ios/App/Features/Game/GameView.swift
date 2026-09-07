@@ -258,7 +258,10 @@ struct ScoringControls: View {
             .padding(12).background(Tokens.indigoSoft, in: RoundedRectangle(cornerRadius: 12))
             .foregroundStyle(Tokens.ink)
 
-            if let score = store.score {
+            if let detail = store.scoreDetail {
+                ScoreBreakdownView(score: detail, blackName: LS(localized: "Đen"), whiteName: LS(localized: "Trắng"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if let score = store.score {
                 HStack {
                     Text("Đen ").foregroundStyle(Tokens.inkSecondary) + Text(score.black.formatted()).font(.system(.body, design: .monospaced).weight(.medium))
                     Spacer()
@@ -296,11 +299,16 @@ struct ResultView: View {
             Text(title).font(.system(size: 36, weight: .regular, design: .serif))
             if let score = store.result?.score {
                 Text("\(score.margin.formatted()) điểm").font(.system(.body, design: .monospaced)).foregroundStyle(Tokens.inkSecondary)
-                Grid(alignment: .trailing, horizontalSpacing: 24, verticalSpacing: 8) {
-                    GridRow { Text(""); Text("Đen").font(.caption.weight(.bold)); Text("Trắng").font(.caption.weight(.bold)) }
-                    GridRow { Text("Tổng").gridColumnAlignment(.leading).foregroundStyle(Tokens.inkSecondary)
-                        Text(score.black.formatted()).monospacedDigit(); Text(score.white.formatted()).monospacedDigit() }
-                }.font(.subheadline).padding(.top, 6)
+                if let detail = store.scoreDetail {
+                    ScoreBreakdownView(score: detail, blackName: LS(localized: "Đen"), whiteName: LS(localized: "Trắng"))
+                        .padding(.top, 6)
+                } else {
+                    Grid(alignment: .trailing, horizontalSpacing: 24, verticalSpacing: 8) {
+                        GridRow { Text(""); Text("Đen").font(.caption.weight(.bold)); Text("Trắng").font(.caption.weight(.bold)) }
+                        GridRow { Text("Tổng").gridColumnAlignment(.leading).foregroundStyle(Tokens.inkSecondary)
+                            Text(score.black.formatted()).monospacedDigit(); Text(score.white.formatted()).monospacedDigit() }
+                    }.font(.subheadline).padding(.top, 6)
+                }
             }
             Spacer(minLength: 8)
             if let rematch {

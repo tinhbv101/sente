@@ -210,11 +210,9 @@ struct LocalBoardView: View {
             .padding(12).background(Tokens.indigoSoft, in: RoundedRectangle(cornerRadius: 12))
             .foregroundStyle(Tokens.ink)
             if let score = store.score {
-                HStack {
-                    Text("\(store.config.blackName) ").foregroundStyle(Tokens.inkSecondary) + Text(score.black.formatted()).font(.system(.body, design: .monospaced).weight(.medium))
-                    Spacer()
-                    Text("\(store.config.whiteName) ").foregroundStyle(Tokens.inkSecondary) + Text(score.white.formatted()).font(.system(.body, design: .monospaced).weight(.medium))
-                }.font(.footnote)
+                ScoreBreakdownView(score: score, blackName: store.config.blackName,
+                                   whiteName: store.config.whiteName)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             HStack(spacing: 9) {
                 Button("Chơi tiếp") { store.resumePlay() }.buttonStyle(SecondaryButton())
@@ -230,8 +228,8 @@ struct LocalBoardView: View {
                 .background(Tokens.sheetSecondary, in: Capsule()).foregroundStyle(Tokens.inkSecondary)
             Text(title).font(.system(size: 30, weight: .regular, design: .serif))
             if let score = store.finalScore {
-                Text("\(store.config.blackName) \(score.black.formatted()) · \(store.config.whiteName) \(score.white.formatted())")
-                    .font(.system(.footnote, design: .monospaced)).foregroundStyle(Tokens.inkSecondary)
+                ScoreBreakdownView(score: score, blackName: store.config.blackName,
+                                   whiteName: store.config.whiteName)
             }
             HStack(spacing: 9) {
                 ShareLink(item: sgfFile, preview: SharePreview("Ván cờ \(store.config.size)×\(store.config.size)")) {

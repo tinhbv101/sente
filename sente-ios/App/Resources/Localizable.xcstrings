@@ -1,292 +1,42 @@
 {
   "sourceLanguage" : "vi",
   "strings" : {
-    "Tiếng đặt quân và rung nhẹ khi có nước đi, bắt quân hoặc tin nhắn nhanh. Âm thanh theo công tắc im lặng của máy." : {
+    "Vùng (quân + đất)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A stone click and a light tap for moves, captures and quick chat. Sounds follow the mute switch."
+            "value" : "Area (stones + territory)"
           }
         }
       }
     },
-    "Âm thanh & rung" : {
+    "Quân chết bị bắt" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sound & haptics"
+            "value" : "Dead stones captured"
           }
         }
       }
     },
-    "Rung phản hồi" : {
+    "Tù binh trong ván" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Haptics"
+            "value" : "Prisoners in play"
           }
         }
       }
     },
-    "Âm thanh" : {
+    "Đất" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sounds"
-          }
-        }
-      }
-    },
-    "Để sau" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Later"
-          }
-        }
-      }
-    },
-    "Gửi link hoặc mã QR là vào ván" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Send a link or QR code and play"
-          }
-        }
-      }
-    },
-    "Mời bạn chơi online" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invite a friend online"
-          }
-        }
-      }
-    },
-    "Bài học tương tác, bắt đầu từ số 0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Interactive lessons, starting from zero"
-          }
-        }
-      }
-    },
-    "Học luật trong 5 phút" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Learn the rules in 5 minutes"
-          }
-        }
-      }
-    },
-    "Cờ vây: vây đất và bắt quân. Luật học trong năm phút — chơi được cả đời." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Go: surround territory, capture stones. Five minutes to learn — a lifetime to play."
-          }
-        }
-      }
-    },
-    "Chào mừng đến với Sente" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Welcome to Sente"
-          }
-        }
-      }
-    },
-    "%lld×%lld · %@ · %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld×%lld · %@ · %@"
-          }
-        }
-      }
-    },
-    "%@ (xin thua)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (by resignation)"
-          }
-        }
-      }
-    },
-    "Không đọc được ván" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Could not read this game"
-          }
-        }
-      }
-    },
-    "Ván chơi trên máy này và ván đấu bot sẽ tự lưu vào đây khi kết thúc." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Games played on this device and against the bot are saved here when they finish."
-          }
-        }
-      }
-    },
-    "Chưa có ván nào được lưu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No saved games yet"
-          }
-        }
-      }
-    },
-    "%lld ván trên máy này · xem lại và phân tích" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld games on this device · replay and analyse"
-          }
-        }
-      }
-    },
-    "Ván đã lưu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saved games"
-          }
-        }
-      }
-    },
-    "nên %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "better: %@"
-          }
-        }
-      }
-    },
-    "Nước %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move %lld"
-          }
-        }
-      }
-    },
-    "Không thấy sai lầm lớn nào — ván đấu chắc tay!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No big mistakes found — a solid game!"
-          }
-        }
-      }
-    },
-    "Máy soát cả ván — tìm nước sai" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bot review — find the mistakes"
-          }
-        }
-      }
-    },
-    "Tin nhắn nhanh" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quick chat"
-          }
-        }
-      }
-    },
-    "🤝 Ván hay quá" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "🤝 Good game"
-          }
-        }
-      }
-    },
-    "🙏 Cảm ơn ván đấu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "🙏 Thanks for the game"
-          }
-        }
-      }
-    },
-    "😅 Nhầm tay rồi" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "😅 Misclick, sorry"
-          }
-        }
-      }
-    },
-    "👍 Nước hay!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "👍 Nice move!"
-          }
-        }
-      }
-    },
-    "🍀 Chúc may mắn" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "🍀 Good luck"
-          }
-        }
-      }
-    },
-    "👋 Chào bạn" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "👋 Hello"
+            "value" : "Territory"
           }
         }
       }
@@ -299,6 +49,16 @@
     },
     "%@ · komi %@" : {
 
+    },
+    "%@ (xin thua)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (by resignation)"
+          }
+        }
+      }
     },
     "%@ %@" : {
 
@@ -356,6 +116,16 @@
         }
       }
     },
+    "%@ vs %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ vs %2$@"
+          }
+        }
+      }
+    },
     "%@ xin thua" : {
       "localizations" : {
         "en" : {
@@ -405,6 +175,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@, empty"
+          }
+        }
+      }
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
           }
         }
       }
@@ -496,6 +276,26 @@
         }
       }
     },
+    "%lld ván trên máy này · xem lại và phân tích" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld games on this device · replay and analyse"
+          }
+        }
+      }
+    },
+    "%lld/%lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "%lld/%lld thắng" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -509,6 +309,16 @@
     },
     "%lld×%lld" : {
 
+    },
+    "%lld×%lld · %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld×%lld · %@ · %@"
+          }
+        }
+      }
     },
     "%lld×%lld · %@ · komi %@" : {
 
@@ -553,6 +363,72 @@
         }
       }
     },
+    "−%lld%%" : {
+
+    },
+    "⚫︎ ⚪︎" : {
+
+    },
+    "🍀 Chúc may mắn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🍀 Good luck"
+          }
+        }
+      }
+    },
+    "👋 Chào bạn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "👋 Hello"
+          }
+        }
+      }
+    },
+    "👍 Nước hay!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "👍 Nice move!"
+          }
+        }
+      }
+    },
+    "🤝 Ván hay quá" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🤝 Good game"
+          }
+        }
+      }
+    },
+    "😅 Nhầm tay rồi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😅 Misclick, sorry"
+          }
+        }
+      }
+    },
+    "🙏 Cảm ơn ván đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🙏 Thanks for the game"
+          }
+        }
+      }
+    },
     "9×9 · 10 phút" : {
       "localizations" : {
         "en" : {
@@ -593,12 +469,42 @@
         }
       }
     },
+    "Âm thanh" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sounds"
+          }
+        }
+      }
+    },
+    "Âm thanh & rung" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound & haptics"
+          }
+        }
+      }
+    },
     "Apple không trả về thông tin đăng nhập. Thử lại sau." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple did not return sign-in details. Try again later."
+          }
+        }
+      }
+    },
+    "Bài học tương tác, bắt đầu từ số 0" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interactive lessons, starting from zero"
           }
         }
       }
@@ -898,6 +804,16 @@
         }
       }
     },
+    "Chào mừng đến với Sente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to Sente"
+          }
+        }
+      }
+    },
     "Chấp nhận" : {
       "localizations" : {
         "en" : {
@@ -1028,6 +944,16 @@
         }
       }
     },
+    "Chưa có ván nào được lưu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved games yet"
+          }
+        }
+      }
+    },
     "Chưa đúng — thử lại." : {
       "localizations" : {
         "en" : {
@@ -1084,6 +1010,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Board size"
+          }
+        }
+      }
+    },
+    "Cờ vây: vây đất và bắt quân. Luật học trong năm phút — chơi được cả đời." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go: surround territory, capture stones. Five minutes to learn — a lifetime to play."
           }
         }
       }
@@ -1307,6 +1243,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This is your invitation — send the code to a friend."
+          }
+        }
+      }
+    },
+    "Để sau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
           }
         }
       }
@@ -1551,6 +1497,16 @@
         }
       }
     },
+    "Gửi link hoặc mã QR là vào ván" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send a link or QR code and play"
+          }
+        }
+      }
+    },
     "Gửi lời mời" : {
       "localizations" : {
         "en" : {
@@ -1671,6 +1627,16 @@
         }
       }
     },
+    "Học luật trong 5 phút" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn the rules in 5 minutes"
+          }
+        }
+      }
+    },
     "Hôm nay đã giải ✓ · chuỗi %lld ngày" : {
       "localizations" : {
         "en" : {
@@ -1724,6 +1690,16 @@
         }
       }
     },
+    "Không đọc được ván" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not read this game"
+          }
+        }
+      }
+    },
     "Không hợp lệ" : {
       "localizations" : {
         "en" : {
@@ -1761,6 +1737,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not load the game"
+          }
+        }
+      }
+    },
+    "Không thấy sai lầm lớn nào — ván đấu chắc tay!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No big mistakes found — a solid game!"
           }
         }
       }
@@ -2102,6 +2088,16 @@
         }
       }
     },
+    "Máy soát cả ván — tìm nước sai" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bot review — find the mistakes"
+          }
+        }
+      }
+    },
     "Mở Cài đặt" : {
       "localizations" : {
         "en" : {
@@ -2128,6 +2124,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Invite a friend"
+          }
+        }
+      }
+    },
+    "Mời bạn chơi online" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite a friend online"
           }
         }
       }
@@ -2198,6 +2204,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "One puzzle a day; solve it to build a streak"
+          }
+        }
+      }
+    },
+    "nên %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "better: %@"
           }
         }
       }
@@ -2338,6 +2354,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pass"
+          }
+        }
+      }
+    },
+    "Nước %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move %lld"
           }
         }
       }
@@ -2943,6 +2969,16 @@
     "R4TN8KMP" : {
 
     },
+    "Rung phản hồi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptics"
+          }
+        }
+      }
+    },
     "Rút lại" : {
       "localizations" : {
         "en" : {
@@ -3256,6 +3292,16 @@
         }
       }
     },
+    "Tiếng đặt quân và rung nhẹ khi có nước đi, bắt quân hoặc tin nhắn nhanh. Âm thanh theo công tắc im lặng của máy." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A stone click and a light tap for moves, captures and quick chat. Sounds follow the mute switch."
+          }
+        }
+      }
+    },
     "Tiếp tục" : {
       "localizations" : {
         "en" : {
@@ -3272,6 +3318,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continue the game on this device"
+          }
+        }
+      }
+    },
+    "Tin nhắn nhanh" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick chat"
           }
         }
       }
@@ -3436,6 +3492,16 @@
         }
       }
     },
+    "Ván chơi trên máy này và ván đấu bot sẽ tự lưu vào đây khi kết thúc." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Games played on this device and against the bot are saved here when they finish."
+          }
+        }
+      }
+    },
     "Ván cờ %lld×%lld" : {
       "localizations" : {
         "en" : {
@@ -3462,6 +3528,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The game is over."
+          }
+        }
+      }
+    },
+    "Ván đã lưu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved games"
           }
         }
       }
