@@ -129,6 +129,7 @@ final class LocalGameStore {
             engine = next
             moves.append(RecordedMove(player: stored.player, move: move))
         }
+        if engine.state.phase == .scoring { deadStones = BotHeuristics.suggestDead(engine) }
         makeBots()
         scheduleBot()
     }
@@ -336,6 +337,12 @@ final class LocalGameStore {
         engine = try engine.apply(move, by: player)
         moves.append(RecordedMove(player: player, move: move))
         toast = nil
+        if engine.state.phase == .scoring, deadStones.isEmpty {
+            // Opening the count: pre-mark what is clearly dead. Online games get
+            // this from the server; on-device games must judge for themselves,
+            // or an unmarked dead group silently scores as alive.
+            deadStones = BotHeuristics.suggestDead(engine)
+        }
         if engine.state.phase == .finished { storage.clear(); archive() } else { save() }
     }
 

@@ -203,7 +203,7 @@ struct LocalBoardView: View {
         VStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Đánh dấu quân chết").font(.subheadline.weight(.semibold))
-                Text("Chạm vào một đám quân để bật hoặc tắt. Hai bên cùng nhìn rồi bấm Đếm điểm.")
+                Text("Máy đã đánh dấu sẵn những đám chắc chắn chết — chạm vào một đám quân để sửa, rồi bấm Đếm điểm.")
                     .font(.caption).foregroundStyle(Tokens.inkSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -140,7 +140,7 @@ public struct Board: Equatable, Sendable {
         return copy
     }
 
-    func clearing(_ points: [Point]) -> Board {
+    public func clearing(_ points: [Point]) -> Board {
         var copy = self
         for point in points { copy.cells[index(point)] = .empty }
         return copy

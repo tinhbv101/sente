@@ -1,50 +1,17 @@
 {
   "sourceLanguage" : "vi",
   "strings" : {
-    "Vùng (quân + đất)" : {
+    "Máy đã đánh dấu sẵn những đám chắc chắn chết — chạm vào một đám quân để sửa, rồi bấm Đếm điểm." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Area (stones + territory)"
-          }
-        }
-      }
-    },
-    "Quân chết bị bắt" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dead stones captured"
-          }
-        }
-      }
-    },
-    "Tù binh trong ván" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prisoners in play"
-          }
-        }
-      }
-    },
-    "Đất" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Territory"
+            "value" : "Clearly dead groups are pre-marked — tap a group to correct, then Count."
           }
         }
       }
     },
     "" : {
-
-    },
-    "%@ " : {
 
     },
     "%@ · komi %@" : {
@@ -1213,6 +1180,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mark dead stones"
+          }
+        }
+      }
+    },
+    "Đất" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Territory"
           }
         }
       }
@@ -2936,6 +2913,16 @@
         }
       }
     },
+    "Quân chết bị bắt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dead stones captured"
+          }
+        }
+      }
+    },
     "Quấy rối / lời lẽ xúc phạm" : {
       "localizations" : {
         "en" : {
@@ -3452,6 +3439,16 @@
         }
       }
     },
+    "Tù binh trong ván" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prisoners in play"
+          }
+        }
+      }
+    },
     "Từ chối" : {
       "localizations" : {
         "en" : {
@@ -3588,6 +3585,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Void"
+          }
+        }
+      }
+    },
+    "Vùng (quân + đất)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Area (stones + territory)"
           }
         }
       }

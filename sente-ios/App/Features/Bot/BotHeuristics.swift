@@ -111,12 +111,107 @@ enum BotHeuristics {
         return nil
     }
 
-    /// Area margin that counts dead-shaped groups as captured: a chain with
-    /// fewer than two eye-worthy regions and almost no liberties elsewhere is
-    /// dead, and its stones and space belong to the opponent. This is what lets
-    /// a truncated playout see the point of a kill it has no time to finish.
+    /// One chain that cannot make two eyes and has almost no liberties left.
+    struct DeadShapedChain {
+        let owner: Player
+        let stones: Set<Point>
+        let enclosedArea: Int
+    }
+
+    /// Area margin that counts dead-shaped groups as captured: their stones and
+    /// space belong to the opponent. This is what lets a truncated playout see
+    /// the point of a kill it has no time to finish.
     static func deadAwareMargin(_ engine: GameEngine, for side: Player) -> Double {
         var margin = areaMargin(engine, for: .black)
+        for dead in deadShapedChains(engine) {
+            let swing = Double(2 * dead.stones.count + 2 * dead.enclosedArea)
+            margin += dead.owner == .black ? -swing : swing
+        }
+        return side == .black ? margin : -margin
+    }
+
+    /// The scoring suggestion for on-device games, in two tiers:
+    /// 1. dead-shaped chains — no two eyes and out of liberties; and
+    /// 2. stragglers — a chain whose every liberty lies in a region the enemy
+    ///    border dominates three to one: the invasion stone left in territory.
+    /// Benson-proved chains are never suggested. A seki can be over-marked,
+    /// which is why the marks stay tappable.
+    static func suggestDead(_ engine: GameEngine) -> Set<Point> {
+        let size = engine.state.size
+        var passAlive = Set<Point>()
+        for player in [Player.black, .white] {
+            for chain in engine.board.passAliveChains(for: player) { passAlive.formUnion(chain) }
+        }
+        var dead = Set<Point>()
+        for candidate in deadShapedChains(engine) where candidate.stones.isDisjoint(with: passAlive) {
+            dead.formUnion(candidate.stones)
+        }
+
+        // Tier 2 runs to a fixpoint: clearing one straggler can expose the next.
+        while true {
+            let board = engine.board.clearing(Array(dead))
+            // Empty regions and the stones of each colour on their borders.
+            var regionOf = [Int](repeating: -1, count: size * size)
+            var borders: [[Player: Set<Point>]] = []
+            var seen = [Bool](repeating: false, count: size * size)
+            for row in 0..<size {
+                for col in 0..<size {
+                    let start = Point(col: col, row: row)
+                    guard board.isEmpty(start), !seen[row * size + col] else { continue }
+                    var stack = [start], points = [start]
+                    var border: [Player: Set<Point>] = [:]
+                    seen[row * size + col] = true
+                    while let current = stack.popLast() {
+                        for neighbor in GoBot.neighbors(of: current, size: size) {
+                            if let color = board[neighbor] {
+                                border[color, default: []].insert(neighbor)
+                            } else if !seen[neighbor.row * size + neighbor.col] {
+                                seen[neighbor.row * size + neighbor.col] = true
+                                points.append(neighbor)
+                                stack.append(neighbor)
+                            }
+                        }
+                    }
+                    for point in points { regionOf[point.row * size + point.col] = borders.count }
+                    borders.append(border)
+                }
+            }
+
+            var added = false
+            var counted = Set<Point>()
+            for color in [Player.black, .white] {
+                for stone in board.stones(of: color) where !counted.contains(stone) {
+                    let chain = board.chain(at: stone)
+                    counted.formUnion(chain)
+                    guard chain.isDisjoint(with: passAlive) else { continue }
+                    var liberties = Set<Point>()
+                    for member in chain {
+                        for neighbor in GoBot.neighbors(of: member, size: size)
+                        where board.isEmpty(neighbor) { liberties.insert(neighbor) }
+                    }
+                    guard !liberties.isEmpty else { continue }
+                    let doomed = liberties.allSatisfy { liberty in
+                        let region = regionOf[liberty.row * size + liberty.col]
+                        guard region >= 0 else { return false }
+                        let mine = borders[region][color]?.count ?? 0
+                        let theirs = borders[region][color.opponent]?.count ?? 0
+                        return theirs >= 3 * mine && theirs >= 3
+                    }
+                    if doomed {
+                        dead.formUnion(chain)
+                        added = true
+                    }
+                }
+            }
+            if !added { return dead }
+        }
+    }
+
+    /// Chains with fewer than two eye-worthy regions and at most two liberties
+    /// elsewhere — dead as they stand. Shared by the playout evaluation and the
+    /// scoring suggestion.
+    static func deadShapedChains(_ engine: GameEngine) -> [DeadShapedChain] {
+        var out: [DeadShapedChain] = []
         let board = engine.board
         let size = engine.state.size
 
@@ -170,11 +265,10 @@ enum BotHeuristics {
                     libertiesElsewhere.subtract(region.points)
                 }
                 guard eyes < 2, libertiesElsewhere.count <= 2 else { continue }
-                let swing = Double(2 * chain.count + 2 * enclosed)
-                margin += color == .black ? -swing : swing
+                out.append(DeadShapedChain(owner: color, stones: chain, enclosedArea: enclosed))
             }
         }
-        return side == .black ? margin : -margin
+        return out
     }
 
     /// Life-and-death sight, the lessons' rule generalised: an empty region
