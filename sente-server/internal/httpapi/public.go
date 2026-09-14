@@ -91,7 +91,41 @@ var landingTemplate = template.Must(template.New("landing").Parse(`<!doctype htm
 <p class="muted"><a href="/privacy" style="color:#7B7364">Quyền riêng tư</a></p>
 </main></body></html>`))
 
-// handleAASA lets iOS open https://<host>/j/… and /g/… in the app. Apple fetches
+// handleFriendLanding is where a shared friend code lands for someone who is not
+// in the app: the code itself is all it shows. Looking the account up would turn
+// this unauthenticated page into the enumeration oracle docs/08 §4.2 forbids.
+func (s *Server) handleFriendLanding(w http.ResponseWriter, r *http.Request) {
+	code := normaliseCode(r.PathValue("code"))
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	if err := friendLandingTemplate.Execute(w, landingData{
+		Code: code, AppStoreURL: s.config.AppStoreURL,
+	}); err != nil {
+		s.config.Logger.Warn("rendering friend landing page", "error", err)
+	}
+}
+
+var friendLandingTemplate = template.Must(template.New("friend").Parse(`<!doctype html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sente — kết bạn</title>
+<style>
+  body{margin:0;font:17px/1.5 -apple-system,"Be Vietnam Pro",system-ui,sans-serif;background:#F4F1EA;color:#17150F;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+  main{max-width:420px;width:100%%;text-align:center}
+  h1{font:400 32px/1.15 Georgia,"Newsreader",serif;margin:0 0 8px}
+  .code{font:500 30px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;background:#fff;border-radius:12px;padding:14px 20px;display:inline-block;margin:16px 0}
+  a.btn{display:block;background:#274A73;color:#fff;text-decoration:none;font-weight:600;border-radius:15px;padding:15px;margin-top:10px}
+  p.muted{color:#7B7364;font-size:14px}
+</style></head><body><main>
+  <h1>Kết bạn trên Sente</h1>
+  <p class="muted">Mở trong ứng dụng Sente, hoặc nhập mã này trong mục Bạn bè:</p>
+  <div class="code">{{.Code}}</div>
+  <a class="btn" href="sente://f/{{.Code}}">Mở trong Sente</a>
+  {{if .AppStoreURL}}<a class="btn" style="background:#fff;color:#274A73;border:1.5px solid #A69E8D" href="{{.AppStoreURL}}">Tải Sente trên App Store</a>{{end}}
+  <p class="muted"><a href="/privacy" style="color:#7B7364">Quyền riêng tư</a></p>
+</main></body></html>`))
+
+// handleAASA lets iOS open https://<host>/j/…, /g/… and /f/… in the app. Apple fetches
 // it from the domain; it must be served at exactly this path, as JSON, with no
 // redirect. Empty when no Team ID is configured, so nothing wrong is claimed.
 func (s *Server) handleAASA(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +142,7 @@ func (s *Server) handleAASA(w http.ResponseWriter, r *http.Request) {
 				"components": []map[string]any{
 					{"/": "/j/*", "comment": "invitation"},
 					{"/": "/g/*", "comment": "game"},
+					{"/": "/f/*", "comment": "friend code"},
 				},
 			}},
 		},

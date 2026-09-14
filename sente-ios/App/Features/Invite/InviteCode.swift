@@ -32,4 +32,11 @@ enum InviteCode {
     static func link(for code: String, shareUrl: String?) -> String {
         shareUrl ?? "sente://j/\(code)"
     }
+
+    /// A friend code shared as a link. Deliberately a different path from an
+    /// invitation: both are eight characters from the same alphabet, so only the
+    /// prefix can say which kind of code this is.
+    static func friendLink(for code: String, host: String = "sente.devlord.net") -> String {
+        "https://\(host)/f/\(code)"
+    }
 }

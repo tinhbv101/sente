@@ -128,19 +128,37 @@ CREATE INDEX idx_devices_user ON devices (user_id);
 
 ```sql
 CREATE TABLE friendships (
-    requester_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    addressee_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    status          TEXT        NOT NULL CHECK (status IN ('pending', 'accepted', 'declined')),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    responded_at    TIMESTAMPTZ,
+    user_low     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_high    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    requester_id UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status       TEXT        NOT NULL CHECK (status IN ('pending', 'accepted', 'declined')),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    decided_at   TIMESTAMPTZ,
 
-    PRIMARY KEY (requester_id, addressee_id),
-    CONSTRAINT no_self_friend CHECK (requester_id <> addressee_id)
+    PRIMARY KEY (user_low, user_high),
+    CONSTRAINT friendship_order CHECK (user_low < user_high),
+    CONSTRAINT requester_is_member CHECK (requester_id IN (user_low, user_high))
 );
 
--- Truy vấn "bạn bè của tôi" phải quét cả hai chiều; index phía addressee cho chiều còn lại.
-CREATE INDEX idx_friendships_addressee ON friendships (addressee_id, status);
+-- Khóa chính đã index user_low; nửa còn lại cần index riêng.
+CREATE INDEX idx_friendships_high ON friendships (user_high);
 ```
+
+*Sửa lại khi cài đặt:* bản thiết kế định khóa theo `(requester_id, addressee_id)` — bỏ, vì nó
+cho phép **hai hàng** cho cùng một cặp khi hai người cùng mời nhau, và khi đó "đã là bạn chưa"
+không còn là một lần tra khóa chính. Một hàng mỗi cặp, lưu theo thứ tự chuẩn hóa
+(`least`/`greatest`), khiến lời mời chéo **đụng khóa** thay vì chạy đua: hàng thứ hai rơi vào
+`ON CONFLICT` và chuyển thẳng sang `accepted` — hai người cùng mời nhau chính là đồng ý.
+`requester_id` giữ lại vì nó là thứ phân biệt chiều: ai hỏi, và vì thế lời từ chối dính vào ai.
+
+Hàng `declined` **không xóa**: nó chính là thứ chặn việc mời lại. Chỉ người đã từ chối, khi tự
+mình gửi lời mời, mới mở lại được hàng đó. Người bị từ chối không xóa được hàng này (nếu xóa
+được thì "thu hồi rồi gửi lại" là đường vòng qua đúng cái vừa bị chặn).
+
+Chỉ tài khoản đã đăng nhập Apple (`is_guest = false`) mới kết bạn được ([FR-A3](01-requirements.md#41-tài-khoản--nhận-dạng)):
+tài khoản khách gắn với một máy, nên lời hứa "bạn bè" sẽ đứt khi cài lại app. Bị thu hồi Apple ID
+thì quan hệ **giữ nguyên** (ngủ đông) — mất quyền kết bạn mới, không mất bạn cũ. Xóa tài khoản thì
+xóa hàng: `users` không bị xóa thật nên `ON DELETE CASCADE` không bao giờ chạy.
 
 ```sql
 CREATE TABLE blocks (
@@ -151,8 +169,10 @@ CREATE TABLE blocks (
 );
 ```
 
-Chặn có hiệu lực: không nhận lời mời, không ghép ngẫu nhiên, không thấy chat. **Không** hủy
-ván đang chơi dở (tránh lạm dụng để thoát ván khi đang thua) — thay vào đó chat bị ẩn.
+Chặn có hiệu lực: không nhận lời mời (kể cả link mở — điều kiện chặn nằm trong `FOR UPDATE`
+của `Challenges.Accept`), không ghép ngẫu nhiên, không thấy chat. Chặn còn **xóa quan hệ bạn bè**
+và **hủy lời mời đích danh** giữa hai người, trong cùng một câu lệnh. **Không** hủy ván đang chơi
+dở (tránh lạm dụng để thoát ván khi đang thua) — thay vào đó chat bị ẩn.
 
 ## 5. Lời mời
 

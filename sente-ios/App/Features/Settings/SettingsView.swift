@@ -38,6 +38,9 @@ struct SettingsView: View {
                     }
                     if let nameError { Text(nameError).font(.footnote).foregroundStyle(.red) }
                     LabeledContent("Mã bạn bè", value: user.friendCode)
+                    if !user.isGuest {
+                        NavigationLink { FriendsView() } label: { Label("Bạn bè", systemImage: "person.2") }
+                    }
                     if user.isGuest {
                         SignInWithAppleButton(.continue, onRequest: prepareAppleRequest, onCompletion: handleApple)
                             .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
@@ -137,6 +140,7 @@ struct SettingsView: View {
     @AppStorage("pushPrefLowTime") private var prefLowTime = true
     @AppStorage("pushPrefGameEnd") private var prefGameEnd = true
     @AppStorage("pushPrefInvite") private var prefInvite = true
+    @AppStorage("pushPrefFriend") private var prefFriend = true
 
     private func pushPref(_ key: String, _ value: Bool) {
         guard let token = session.deviceToken else { return }
@@ -171,6 +175,8 @@ struct SettingsView: View {
                     .onChange(of: prefGameEnd) { _, new in pushPref("game_end", new) }
                 Toggle("Lời mời", isOn: $prefInvite)
                     .onChange(of: prefInvite) { _, new in pushPref("invite", new) }
+                Toggle("Kết bạn", isOn: $prefFriend)
+                    .onChange(of: prefFriend) { _, new in pushPref("friend", new) }
             case .denied:
                 Button("Mở Cài đặt để bật thông báo") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
@@ -183,7 +189,7 @@ struct SettingsView: View {
                 ProgressView()
             }
         } header: { Text("Thông báo") } footer: {
-            Text("Báo khi đến lượt bạn trong ván chậm, khi ván kết thúc, và khi bạn nhận lời mời.")
+            Text("Báo khi đến lượt bạn trong ván chậm, khi ván kết thúc, khi bạn nhận lời mời và khi có người kết bạn.")
         }
         .task { pushStatus = await PushRegistrar.status() }
     }

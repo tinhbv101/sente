@@ -27,6 +27,8 @@ var (
 	// ErrOwnChallenge is separate because it is the creator's own mistake, not a
 	// probe: they need to be told what happened.
 	ErrOwnChallenge = errors.New("store: you cannot accept your own invitation")
+	// ErrInviteRefused: one of the two has blocked the other.
+	ErrInviteRefused = errors.New("store: this player cannot be invited")
 )
 
 type ChallengeStatus string
@@ -99,15 +101,26 @@ func (c *Challenges) Create(ctx context.Context, params CreateChallengeParams) (
 		Status: ChallengePending, ExpiresAt: time.Now().Add(ttl),
 	}
 	// Retry on the vanishing chance of a code collision; the unique index decides.
+	// A block is refused by the INSERT itself rather than by a read before it, so
+	// there is no window between the check and the write -- which means a
+	// successful Exec is not proof of a row, and the count has to be inspected.
 	for attempt := 0; attempt < 5; attempt++ {
 		challenge.Code = NewFriendCode()
-		_, err := c.pool.Exec(ctx, `
+		tag, err := c.pool.Exec(ctx, `
 			INSERT INTO challenges (id, code, creator_id, invitee_id, config,
 			                        creator_color, status, expires_at)
-			VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)`,
+			SELECT $1::uuid, $2::text, $3::uuid, $4::uuid, $5::jsonb, $6::text, 'pending', $7::timestamptz
+			 WHERE $4::uuid IS NULL
+			    OR NOT EXISTS (SELECT 1 FROM blocks
+			         WHERE (blocker_id = $3::uuid AND blocked_id = $4::uuid)
+			            OR (blocker_id = $4::uuid AND blocked_id = $3::uuid))`,
 			challenge.ID, challenge.Code, challenge.CreatorID, nullable(challenge.InviteeID),
 			encoded, challenge.CreatorColor, challenge.ExpiresAt)
 		if err == nil {
+			if tag.RowsAffected() == 0 {
+				// Not a collision: a new code would be refused just the same.
+				return Challenge{}, ErrInviteRefused
+			}
 			return challenge, nil
 		}
 		if attempt == 4 {
@@ -180,6 +193,12 @@ func (c *Challenges) Accept(ctx context.Context, code, userID string) (Challenge
 		   AND expires_at > now()
 		   AND creator_id <> $2
 		   AND (invitee_id IS NULL OR invitee_id = $2)
+		   -- A block has to stop an open link too, or blocking someone leaves
+		   -- them one shared link away from a game with you. It lands in the
+		   -- deliberately opaque ErrChallengeGone, so it tells the caller nothing.
+		   AND NOT EXISTS (SELECT 1 FROM blocks
+		        WHERE (blocker_id = creator_id AND blocked_id = $2::uuid)
+		           OR (blocker_id = $2::uuid AND blocked_id = creator_id))
 		   FOR UPDATE`, code, userID).
 		Scan(&id, &creatorID, &creatorColor, &configJSON)
 	if err == nil {

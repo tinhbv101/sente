@@ -153,13 +153,17 @@ trong App ID → Sign in with Apple → *Server-to-Server Notification Endpoint*
 
 | Method | Path | Mô tả |
 |--------|------|-------|
-| `GET` | `/v1/friends` | Danh sách bạn + trạng thái online |
-| `POST` | `/v1/friends/requests` | `{ "friend_code": "K7MPQ2XB" }` |
-| `POST` | `/v1/friends/requests/{user_id}/accept` | |
-| `POST` | `/v1/friends/requests/{user_id}/decline` | |
-| `DELETE` | `/v1/friends/{user_id}` | Hủy kết bạn |
-| `POST` | `/v1/blocks` | `{ "user_id": "..." }` |
+| `GET` | `/v1/friends` | Bạn bè + lời mời hai chiều: `{items:[{user_id, display_name, friend_code, status, incoming, created_at}]}`. `status` ∈ `pending`\|`accepted`; `incoming` chỉ có nghĩa khi `pending`. Hàng `declined` không bao giờ xuất hiện |
+| `POST` | `/v1/friends` | `{ "user_id": "..." }` → `201 {status}`. Nhận `user_id` chứ **không** nhận `friend_code`: tra mã là bề mặt liệt kê riêng ở `/v1/users/by-code/{code}` với hạn mức chặt hơn ([§4.2](08-security-fairplay.md#42-chống-liệt-kê)), và người dùng xác nhận **tên** trước khi gửi. Hai người cùng gửi cho nhau = thành bạn ngay |
+| `POST` | `/v1/friends/{user_id}/accept` | `204` |
+| `POST` | `/v1/friends/{user_id}/decline` | `204`. Từ chối **dính**: người bị từ chối không gửi lại được; chính người từ chối gửi lời mời của mình thì mở lại |
+| `DELETE` | `/v1/friends/{user_id}` | Hủy kết bạn, hoặc thu hồi lời mời mình đã gửi. Không xóa được hàng đã từ chối |
+| `POST` | `/v1/blocks` | `{ "user_id": "..." }`. Chặn xóa luôn quan hệ bạn bè và hủy lời mời đích danh giữa hai người |
+| `GET` | `/v1/blocks` | Danh sách đã chặn, để bỏ chặn được từ trong app |
 | `DELETE` | `/v1/blocks/{user_id}` | |
+
+> Chỉ tài khoản đã đăng nhập Apple mới kết bạn được ([FR-A3](01-requirements.md#41-tài-khoản--nhận-dạng)); tài khoản khách nhận `403 apple_required`.
+> Bị chặn **không** báo lỗi: lời mời kết bạn trả về như đã gửi nhưng không ghi gì, để việc bị chặn không lộ ra.
 
 ### 2.4 Lời mời
 
@@ -253,7 +257,7 @@ Gửi lại cùng `client_move_id` trả về **đúng response cũ** với `200
 | Method | Path | Mô tả |
 |--------|------|-------|
 | `POST` | `/v1/devices` | Đăng ký APNs token: `{ "apns_token": "<hex>", "environment": "sandbox"\|"production", "app_version": "0.1.0" }` → `204`. Gọi lại mỗi lần mở app; token đổi chủ thì theo người mới |
-| `PATCH` | `/v1/devices/{token}` | Bật/tắt từng loại thông báo: `{"turn":false,…}` (turn, low_time, game_end, invite) → trả prefs đã gộp |
+| `PATCH` | `/v1/devices/{token}` | Bật/tắt từng loại thông báo: `{"turn":false,…}` (turn, low_time, game_end, invite, friend) → trả prefs đã gộp |
 | `DELETE` | `/v1/devices/{token}` | Hủy đăng ký, chỉ token của chính mình |
 | `POST` | `/v1/reports` | Báo cáo người chơi |
 | `GET` | `/v1/config` | **Không cần auth.** Cấu hình client |
@@ -583,5 +587,7 @@ Không bao giờ bỏ `move_made`, `game_over`, `move_ack` — thà đóng kết
 | [FR-G11](01-requirements.md#43-chơi-ván-core) chat | WS `chat`, `GET /v1/games/{id}/chat` |
 | [FR-R2..R4](01-requirements.md#44-sau-ván-đấu) lịch sử, replay, SGF | `GET /v1/games`, `/moves`, `/sgf` |
 | [FR-N1](01-requirements.md#45-thông-báo--vòng-đời-app) push | `POST /v1/devices` + worker |
-| [FR-S1](01-requirements.md#46-an-toàn--kiểm-duyệt) báo cáo/chặn | `POST /v1/reports`, `/v1/blocks` |
+| [FR-S1](01-requirements.md#46-an-toàn--kiểm-duyệt) báo cáo/chặn | `POST /v1/reports`, `/v1/blocks`, `GET /v1/blocks` |
+| [FR-A3](01-requirements.md#41-tài-khoản--nhận-dạng)/[FR-A4](01-requirements.md#41-tài-khoản--nhận-dạng) kết bạn | `GET /v1/users/by-code/{code}`, `/v1/friends` |
+| [FR-M4](01-requirements.md#42-tạo-ván--ghép-cặp) mời bạn trực tiếp | `POST /v1/challenges` với `invitee_user_id` |
 | [J3](01-requirements.md#j3--mất-mạng-giữa-ván-realtime-p0) khôi phục | WS `resume` → `sync_delta` / `game_state`, `client_move_id` |

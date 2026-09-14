@@ -46,6 +46,7 @@ const (
 	KindGameEnd = "game_end"
 	KindInvite  = "invite"
 	KindLowTime = "low_time"
+	KindFriend  = "friend"
 )
 
 type job struct {
@@ -147,6 +148,35 @@ func (n *Notifier) ChallengeReceived(inviteeID, fromName, code string) {
 		TitleKey: "push.challenge.title", BodyKey: "push.challenge.body", Args: []string{fromName},
 		CollapseID: "invite:" + code, ThreadID: code,
 		Payload: map[string]any{"invite_code": code, "kind": KindInvite},
+	}}})
+}
+
+// FriendRequestReceived tells someone that a player wants to be friends. The
+// payload has no game, so the app opens the friends screen instead.
+func (n *Notifier) FriendRequestReceived(targetID, fromName, fromID string) {
+	if !n.Enabled() {
+		return
+	}
+	n.enqueue(job{gameID: fromID, direct: &directJob{userID: targetID, kind: KindFriend, note: push.Notification{
+		Title: "Lời mời kết bạn", Body: fmt.Sprintf("%s muốn kết bạn với bạn.", fromName),
+		TitleKey: "push.friend.request.title", BodyKey: "push.friend.request.body",
+		Args:       []string{fromName},
+		CollapseID: "friend:" + fromID, ThreadID: "friends",
+		Payload: map[string]any{"kind": KindFriend, "friend_id": fromID},
+	}}})
+}
+
+// FriendRequestAccepted closes the loop for the person who asked.
+func (n *Notifier) FriendRequestAccepted(targetID, byName, byID string) {
+	if !n.Enabled() {
+		return
+	}
+	n.enqueue(job{gameID: byID, direct: &directJob{userID: targetID, kind: KindFriend, note: push.Notification{
+		Title: "Đã là bạn bè", Body: fmt.Sprintf("%s đã nhận lời mời kết bạn.", byName),
+		TitleKey: "push.friend.accepted.title", BodyKey: "push.friend.accepted.body",
+		Args:       []string{byName},
+		CollapseID: "friend:" + byID, ThreadID: "friends",
+		Payload: map[string]any{"kind": KindFriend, "friend_id": byID},
 	}}})
 }
 

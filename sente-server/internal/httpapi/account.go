@@ -170,6 +170,10 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
+	if !isUUID(request.UserID) || (request.GameID != "" && !isUUID(request.GameID)) {
+		writeError(w, r, http.StatusBadRequest, "invalid_report", "Báo cáo không hợp lệ.")
+		return
+	}
 	claims := userFrom(r.Context())
 	err := s.moderation.Report(r.Context(), claims.UserID, request.UserID, request.GameID,
 		request.Category, request.Note)
@@ -191,7 +195,7 @@ type blockRequest struct {
 func (s *Server) handleBlock(w http.ResponseWriter, r *http.Request) {
 	var request blockRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&request); err != nil ||
-		request.UserID == "" {
+		!isUUID(request.UserID) {
 		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
 		return
 	}
@@ -208,6 +212,10 @@ func (s *Server) handleBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUnblock(w http.ResponseWriter, r *http.Request) {
+	if !isUUID(r.PathValue("id")) {
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		return
+	}
 	claims := userFrom(r.Context())
 	if err := s.moderation.Unblock(r.Context(), claims.UserID, r.PathValue("id")); err != nil {
 		writeError(w, r, http.StatusInternalServerError, "internal", "Không bỏ chặn được.")

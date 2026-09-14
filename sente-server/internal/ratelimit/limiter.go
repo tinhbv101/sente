@@ -128,6 +128,12 @@ var (
 	AcceptInvite = Rule{Name: "accept", Capacity: 30, Window: time.Hour}
 	CreateGame   = Rule{Name: "creategame", Capacity: 30, Window: time.Hour}
 	Read         = Rule{Name: "read", Capacity: 120, Window: time.Minute}
+	// FriendLookup is the anti-enumeration budget docs/08 §4.2 sets against a
+	// 2^40 code space.
+	FriendLookup = Rule{Name: "friendlookup", Capacity: 10, Window: time.Minute}
+	// FriendWrite is deliberately far tighter than a read: every one of these
+	// changes somebody else's account and can ring their phone.
+	FriendWrite = Rule{Name: "friendwrite", Capacity: 30, Window: time.Hour}
 	// Socket is per connection, not per user: someone with two devices is not
 	// abusing anything.
 	Socket = Rule{Name: "socket", Capacity: 30, Window: 10 * time.Second}

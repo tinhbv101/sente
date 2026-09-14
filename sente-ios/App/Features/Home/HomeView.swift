@@ -17,6 +17,7 @@ struct HomeView: View {
             List {
                 gameSections
                 inviteSection
+                friendsSection
                 localSection
                 kifuSection
                 learnSection
@@ -84,6 +85,7 @@ struct HomeView: View {
             }
             .navigationDestination(for: Lesson.self) { LessonPlayerView(lesson: $0) }
             .navigationDestination(for: KifuRoute.self) { _ in KifuLibraryView() }
+            .navigationDestination(for: FriendsRoute.self) { _ in FriendsView() }
             .navigationDestination(for: KifuEntry.self) { entry in
                 if let record = try? SGF.decode(entry.sgf) {
                     LocalReplayView(record: record)
@@ -105,6 +107,8 @@ struct HomeView: View {
                 if UserDefaults.standard.bool(forKey: "openBot") { path.append(BotRoute.play) }
                 if UserDefaults.standard.bool(forKey: "openPuzzle") { path.append(PuzzleRoute.today) }
                 if UserDefaults.standard.bool(forKey: "openWatch") { path.append(BotRoute.watch) }
+                if UserDefaults.standard.bool(forKey: "openFriends") { path.append(FriendsRoute.list) }
+                openPendingFriends()
                 if let id = UserDefaults.standard.string(forKey: "openLesson"),
                    let lesson = LessonLibrary.shared.chapters.flatMap(\.lessons).first(where: { $0.id == id }) {
                     path.append(LearnRoute.list)
@@ -114,6 +118,8 @@ struct HomeView: View {
                 openPendingInvite(session.pendingInviteCode)
             }
             .onChange(of: session.pendingGameID) { _, id in openPendingGame(id) }
+            .onChange(of: session.openFriends) { _, _ in openPendingFriends() }
+            .onChange(of: session.pendingFriendCode) { _, _ in openPendingFriends() }
             .onChange(of: session.games) { _, _ in openPendingGame(session.pendingGameID) }
             .task(id: path.count) { if path.isEmpty { await session.refreshQuietly() } }
             // While one of my invitations is open, someone may accept it any moment:
@@ -177,6 +183,15 @@ struct HomeView: View {
 
     private var welcomePresented: Binding<Bool> {
         Binding(get: { !welcomed }, set: { if !$0 { welcomed = true } })
+    }
+
+    /// A friend push, or a shared sente://f/<code> link, lands on the friends
+    /// screen; the code itself is consumed there.
+    private func openPendingFriends() {
+        guard session.openFriends || session.pendingFriendCode != nil else { return }
+        session.openFriends = false
+        if !path.isEmpty { path = NavigationPath() }
+        path.append(FriendsRoute.list)
     }
 
     private func openPendingInvite(_ code: String?) {
@@ -320,6 +335,44 @@ struct HomeView: View {
         } else {
             Text("Một bài mỗi ngày, giải để tạo chuỗi").font(.caption).foregroundStyle(Tokens.inkSecondary)
         }
+    }
+
+    /// Friends, with the number of requests waiting for an answer -- the only
+    /// thing here that someone else is waiting on. Shown to guests too: the
+    /// screen behind it is what explains why signing in is worth it.
+    @ViewBuilder private var friendsSection: some View {
+        if session.user != nil {
+            let waiting = session.friends.filter { $0.isPending && $0.incoming }.count
+            Section {
+                Button { path.append(FriendsRoute.list) } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.2.badge.plus").foregroundStyle(Tokens.indigo)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Bạn bè").font(.callout.weight(.semibold))
+                            Text(friendsSubtitle(waiting: waiting))
+                                .font(.caption).foregroundStyle(Tokens.inkSecondary)
+                        }
+                        Spacer()
+                        if waiting > 0 {
+                            Text("\(waiting)")
+                                .font(.caption.weight(.bold)).foregroundStyle(Tokens.onIndigo)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Tokens.seal, in: Capsule())
+                        }
+                        Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Tokens.inkTertiary)
+                    }
+                }
+                .foregroundStyle(Tokens.ink)
+            }
+        }
+    }
+
+    private func friendsSubtitle(waiting: Int) -> String {
+        if waiting > 0 { return LS(localized: "\(waiting) lời mời kết bạn đang chờ") }
+        if session.user?.isGuest == true { return LS(localized: "Đăng nhập Apple để kết bạn") }
+        let count = session.friends.filter(\.isAccepted).count
+        return count > 0 ? LS(localized: "\(count) người bạn · mời chơi nhanh")
+                         : LS(localized: "Thêm bạn bằng mã để mời chơi nhanh")
     }
 
     /// Finished on-device games: replayable, analysable, exportable.

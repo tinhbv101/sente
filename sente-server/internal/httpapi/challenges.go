@@ -68,11 +68,21 @@ func (s *Server) handleCreateChallenge(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusBadRequest, "invalid_config", err.Error())
 		return
 	}
+	if request.InviteeUserID != "" && !isUUID(request.InviteeUserID) {
+		writeError(w, r, http.StatusBadRequest, "malformed", "Yêu cầu không hợp lệ.")
+		return
+	}
 	claims := userFrom(r.Context())
 	challenge, err := s.challenges.Create(r.Context(), store.CreateChallengeParams{
 		CreatorID: claims.UserID, InviteeID: request.InviteeUserID,
 		Config: config, CreatorColor: request.CreatorColor,
 	})
+	// A refusal is its own answer. Everything else is a settings problem, and
+	// only those errors carry text meant for a person to read.
+	if errors.Is(err, store.ErrInviteRefused) {
+		writeError(w, r, http.StatusForbidden, "invite_refused", "Không thể mời người chơi này.")
+		return
+	}
 	if err != nil {
 		s.config.Logger.Warn("creating invitation", "error", err)
 		writeError(w, r, http.StatusBadRequest, "invalid_config", err.Error())

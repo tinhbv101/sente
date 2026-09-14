@@ -21,6 +21,8 @@ var englishErrorText = map[string]string{
 	"invalid_payload":        "The notification payload is not valid.",
 	"invalid_report":         "The report is not valid.",
 	"invalid_block":          "The block request is not valid.",
+	"apple_required":         "Sign in with Apple to add friends.",
+	"invite_refused":         "This player cannot be invited.",
 	"identity_taken":         "This Apple ID was just used elsewhere. Try again.",
 	"not_available":          "This feature is not enabled on this server.",
 	"not_configured":         "Universal links are not configured.",

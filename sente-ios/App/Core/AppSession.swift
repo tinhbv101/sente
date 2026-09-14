@@ -16,6 +16,12 @@ final class AppSession {
     private(set) var user: GuestSignUp.User?
     private(set) var games: [GameSummary] = []
     private(set) var invitations: [Challenge] = []
+    private(set) var friends: [FriendSummary] = []
+    /// A friend code to look up as soon as the friends screen can show it: from
+    /// a `sente://f/<code>` link someone shared.
+    var pendingFriendCode: String?
+    /// Set by a friend push, so tapping it opens the friends screen.
+    var openFriends = false
     private(set) var isRefreshing = false
     var pendingInviteCode: String?
     /// A game to open as soon as the home screen can navigate: from a push, or a
@@ -124,6 +130,13 @@ final class AppSession {
         async let invitations = api.myChallenges()
         self.games = try await games
         self.invitations = try await invitations
+        // Friends are a side dish: a server that cannot list them must not stop
+        // the games and invitations from loading.
+        if let user, !user.isGuest {
+            self.friends = (try? await api.friends()) ?? friends
+        } else {
+            self.friends = []
+        }
         publishWidgetSummary()
         await registerForPushIfUseful()
     }
@@ -170,15 +183,16 @@ final class AppSession {
             openSGF(url)
             return
         }
-        // sente://j/CODE, sente://g/ID and https://<host>/{j,g}/… all put the kind
-        // and the value in the last two path components; the custom scheme puts
-        // the kind in the host instead.
+        // sente://j/CODE, sente://g/ID, sente://f/CODE and https://<host>/{j,g,f}/…
+        // all put the kind and the value in the last two path components; the
+        // custom scheme puts the kind in the host instead.
         var parts = url.pathComponents.filter { $0 != "/" }
-        if let host = url.host, host == "j" || host == "g" { parts.insert(host, at: 0) }
+        if let host = url.host, ["j", "g", "f"].contains(host) { parts.insert(host, at: 0) }
         guard parts.count >= 2 else { return }
         switch parts[parts.count - 2] {
         case "j": pendingInviteCode = parts[parts.count - 1].uppercased()
         case "g": pendingGameID = parts[parts.count - 1]
+        case "f": pendingFriendCode = parts[parts.count - 1].uppercased()
         default: break
         }
     }

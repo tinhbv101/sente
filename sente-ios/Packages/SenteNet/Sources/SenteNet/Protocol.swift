@@ -77,12 +77,45 @@ public struct GameConfigRequest: Encodable, Sendable {
     public var handicap: Int
     public var timeControl: TimeControl
     public var creatorColor: String
+    /// Aims the invitation at one person instead of anyone holding the link.
+    public var inviteeUserId: String?
 
     public init(boardSize: Int = 9, rules: RuleSet = .japanese, komi: Double? = nil, handicap: Int = 0,
-                timeControl: TimeControl = .standard, creatorColor: String = "random") {
+                timeControl: TimeControl = .standard, creatorColor: String = "random",
+                inviteeUserId: String? = nil) {
         self.boardSize = boardSize; self.rules = rules.rawValue; self.komi = komi
         self.handicap = handicap; self.timeControl = timeControl; self.creatorColor = creatorColor
+        self.inviteeUserId = inviteeUserId
     }
+}
+
+/// One row of the friends screen: an accepted friend, or a request waiting
+/// either way. `incoming` is only meaningful while the status is pending.
+public struct FriendSummary: Decodable, Sendable, Identifiable, Equatable, Hashable {
+    public let userId: String
+    public let displayName: String
+    public let friendCode: String
+    public let status: String
+    public let incoming: Bool
+    public let createdAt: Date
+
+    public var id: String { userId }
+    public var isAccepted: Bool { status == "accepted" }
+    public var isPending: Bool { status == "pending" }
+}
+
+/// What a friend code resolves to. Deliberately thin: a lookup reveals a name
+/// and nothing else (docs/08 §4.2).
+public struct FoundPlayer: Decodable, Sendable, Equatable, Hashable {
+    public let userId: String
+    public let displayName: String
+    public let friendCode: String
+}
+
+public struct BlockedPlayer: Decodable, Sendable, Identifiable, Equatable, Hashable {
+    public let userId: String
+    public let displayName: String
+    public var id: String { userId }
 }
 
 public struct Challenge: Decodable, Sendable, Identifiable, Equatable {

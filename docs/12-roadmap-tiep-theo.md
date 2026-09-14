@@ -37,12 +37,12 @@
 
 | # | Hạng mục | Ghi chú |
 |---|---|---|
-| C1 | Danh sách bạn bè (FR-A3/M4): kết bạn bằng mã, mời thẳng | tuần-công, server+app |
+| C1 | Danh sách bạn bè (FR-A3/M4): kết bạn bằng mã, mời thẳng | ☑ 2026-09-11 — chỉ cho tài khoản Apple; bảng `friendships` một hàng mỗi cặp (thứ tự chuẩn hóa), hai bên cùng mời = thành bạn ngay, từ chối dính; mời chơi dùng lại `invitee_user_id` sẵn có |
 | C2 | Chat trong ván + kiểm duyệt (docs/08 §6) | tuần-công; kéo theo nghĩa vụ duyệt nội dung |
 | C3 | ELO nội bộ | sau khi có dữ liệu ván đủ nhiều |
 | C4 | Ghép ngẫu nhiên (FR-M6) | chỉ đáng khi có người online đồng thời |
 
-> Phase C chưa khởi công có chủ đích: cả bốn mục cần lượng người chơi thật để đáng giá,
+> C1 đã làm (2026-09-11); C2–C4 vẫn hoãn có chủ đích: cả bốn mục cần lượng người chơi thật để đáng giá,
 > và mỗi mục là nhiều ngày server-side. Làm A+B trước để bản TestFlight giữ được tester.
 
 ## Phase D — Trước khi nộp App Store

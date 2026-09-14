@@ -8,6 +8,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     static var onDeviceToken: ((String) -> Void)?
     static var onOpenGame: ((String) -> Void)?
     static var onOpenInvite: ((String) -> Void)?
+    /// A friend request or acceptance; there is no game to open.
+    static var onOpenFriends: (() -> Void)?
     /// A push arriving while the app is in the foreground.
     static var onForegroundPush: (() -> Void)?
 
@@ -31,22 +33,45 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                             willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        // A push for the game currently on screen would only be noise.
+        // A push for the game currently on screen would only be noise. A push
+        // with no game at all -- an invitation, a friend request -- is never
+        // that: comparing two nils used to suppress every one of them.
         let gameID = notification.request.content.userInfo["game_id"] as? String
         return await MainActor.run { () -> UNNotificationPresentationOptions in
             Self.onForegroundPush?()
-            return PushRegistrar.visibleGameID == gameID ? [] : [.banner, .sound, .badge]
+            let isOnScreen = gameID != nil && PushRegistrar.visibleGameID == gameID
+            return isOnScreen ? [] : [.banner, .sound, .badge]
         }
     }
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                             didReceive response: UNNotificationResponse) async {
+        // The payload itself is not Sendable, so only the strings cross over.
         let info = response.notification.request.content.userInfo
-        if let code = info["invite_code"] as? String {
-            await MainActor.run { Self.onOpenInvite?(code) }
-        } else if let gameID = info["game_id"] as? String {
-            await MainActor.run { Self.onOpenGame?(gameID) }
+        let inviteCode = info["invite_code"] as? String
+        let kind = info["kind"] as? String
+        let gameID = info["game_id"] as? String
+        await MainActor.run { Self.route(inviteCode: inviteCode, kind: kind, gameID: gameID) }
+    }
+
+    /// Where a tapped notification goes. Named so the tests exercise this exact
+    /// branch rather than a copy of it that cannot regress with it.
+    @MainActor
+    static func route(inviteCode: String?, kind: String?, gameID: String?) {
+        if let inviteCode {
+            onOpenInvite?(inviteCode)
+        } else if kind == "friend" {
+            onOpenFriends?()
+        } else if let gameID {
+            onOpenGame?(gameID)
         }
+    }
+
+    @MainActor
+    static func route(_ info: [AnyHashable: Any]) {
+        route(inviteCode: info["invite_code"] as? String,
+              kind: info["kind"] as? String,
+              gameID: info["game_id"] as? String)
     }
 }
 

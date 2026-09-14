@@ -1,12 +1,396 @@
 {
   "sourceLanguage" : "vi",
   "strings" : {
-    "Máy đã đánh dấu sẵn những đám chắc chắn chết — chạm vào một đám quân để sửa, rồi bấm Đếm điểm." : {
+    "Đăng nhập Apple để kết bạn" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Clearly dead groups are pre-marked — tap a group to correct, then Count."
+            "value" : "Sign in with Apple to add friends"
+          }
+        }
+      }
+    },
+    "push.friend.accepted.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ accepted your friend request."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ đã nhận lời mời kết bạn."
+          }
+        }
+      }
+    },
+    "push.friend.accepted.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are now friends"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã là bạn bè"
+          }
+        }
+      }
+    },
+    "push.friend.request.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wants to be friends."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ muốn kết bạn với bạn."
+          }
+        }
+      }
+    },
+    "push.friend.request.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend request"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lời mời kết bạn"
+          }
+        }
+      }
+    },
+    "Báo khi đến lượt bạn trong ván chậm, khi ván kết thúc, khi bạn nhận lời mời và khi có người kết bạn." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tells you when it is your move in a slow game, when a game ends, when an invitation arrives, and when someone adds you."
+          }
+        }
+      }
+    },
+    "Kết bạn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends"
+          }
+        }
+      }
+    },
+    "%@ sẽ thấy lời mời trong Sente và nhận được thông báo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ will see the invitation in Sente and get a notification."
+          }
+        }
+      }
+    },
+    "Đã gửi lời mời" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitation sent"
+          }
+        }
+      }
+    },
+    "Mời %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite %@"
+          }
+        }
+      }
+    },
+    "Thêm bạn bằng mã để mời chơi nhanh" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a friend by code to invite them quickly"
+          }
+        }
+      }
+    },
+    "%lld người bạn · mời chơi nhanh" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld friends · invite in a tap"
+          }
+        }
+      }
+    },
+    "%lld lời mời kết bạn đang chờ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld friend requests waiting"
+          }
+        }
+      }
+    },
+    "Tìm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find"
+          }
+        }
+      }
+    },
+    "Đã gửi lời mời kết bạn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend request sent"
+          }
+        }
+      }
+    },
+    "Tìm thấy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Found"
+          }
+        }
+      }
+    },
+    "Mã gồm 8 ký tự, ví dụ ABCD2345. Hỏi bạn của bạn trong mục Bạn bè trên máy của họ." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An 8-character code, for example ABCD2345. Ask your friend for theirs under Friends."
+          }
+        }
+      }
+    },
+    "Thêm bạn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a friend"
+          }
+        }
+      }
+    },
+    "Đang chờ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting"
+          }
+        }
+      }
+    },
+    "Thu hồi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Withdraw"
+          }
+        }
+      }
+    },
+    "Chặn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Block"
+          }
+        }
+      }
+    },
+    "Bỏ kết bạn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove friend"
+          }
+        }
+      }
+    },
+    "Mời chơi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite"
+          }
+        }
+      }
+    },
+    "Thêm bạn bằng mã" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a friend by code"
+          }
+        }
+      }
+    },
+    "Kết bạn với mình trên Sente nhé! Mã của mình là %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let's be friends on Sente! My code is %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "Chỉ người có mã này mới gửi được lời mời kết bạn cho bạn." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only someone with this code can send you a friend request."
+          }
+        }
+      }
+    },
+    "Mã bạn bè của bạn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your friend code"
+          }
+        }
+      }
+    },
+    "Đưa mã bạn bè của bạn cho bạn bè, hoặc nhập mã của họ để gửi lời mời." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Give out your friend code, or enter theirs to send a request."
+          }
+        }
+      }
+    },
+    "Chưa có bạn nào" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No friends yet"
+          }
+        }
+      }
+    },
+    "Kết bạn cần một tài khoản thật. Đăng nhập bằng Apple để bạn bè tìm được bạn kể cả khi bạn đổi máy." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends need a real account. Sign in with Apple so your friends can find you even if you change phones."
+          }
+        }
+      }
+    },
+    "Cần đăng nhập Apple" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple sign-in needed"
+          }
+        }
+      }
+    },
+    "Bỏ chặn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unblock"
+          }
+        }
+      }
+    },
+    "Đã chặn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocked"
+          }
+        }
+      }
+    },
+    "Đã gửi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent"
+          }
+        }
+      }
+    },
+    "Bạn bè · %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends · %lld"
+          }
+        }
+      }
+    },
+    "Lời mời kết bạn · %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend requests · %lld"
+          }
+        }
+      }
+    },
+    "Bạn bè" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends"
           }
         }
       }
@@ -752,6 +1136,7 @@
       }
     },
     "Chạm vào một đám quân để bật hoặc tắt. Hai bên cùng nhìn rồi bấm Đếm điểm." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1991,6 +2376,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The server returned error %lld."
+          }
+        }
+      }
+    },
+    "Máy đã đánh dấu sẵn những đám chắc chắn chết — chạm vào một đám quân để sửa, rồi bấm Đếm điểm." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clearly dead groups are pre-marked — tap a group to correct, then Count."
           }
         }
       }

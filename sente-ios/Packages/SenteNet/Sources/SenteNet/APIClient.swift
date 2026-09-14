@@ -149,6 +149,52 @@ public actor APIClient {
         _ = try await perform("POST", "/v1/blocks", body: Body(userId: userID), authenticated: true, allowRefresh: true)
     }
 
+    public func unblock(userID: String) async throws {
+        try await requestNoContent("DELETE", "/v1/blocks/\(userID)")
+    }
+
+    public func blockedPlayers() async throws -> [BlockedPlayer] {
+        struct Envelope: Decodable { let items: [BlockedPlayer] }
+        return try await request("GET", "/v1/blocks", as: Envelope.self).items
+    }
+
+    // MARK: - Friends (docs/01 FR-A3)
+
+    public func friends() async throws -> [FriendSummary] {
+        struct Envelope: Decodable { let items: [FriendSummary] }
+        return try await request("GET", "/v1/friends", as: Envelope.self).items
+    }
+
+    /// Resolves a friend code. A code nobody owns, a guest's code and anyone
+    /// either side has blocked all throw the same `not_found` (docs/08 §4.2).
+    public func findPlayer(code: String) async throws -> FoundPlayer {
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        return try await request("GET", "/v1/users/by-code/\(trimmed)")
+    }
+
+    /// Sends a friend request, or accepts one already waiting from them.
+    /// Returns the resulting status: "pending" or "accepted".
+    @discardableResult
+    public func addFriend(userID: String) async throws -> String {
+        struct Body: Encodable { let userId: String }
+        struct Reply: Decodable { let status: String }
+        let reply: Reply = try await request("POST", "/v1/friends", body: Body(userId: userID))
+        return reply.status
+    }
+
+    public func acceptFriend(userID: String) async throws {
+        try await requestNoContent("POST", "/v1/friends/\(userID)/accept")
+    }
+
+    public func declineFriend(userID: String) async throws {
+        try await requestNoContent("POST", "/v1/friends/\(userID)/decline")
+    }
+
+    /// Unfriends, or takes back a request we sent.
+    public func removeFriend(userID: String) async throws {
+        try await requestNoContent("DELETE", "/v1/friends/\(userID)")
+    }
+
     /// The same settings, colours swapped, straight to the old opponent.
     public func rematch(gameID: String) async throws -> Challenge {
         try await request("POST", "/v1/games/\(gameID)/rematch", as: Challenge.self)

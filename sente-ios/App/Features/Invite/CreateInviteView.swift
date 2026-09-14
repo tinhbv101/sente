@@ -7,6 +7,9 @@ import SenteUI
 /// shortcuts that fill the same controls. The clock's ceiling follows the board
 /// (docs/07 §8): three hours on 9×9, nine on 13×13, a day on 19×19.
 struct CreateInviteView: View {
+    /// When set, the invitation is aimed at this friend instead of at anyone
+    /// holding the link -- the directed invitation the server already supported.
+    var invitee: FriendSummary?
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
 
@@ -119,7 +122,7 @@ struct CreateInviteView: View {
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
-            .navigationTitle("Mời bạn chơi")
+            .navigationTitle(invitee.map { LS(localized: "Mời \($0.displayName)") } ?? LS(localized: "Mời bạn chơi"))
             .navigationBarTitleDisplayMode(.inline)
             // A smaller board has a lower ceiling; a choice above it snaps to the cap.
             .onChange(of: boardSize) { _, size in
@@ -135,8 +138,15 @@ struct CreateInviteView: View {
                 .padding(16)
             }
             .sheet(item: $created) { invite in
-                ShareInviteView(invite: invite) { dismiss() }
-                    .presentationDetents([.large])
+                if invitee != nil {
+                    // A directed invitation needs no link: it is already on its
+                    // way to one person, who gets a push about it.
+                    SentToFriendView(name: invitee?.displayName ?? "") { dismiss() }
+                        .presentationDetents([.medium])
+                } else {
+                    ShareInviteView(invite: invite) { dismiss() }
+                        .presentationDetents([.large])
+                }
             }
         }
     }
@@ -154,7 +164,8 @@ struct CreateInviteView: View {
         do {
             created = try await session.api.createChallenge(GameConfigRequest(
                 boardSize: boardSize, rules: rules, handicap: handicap,
-                timeControl: timeControl, creatorColor: colour))
+                timeControl: timeControl, creatorColor: colour,
+                inviteeUserId: invitee?.userId))
             await session.refreshQuietly()
         } catch let apiError as APIError {
             error = apiError.userMessage
@@ -215,5 +226,25 @@ struct ShareInviteView: View {
                 onDone()
             }
         }
+    }
+}
+
+
+/// The confirmation for an invitation aimed at one friend.
+struct SentToFriendView: View {
+    let name: String
+    let onDone: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "paperplane.fill").font(.system(size: 40)).foregroundStyle(Tokens.indigo)
+            Text("Đã gửi lời mời").font(.title3.weight(.semibold))
+            Text("\(name) sẽ thấy lời mời trong Sente và nhận được thông báo.")
+                .font(.footnote).foregroundStyle(Tokens.inkSecondary).multilineTextAlignment(.center)
+            Button("Xong") { onDone() }.buttonStyle(PrimaryButton())
+        }
+        .padding(24)
+        .foregroundStyle(Tokens.ink)
+        .presentationBackground(Tokens.sheet)
     }
 }

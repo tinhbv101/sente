@@ -25,6 +25,7 @@ struct SenteApp: App {
                     AppDelegate.onDeviceToken = { [session] in session.deviceTokenReceived($0) }
                     AppDelegate.onOpenGame = { [session] in session.pendingGameID = $0 }
                     AppDelegate.onOpenInvite = { [session] in session.pendingInviteCode = $0 }
+                    AppDelegate.onOpenFriends = { [session] in session.openFriends = true }
                     // A push while the app is open means the list is stale right now.
                     AppDelegate.onForegroundPush = { [session] in Task { await session.refreshQuietly() } }
                     await session.start()

@@ -23,8 +23,10 @@ extension AppSession {
 
     // MARK: - Push
 
-    func registerForPushIfUseful() async {
-        guard !pushAttempted, !games.isEmpty else { return }
+    /// A friend request arrives when the app is closed, so the friends screen is
+    /// a moment worth a prompt even for someone with no games yet.
+    func registerForPushIfUseful(force: Bool = false) async {
+        guard !pushAttempted, force || !games.isEmpty else { return }
         pushAttempted = true
         // Never re-prompt: once denied, Settings is the only way back.
         if await PushRegistrar.status() != .denied { await PushRegistrar.register() }

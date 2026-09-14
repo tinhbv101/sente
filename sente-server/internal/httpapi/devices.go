@@ -49,7 +49,9 @@ func (s *Server) handleUnregisterDevice(w http.ResponseWriter, r *http.Request) 
 }
 
 // The notification kinds a person may switch off, one by one.
-var knownPrefKeys = map[string]bool{"turn": true, "low_time": true, "game_end": true, "invite": true}
+var knownPrefKeys = map[string]bool{
+	"turn": true, "low_time": true, "game_end": true, "invite": true, "friend": true,
+}
 
 func (s *Server) handleDevicePrefs(w http.ResponseWriter, r *http.Request) {
 	var patch map[string]bool

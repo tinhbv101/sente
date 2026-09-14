@@ -67,6 +67,7 @@ type Server struct {
 	moderation *store.Moderation
 	devices    *store.Devices
 	identities *store.Identities
+	friends    *store.Friends
 	mux        *http.ServeMux
 }
 
@@ -83,6 +84,7 @@ func New(config Config) *Server {
 		moderation: store.NewModeration(config.Pool),
 		devices:    store.NewDevices(config.Pool),
 		identities: store.NewIdentities(config.Pool),
+		friends:    store.NewFriends(config.Pool),
 		mux:        http.NewServeMux(),
 	}
 	s.routes()
@@ -112,7 +114,18 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("DELETE /v1/me", s.authed(ratelimit.Read, s.handleDeleteAccount))
 	s.mux.HandleFunc("POST /v1/reports", s.authed(ratelimit.CreateInvite, s.handleReport))
 	s.mux.HandleFunc("POST /v1/blocks", s.authed(ratelimit.Read, s.handleBlock))
+	s.mux.HandleFunc("GET /v1/blocks", s.authed(ratelimit.Read, s.handleListBlocks))
 	s.mux.HandleFunc("DELETE /v1/blocks/{id}", s.authed(ratelimit.Read, s.handleUnblock))
+
+	s.mux.HandleFunc("GET /v1/friends", s.authed(ratelimit.Read, s.handleListFriends))
+	s.mux.HandleFunc("POST /v1/friends", s.authed(ratelimit.FriendWrite, s.handleAddFriend))
+	s.mux.HandleFunc("POST /v1/friends/{id}/accept", s.authed(ratelimit.FriendWrite, s.handleAcceptFriend))
+	s.mux.HandleFunc("POST /v1/friends/{id}/decline", s.authed(ratelimit.FriendWrite, s.handleDeclineFriend))
+	s.mux.HandleFunc("DELETE /v1/friends/{id}", s.authed(ratelimit.FriendWrite, s.handleRemoveFriend))
+	// Tighter than a read: this is the only endpoint that turns a code someone
+	// guessed into a person (docs/08 §4.2).
+	s.mux.HandleFunc("GET /v1/users/by-code/{code}",
+		s.authed(ratelimit.FriendLookup, s.handleLookupFriendCode))
 	s.mux.HandleFunc("POST /v1/devices", s.authed(ratelimit.Read, s.handleRegisterDevice))
 	s.mux.HandleFunc("DELETE /v1/devices/{token}", s.authed(ratelimit.Read, s.handleUnregisterDevice))
 	s.mux.HandleFunc("PATCH /v1/devices/{token}", s.authed(ratelimit.Read, s.handleDevicePrefs))
@@ -139,6 +152,7 @@ func (s *Server) routes() {
 
 	// Public pages and operational endpoints.
 	s.mux.HandleFunc("GET /j/{code}", s.limit(ratelimit.Read, s.handleLanding))
+	s.mux.HandleFunc("GET /f/{code}", s.limit(ratelimit.Read, s.handleFriendLanding))
 	s.mux.HandleFunc("GET /privacy", s.limit(ratelimit.Read, s.handlePrivacy))
 	s.mux.HandleFunc("GET /.well-known/apple-app-site-association", s.handleAASA)
 	s.mux.Handle("GET /metrics", metricsHandler())
@@ -160,6 +174,35 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 	_ = json.NewEncoder(w).Encode(map[string]apiError{
 		"error": {Code: code, Message: errorText(r, code, message)},
 	})
+}
+
+// isUUID guards every {id} path value and every user id in a body. Without it a
+// malformed id reaches a UUID-typed query and comes back as a 500 carrying pgx's
+// own words (docs/08 §11).
+func isUUID(value string) bool {
+	if len(value) != 36 {
+		return false
+	}
+	for index, char := range value {
+		switch index {
+		case 8, 13, 18, 23:
+			if char != '-' {
+				return false
+			}
+		default:
+			isHex := (char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')
+			if !isHex {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// normaliseCode accepts a friend code the way a person types it: any case, with
+// whatever spaces the keyboard added.
+func normaliseCode(raw string) string {
+	return strings.ToUpper(strings.TrimSpace(raw))
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
