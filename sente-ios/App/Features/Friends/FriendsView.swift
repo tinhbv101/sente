@@ -9,7 +9,8 @@ enum FriendsRoute: Hashable { case list }
 /// survive a reinstall.
 struct FriendsView: View {
     @Environment(AppSession.self) private var session
-    @State private var addingCode = false
+    @Environment(AppRouter.self) private var router
+    @State private var showingMyQR = false
     @State private var busy: String?
     @State private var error: String?
     @State private var invitee: FriendSummary?
@@ -56,23 +57,16 @@ struct FriendsView: View {
         .toolbar {
             if session.user?.isGuest == false {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { addingCode = true } label: { Image(systemName: "person.badge.plus") }
-                        .accessibilityLabel("Thêm bạn bằng mã")
+                    Button { router.sheet = .addFriend(code: "") } label: {
+                        Image(systemName: "person.badge.plus")
+                    }
+                    .accessibilityLabel("Thêm bạn bằng mã")
                 }
             }
         }
         .refreshable { await load() }
         .task { await load() }
-        // A shared sente://f/<code> link opens the add sheet with the code ready.
-        // Both paths wait for the profile: a cold start from a link reaches the
-        // screen before it is known whether this account may add anyone.
-        .onChange(of: session.pendingFriendCode) { _, _ in openAddSheetIfAllowed() }
-        .onChange(of: session.user?.isGuest) { _, _ in openAddSheetIfAllowed() }
-        .onAppear { openAddSheetIfAllowed() }
-        .sheet(isPresented: $addingCode) {
-            AddFriendView(initialCode: session.pendingFriendCode ?? "")
-                .onDisappear { session.pendingFriendCode = nil }
-        }
+        .sheet(isPresented: $showingMyQR) { myCodeSheet }
         .sheet(item: $invitee) { friend in
             CreateInviteView(invitee: friend)
         }
@@ -90,11 +84,6 @@ struct FriendsView: View {
         }
     }
 
-    private func openAddSheetIfAllowed() {
-        guard session.pendingFriendCode != nil, session.user?.isGuest == false else { return }
-        addingCode = true
-    }
-
     private var appleRequired: some View {
         Section {
             ContentUnavailableView {
@@ -104,7 +93,7 @@ struct FriendsView: View {
             } actions: {
                 // Telling someone to go to Settings without taking them there is
                 // how a dead end is written.
-                NavigationLink { SettingsView() } label: { Text("Mở Cài đặt") }
+                Button("Mở Cài đặt") { router.show(.me) }
                     .buttonStyle(.borderedProminent).tint(Tokens.indigo)
             }
             .listRowBackground(Color.clear)
@@ -124,24 +113,53 @@ struct FriendsView: View {
 
     private var myCodeSection: some View {
         Section {
-            if let user = session.user {
-                let link = InviteCode.friendLink(for: user.friendCode)
-                ShareLink(item: LS(localized: "Kết bạn với mình trên Sente nhé! Mã của mình là \(user.friendCode): \(link)")) {
+            if session.user != nil {
+                Button { showingMyQR = true } label: {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Mã bạn bè của bạn").font(.callout.weight(.semibold))
-                            Text(user.friendCode)
+                            Text(session.user?.friendCode ?? "")
                                 .font(.system(.body, design: .monospaced)).tracking(3)
                                 .foregroundStyle(Tokens.inkSecondary)
                         }
                         Spacer()
-                        Image(systemName: "square.and.arrow.up").foregroundStyle(Tokens.indigo)
+                        Image(systemName: "qrcode").foregroundStyle(Tokens.indigo)
                     }
+                }
+                .foregroundStyle(Tokens.ink)
+                Button { router.sheet = .scan } label: {
+                    Label("Quét mã của bạn bè", systemImage: "qrcode.viewfinder")
                 }
                 .foregroundStyle(Tokens.ink)
             }
         } footer: {
             Text("Chỉ người có mã này mới gửi được lời mời kết bạn cho bạn.")
+        }
+    }
+
+    /// The code as a QR a friend can scan, with the same text to share by hand.
+    @ViewBuilder private var myCodeSheet: some View {
+        if let user = session.user {
+            let link = InviteCode.friendLink(for: user.friendCode, server: session.settings.serverURL)
+            VStack(spacing: 18) {
+                Text("Mã bạn bè của bạn").font(.title3.weight(.semibold))
+                QRCard(payload: link)
+                Text(user.friendCode)
+                    .font(.system(size: 30, weight: .medium, design: .monospaced)).tracking(4)
+                    .padding(.vertical, 8).padding(.horizontal, 20)
+                    .background(Tokens.sheetSecondary, in: RoundedRectangle(cornerRadius: 12))
+                Text("Bạn của bạn mở Sente, bấm nút quét ở giữa thanh dưới và đưa camera vào mã này.")
+                    .font(.footnote).foregroundStyle(Tokens.inkSecondary)
+                    .multilineTextAlignment(.center)
+                ShareLink(item: LS(localized: "Kết bạn với mình trên Sente nhé! Mã của mình là \(user.friendCode): \(link)")) {
+                    Label("Chia sẻ", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(PrimaryButton())
+                Button("Xong") { showingMyQR = false }.buttonStyle(SecondaryButton())
+            }
+            .padding(24)
+            .foregroundStyle(Tokens.ink)
+            .presentationBackground(Tokens.sheet)
         }
     }
 

@@ -38,6 +38,8 @@ final class FriendsTests: XCTestCase {
         // Both kinds of code look identical, so an invitation parser must refuse
         // a friend link outright rather than reading the code out of it.
         XCTAssertNil(InviteCode.parse(link))
+        // And the scanner reads it as a friend, never as an invitation.
+        XCTAssertEqual(InviteCode.classify(link), .friend("ABCD2345"))
     }
 
     func testTheListSplitsIntoWaiting_FriendsAndSent() {

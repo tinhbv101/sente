@@ -27,6 +27,7 @@ struct LocalReplayView: View {
         .foregroundStyle(Tokens.ink)
         .navigationTitle("Xem lại")
         .navigationBarTitleDisplayMode(.inline)
+        .hidesSenteTabBar()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 ShareLink(item: sgfFile, preview: SharePreview("Ván cờ \(record.size)×\(record.size)")) {

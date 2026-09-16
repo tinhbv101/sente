@@ -36,20 +36,18 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sente uses the camera to scan invitation QR codes."
+            "value" : "Sente uses the camera to scan invitation and friend QR codes."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sente dùng camera để quét mã QR của lời mời."
+            "value" : "Sente dùng camera để quét mã QR của lời mời và mã bạn bè."
           }
         }
       }
     },
-    "Smart Game Format" : {
-
-    }
+    "Smart Game Format" : {}
   },
   "version" : "1.0"
 }

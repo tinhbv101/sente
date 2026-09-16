@@ -55,7 +55,7 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UIRequiresFullScreen: true
         ITSAppUsesNonExemptEncryption: false
-        NSCameraUsageDescription: Sente dùng camera để quét mã QR của lời mời.
+        NSCameraUsageDescription: Sente dùng camera để quét mã QR của lời mời và mã bạn bè.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         # sente://j/<code> opens an invitation. https://sente.devlord.net/j/<code>

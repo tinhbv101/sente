@@ -390,6 +390,26 @@ iCloud backup của hệ thống. Dọn cache: giữ 50 ván gần nhất, xóa 
 
 ## 8. Danh sách màn hình
 
+### 8.0 Khung điều hướng (từ 2026-09-15)
+
+`RootTabsView` là vỏ của app: **bốn tab quanh một nút quét nổi ở giữa** —
+Ván · Bạn bè · **[QR]** · Học · Tôi.
+
+- Ô giữa là một tab item **thật** (để thanh tự chia đều 5 ô và VoiceOver đọc được),
+  nhưng nội dung của nó không bao giờ hiện: chọn nó mở màn quét rồi trả lựa chọn
+  về tab cũ. Vòng tròn nhìn thấy là **overlay** vẽ đè lên.
+- Vì là overlay, `.toolbar(.hidden, for: .tabBar)` **không** giấu được nó. Màn hình
+  bàn cờ phải gọi `.hidesSenteTabBar()` — nó bật `AppRouter.barHidden` để giấu cả
+  hai cùng lúc. Thiếu modifier này thì vòng tròn nổi đè lên bàn cờ ([§8.1](#81-chi-tiết-màn-hình-ván-cờ)).
+- `AppRouter` (giữ trong `SenteApp`, **trên** `.id(language)` để đổi ngôn ngữ không
+  xoá mất stack) sở hữu: tab đang chọn, bốn `NavigationPath`, và **một** ô sheet.
+  Mọi thứ đến từ bên ngoài — link, push, launch argument — đều lái qua router.
+- Mọi tab đăng ký cùng một bộ `navigationDestination` (`withSenteRoutes()`), nên một
+  route đẩy từ đâu cũng mở được. Không còn `navigationDestination(isPresented:)`:
+  trộn nó với push theo giá trị trên cùng một path sẽ đẩy-rồi-nhả.
+- Launch argument đọc **một lần** ở gốc rồi `removeObject`: dưới TabView, `onAppear`
+  của tab chưa chọn không chạy, còn key không xoá sẽ kích lại mỗi lần quay về tab.
+
 | Màn hình | Nội dung chính | Ưu tiên |
 |----------|----------------|---------|
 | Onboarding | 3 bước: chào, chọn trình độ (quyết định cỡ bàn mặc định), xin quyền push | P0 |
@@ -397,7 +417,8 @@ iCloud backup của hệ thống. Dọn cache: giữ 50 ván gần nhất, xóa 
 | Học cờ vây | Bài học tương tác (FR-M8): nội dung là dữ liệu (`App/Resources/Lessons.json`, song ngữ vi/en, 4 chương · 21 bài · 53 bước — luật, khí, đám quân, bắt quân, atari, tự sát, ko, lãnh thổ, đánh đôi, bắt hồi, đuổi biên, **đuổi thang** (trường `atariAt`: test khẳng định sau mỗi nước đuổi đám trắng còn đúng 1 khí — thang ép thật), bắt ngược, hai mắt, điểm trọng yếu, mắt giả, thẳng bốn, cong ba, góc trước, cắt/nối, phòng đánh đôi, tổng hợp). Mỗi bước là *info* (bàn cờ + điểm đánh dấu, dùng lớp chấm territory của `BoardView` làm marker) hoặc *task* (đặt đúng nước → engine GoKit áp thật, có kịch bản trắng đáp, sai giữ nguyên và báo; bước không có `board` nối tiếp thế cờ bước trước). `LessonContentTests` phát lại **toàn bộ** file qua engine: thế cờ 9 hàng × 9 cột, nước đúng hợp lệ, số quân bắt khớp `captures` — nội dung sai là CI đỏ. Tiến độ trong UserDefaults; Home hiện x/15; launch arg `-openLearn 1` | P1 |
 | Đấu với máy / Máy đấu máy | Bot offline (FR-M9), 4 cấp. Hai cấp dưới là heuristic (Mới tập: hình dạng + nhặt quân biếu; Biết bắt quân: bắt/cứu atari, né tự-atari). Hai cấp trên là **MCTS-UCT thật** (`MCTS.swift`): chọn nhánh UCB1 + prior heuristic (FPU theo prior thay vì ∞), **cắt nhánh top-16** theo prior (ngân sách điện thoại không nuôi nổi 60 nhánh), **playout cụt ~28 nước có phản xạ bắt/cứu rồi đánh giá diện tích qua sigmoid** (mượt và rẻ hơn chơi tới hết ván), prior chỉ tính đầy đủ cho nước chạm quân. "Suy tính" ~700 lượt/1,2s; "Cao thủ" chạy theo **hạn 3 giây/nước** — máy càng mạnh càng sâu — và biết **đầu hàng** khi winrate < 6% và thua > 12 điểm sau nước 20. Ứng viên = `legalMoves()` trừ mắt thật → không bao giờ sai luật. Bot là ghế trong `LocalGameStore` (`blackBot`/`whiteBot`): người-máy lưu `bot-game.json`, máy-máy tự đếm khi hai bên nhường, có tạm dừng. Test: bắt quân biếu ở mọi cấp ≥2, tự cứu atari, không lấp mắt 20 seed × 4 cấp, fuzz kết thúc ván, và "Suy tính" (320 lượt) thắng "Biết bắt quân" ≥3/4 ván seed cố định | P1 |
 | Chơi trên máy này | Pass-and-play (FR-M5): thiết lập (cỡ bàn, luật, chấp, tên hai người) → bàn cờ dùng lại `BoardView`, ai tới lượt thì đặt; nhường lượt, đi lại một nước (không cần hỏi — cả hai đang nhìn), xin thua, hai lần nhường → đánh dấu quân chết → Đếm điểm hoặc Chơi tiếp; chia sẻ SGF. Hoàn toàn offline: `LocalGameStore` trên GoKit, ván đang chơi lưu `local-game.json` trong Application Support và mở lại được từ Home | P1 |
-| Chia sẻ lời mời | Mã QR (CoreImage, chứa `share_url` — universal link — hoặc `sente://j/<mã>` khi server không có URL công khai), mã 8 chữ, nút Chia sẻ. Bên nhận: "Nhập mã lời mời" có nút **Quét mã QR** (AVFoundation, `NSCameraUsageDescription`); ô nhập cũng nhận cả link dán vào (`InviteCode.parse`). Simulator không có camera → màn quét báo rõ, không crash | P0 |
+| Chia sẻ lời mời | Mã QR (CoreImage, chứa `share_url` — universal link — hoặc `sente://j/<mã>` khi server không có URL công khai), mã 8 chữ, nút Chia sẻ. Ô nhập mã cũng nhận link dán vào (`InviteCode.parse`) | P0 |
+| **Quét mã QR** | Một màn quét duy nhất cho cả hai việc, mở từ nút giữa thanh tab. `InviteCode.classify` phân loại payload: `/j/<mã>` → vào ván, `/f/<mã>` → kết bạn, `/g/<id>` → mở ván (id là UUID, **không** đi qua bộ chuẩn hoá 8 ký tự), mã trần → lời mời (định dạng cũ, đã in ra ngoài đời). Mã QR lạ hoặc mã hỏng chỉ hiện dòng nhắc và **camera vẫn chạy tiếp** — cờ chống lặp chỉ chốt khi thật sự hành động, nếu không một mã lạ lướt qua sẽ làm máy điếc với mọi mã sau. Quét đúng mã của chính mình được báo riêng (server cố tình trả 404 giống mã không tồn tại). Có **Chọn ảnh có mã QR** (PhotosPicker + `VNDetectBarcodesRequest`, không cần quyền thư viện vì picker chạy ngoài tiến trình). Máy không có camera → vào thẳng nhánh chọn ảnh, không xin quyền không dùng được | P0 |
 | Tạo lời mời | Chọn cỡ bàn (9/13/19), thể thức (tính giờ: thời gian chính + byo-yomi; thư tín: ngày/nước), luật, chấp, màu. Ba preset chỉ là nút điền nhanh. Danh sách thời gian cắt theo trần của cỡ bàn (`TimeLimits`, phản chiếu `game.MaxMainTime`); đổi bàn nhỏ hơn thì thời gian đang chọn kẹp về trần | P0 |
 | Xem trước lời mời | Ai mời, cấu hình gì, Chấp nhận / Từ chối | P0 |
 | **Ván cờ** | Bàn cờ, hai đồng hồ, tù binh, nút Pass/Xin thua/Chat, banner trạng thái kết nối | P0 |
@@ -405,7 +426,7 @@ iCloud backup của hệ thống. Dọn cache: giữ 50 ván gần nhất, xóa 
 | Kết quả | Người thắng, phân tích tỉ số, nút Chơi lại / Xuất SGF / Xem lại | P0 |
 | Replay | Bàn cờ + thanh tua nước đi + chat theo nước, cho phép thử biến hóa | P1 |
 | Lịch sử | Danh sách ván, bộ lọc | P0 |
-| Bạn bè | Danh sách, mã bạn bè của tôi, thêm bạn | P1 |
+| Bạn bè | Lời mời đến / bạn bè / đã gửi / đã chặn; mã bạn bè của tôi hiện dưới dạng **QR** (trên thẻ trắng — mã vẽ đen trên nền trong, nền tối của app gần như đen thì camera không đọc nổi) kèm nút chia sẻ; thêm bạn bằng mã gõ tay hoặc quét; "Mời chơi" đi thẳng vào lời mời đích danh | P1 |
 | Cài đặt | Tài khoản, thông báo, hiển thị bàn cờ, âm thanh/haptic, riêng tư, xóa tài khoản | P0 |
 
 ### 8.1 Chi tiết màn hình ván cờ

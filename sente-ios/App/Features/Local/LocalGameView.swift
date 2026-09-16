@@ -19,6 +19,7 @@ struct LocalGameView: View {
             }
         }
         .navigationTitle(store == nil ? LS(localized: "Chơi trên máy này") : "")
+        .hidesSenteTabBar()
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if store == nil, let record = FileLocalGameStorage().load(), !record.moves.isEmpty {

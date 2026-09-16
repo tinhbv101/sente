@@ -18,6 +18,7 @@ struct BotWatchView: View {
             }
         }
         .navigationTitle(store == nil ? LS(localized: "Máy đấu máy") : "")
+        .hidesSenteTabBar()
         .navigationBarTitleDisplayMode(.inline)
         // `-autoWatch 1` starts a default match on launch, for screenshots.
         .onAppear {

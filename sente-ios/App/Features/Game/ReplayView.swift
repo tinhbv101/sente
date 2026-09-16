@@ -38,6 +38,7 @@ struct ReplayView: View {
         .foregroundStyle(Tokens.ink)
         .navigationTitle("Xem lại")
         .navigationBarTitleDisplayMode(.inline)
+        .hidesSenteTabBar()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 ShareLink(item: session.settings.serverURL.appending(path: "/v1/games/\(summary.gameId)/sgf")) {

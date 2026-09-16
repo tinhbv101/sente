@@ -38,9 +38,6 @@ struct SettingsView: View {
                     }
                     if let nameError { Text(nameError).font(.footnote).foregroundStyle(.red) }
                     LabeledContent("Mã bạn bè", value: user.friendCode)
-                    if !user.isGuest {
-                        NavigationLink { FriendsView() } label: { Label("Bạn bè", systemImage: "person.2") }
-                    }
                     if user.isGuest {
                         SignInWithAppleButton(.continue, onRequest: prepareAppleRequest, onCompletion: handleApple)
                             .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)

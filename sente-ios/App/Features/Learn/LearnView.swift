@@ -32,6 +32,7 @@ struct LearnView: View {
         .background(Tokens.paper.ignoresSafeArea())
         .foregroundStyle(Tokens.ink)
         .navigationTitle("Học cờ vây")
+        .hidesSenteTabBar()
         .onAppear { progress = LessonProgress().done }
     }
 }
@@ -69,6 +70,7 @@ struct LessonPlayerView: View {
         .padding(.horizontal, 12)
         .background(Tokens.paper.ignoresSafeArea())
         .navigationTitle(store.lesson.title.text)
+        .hidesSenteTabBar()
         .navigationBarTitleDisplayMode(.inline)
     }
 

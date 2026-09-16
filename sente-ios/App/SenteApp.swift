@@ -3,6 +3,9 @@ import SwiftUI
 @main
 struct SenteApp: App {
     @State private var session = AppSession()
+    // Above the language id below: rebuilding the tree on a language change must
+    // not throw away which tab you were on and everything pushed on it.
+    @State private var router = AppRouter()
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
 
@@ -15,6 +18,7 @@ struct SenteApp: App {
         WindowGroup {
             RootView()
                 .environment(session)
+                .environment(router)
                 // nil follows the system; a choice in Settings overrides it.
                 .preferredColorScheme(session.settings.appearance.colorScheme)
                 // A language change rebuilds the tree, so every visible string
@@ -62,7 +66,7 @@ struct RootView: View {
                 NavigationLink("Đổi máy chủ") { SettingsView() }
             }
         case .ready:
-            HomeView()
+            RootTabsView()
         }
     }
 }

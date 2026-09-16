@@ -30,6 +30,7 @@ struct GameView: View {
         .padding(.horizontal, 12)
         .background(Tokens.paper.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        .hidesSenteTabBar()
         // Pushes about the game on screen are held back (PushRegistrar).
         .onAppear { PushRegistrar.visibleGameID = summary.gameId }
         .overlay(alignment: .top) { banner }

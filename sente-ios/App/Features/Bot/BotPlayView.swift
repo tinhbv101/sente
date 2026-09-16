@@ -27,6 +27,7 @@ struct BotPlayView: View {
             }
         }
         .navigationTitle(store == nil ? LS(localized: "Đấu với máy") : "")
+        .hidesSenteTabBar()
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if store == nil, let record = Self.storage.load(), !record.moves.isEmpty {
