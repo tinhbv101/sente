@@ -1,106 +1,121 @@
 # Sente
 
-Cờ vây online trên iOS. Thiết kế đầy đủ ở [`docs/`](docs/README.md).
+Go — cờ vây — on iOS: a SwiftUI app and a Go backend, built as one project.
+Full design documents live in [`docs/`](docs/README.md) (written in Vietnamese).
 
-## Trạng thái
+Currently in TestFlight beta, running against a deployed server.
 
-| Phần | Trạng thái |
-|---|---|
-| Tài liệu thiết kế (11 tài liệu) | Xong |
-| `rules-spec/` — hằng số Zobrist, 43 conformance vector, parity lock | Xong |
-| `sente-ios/Packages/GoKit` — engine luật Swift | **Xong · 57/57 xanh · coverage 98,9% dòng / 93,4% nhánh** |
-| `sente-server/internal/rules` — engine luật Go | **Xong · 40/40 xanh** |
-| `sente-server/internal/game` — đồng hồ, đàm phán quân chết, máy trạng thái ván | **Xong · 68/68 xanh** |
-| `sente-server/internal/store` — PostgreSQL, migration, append-only moves | **Xong · 25/25 xanh (testcontainers)** |
-| `sente-server/internal/cluster` — lease Redis, heartbeat, reaper | **Xong · 14/14 xanh (Redis thật)** |
-| `sente-server/internal/game` — Actor: goroutine sở hữu ván, timer đồng hồ | **Xong · 15/15 xanh (fake clock, `-race`)** |
-| `sente-server/internal/node` — Registry: lease + store + actor, **chaos test takeover** | **Xong · 19/19 xanh** |
-| `sente-server/internal/wire` — codec command/event xuyên tiến trình | **Xong · 7/7 xanh** |
-| `sente-server/internal/hub` — định tuyến xuyên node, fanout sự kiện | **Xong · 14/14 xanh** |
-| `sente-server/internal/auth` + `store/refresh` — tài khoản khách, JWT 15′, **refresh token xoay vòng 30 ngày** | **Xong** (chưa có Sign in with Apple) |
-| `sente-server/internal/httpapi` — REST + WebSocket, lời mời, **xóa tài khoản, báo cáo/chặn, SGF, replay, landing page, AASA, /metrics** | **Xong · 36/36 xanh (đầu-cuối)** |
-| `sente-server/internal/sweep` — xử hết giờ cho ván không node nào đang chạy | **Xong · 3/3 xanh** |
-| `sente-server/internal/ratelimit` — token bucket trong Redis | **Xong · 8/8 xanh** |
-| `cmd/server` + Docker, chạy sau reverse proxy có sẵn — **deploy được** | **Xong** — xem [docs/11](docs/11-deployment.md) |
-| CI (`make ci`) — drift, parity, test, coverage gate | **Xong** |
-| `sente-ios/Packages/SenteNet` — REST + WebSocket client, reconnect, outbox | **Xong · 12/12 xanh** |
-| `sente-ios/Packages/SenteUI` — bàn cờ Canvas, cử chỉ đặt quân, đồng hồ | **Xong · 6/6 xanh** |
-| `sente-ios/App` — Home, mời/nhận, ván, đếm điểm, **xem lại ván**, cài đặt (sáng/tối, **xóa tài khoản**), **báo cáo/chặn**, icon | **Chạy được trên simulator** · `GameStore` **23/23 test** (optimistic/rollback, thứ tự sự kiện, canary hash) |
-| Còn lại (Sign in with Apple, push APNs, XCUITest, TestFlight) | Chưa bắt đầu — cả hai đầu cần Apple Developer key |
+## What it does
 
-Hai engine luật độc lập, cùng chạy một bộ vector và một file parity — ràng buộc quan trọng
-nhất của toàn hệ thống ([ADR-002](docs/03-solution-design.md#adr-002--nơi-đặt-engine-luật-cờ)).
+- **Play online** — invite a friend by link or QR code, or scan theirs. Live games
+  with byo-yomi, and correspondence games measured in days per move, with push
+  notifications when it is your turn or your clock runs low.
+- **Friends** — add by an eight-character friend code or by scanning a QR, then
+  invite straight into a game. Requires Sign in with Apple; guest accounts play
+  but cannot befriend.
+- **Play offline** — four bot levels, the top two a real MCTS-UCT search that
+  understands life-and-death shapes, plus pass-and-play on one device and a
+  bot-versus-bot viewer.
+- **Learn** — 28 interactive lessons across 4 chapters, from the rules to
+  life and death, and 12 daily tsumego on a rotation with a streak.
+- **Review** — step through any finished game, ask the bot for the move it would
+  have played, or have it grade every move and name the three worst.
+- **Vietnamese and English**, switchable in the app. Server error messages are
+  localised as well, following the device language.
 
-## Bố cục
+## The thing worth knowing
+
+There are **two** rules engines — Swift on the client so a stone lands within a
+frame, Go on the server because the server is the referee. Them disagreeing is
+the single largest risk in the project. What keeps them honest is `rules-spec/`:
+one constants table, one set of vectors, one parity file, run in both CI suites.
+See [ADR-002](docs/03-solution-design.md#adr-002--nơi-đặt-engine-luật-cờ).
+
+Three layers of constraint, weakest to strongest:
+
+1. **43 conformance vectors** across 9 categories — written by hand from the
+   specification, run by both engines.
+2. **36 parity positions** — the hash of a final position, which catches one
+   engine changing how it hashes.
+3. **24 game traces** — 3,936 hash checks *per move*, which catch a divergence at
+   the exact move it happens.
+
+The second risk — **two nodes owning one game** — is held off by a Redis lease
+with compare-and-swap, and demonstrated by a chaos test in `internal/node`: kill
+a node mid-game, another rebuilds it from the database, and the position and
+prisoner counts have to match exactly.
+
+Any rules bug found **must** become a new vector **before** it is fixed. That is
+a process, not a tool — nothing can enforce it automatically.
+
+## Layout
 
 ```
-docs/           thiết kế: yêu cầu, luật cờ, kiến trúc, API, roadmap
-rules-spec/     hợp đồng dùng chung giữa hai engine luật
-  zobrist_table.json    hằng số hash — đổi là breaking change
-  vectors/              conformance vector, viết tay từ đặc tả
+docs/           design: requirements, rules spec, architecture, API, roadmap
+rules-spec/     the contract shared by the two rules engines
+  SCHEMA.md             what a vector file must contain
+  zobrist_table.json    hash constants - changing one is a breaking change
+  vectors/              conformance vectors, written by hand from the spec
   parity/
-    positions.json      36 thế cờ + hash, chống hồi quy
-    games.json          24 ván ghi từng nước, differential giữa hai engine
-  tools/                script sinh bảng Zobrist và vector
-sente-ios/      app iOS — project.yml (xcodegen) sinh ra Sente.xcodeproj
-  Packages/GoKit        engine luật, Swift thuần, không dependency
+    positions.json      36 positions + hashes, against regressions
+    games.json          24 games recorded move by move, differential
+  tools/                scripts that generate the Zobrist table and vectors
+sente-ios/      the iOS app - project.yml (xcodegen) produces Sente.xcodeproj
+  Packages/GoKit        rules engine, plain Swift, no dependencies
   Packages/SenteNet     REST + WebSocket, Keychain, backoff
-  Packages/SenteUI      BoardView (Canvas), tokens, đồng hồ, banner
-  App/                  màn hình; GameStore giữ cặp confirmed/optimistic
-  scripts/render-icon.swift   vẽ icon bằng CoreGraphics, hai biến thể sáng/tối
-sente-server/   backend Go
-  internal/rules        engine luật, gói thuần, không I/O
-  internal/game         đồng hồ (4 thể thức), đàm phán quân chết,
-                        GameSession — máy trạng thái thuần của một ván
-  internal/store        PostgreSQL: schema, migration, kho ván
-  internal/cluster      lease Redis: ai sở hữu ván nào
-  internal/node         registry: nhận ván, dựng lại từ DB, nhả lease
-  internal/wire         codec command/event giữa hai node
-  internal/hub          định tuyến: chạy tại chỗ hay chuyển tiếp
-  internal/auth         tài khoản khách + JWT
-  internal/httpapi      REST + WebSocket gateway + lời mời
-  internal/ratelimit    token bucket dùng chung giữa các node
-  cmd/server            binary chạy một node
-deploy/         compose dev (Postgres + Redis) và compose production sau proxy
-scripts/        cổng chất lượng chạy được cả local lẫn CI
+  Packages/SenteUI      BoardView (Canvas), tokens, clocks, banners
+  App/Core              session, router, language, push, haptics
+  App/Features          Game, Home, Friends, Scan, Invite, Learn, Bot, Local, Settings
+  Widgets/              WidgetKit extension - the "your turn" widget
+  Tests/                app-level tests
+  scripts/render-icon.swift   draws the icon with CoreGraphics, light and dark
+sente-server/   the Go backend
+  internal/rules        rules engine, a pure package with no I/O
+  internal/game         clocks (4 formats), dead-stone negotiation,
+                        GameSession - the pure state machine of one game
+  internal/store        PostgreSQL: schema, migrations, game storage
+  internal/cluster      Redis leases: which node owns which game
+  internal/node         registry: adopt a game, rebuild from the DB, release
+  internal/wire         command/event codec between nodes
+  internal/hub          routing: run it here or forward it
+  internal/auth         guest accounts + JWT
+  internal/apple        Sign in with Apple: JWKS, nonce, revocation
+  internal/httpapi      REST + WebSocket gateway, invitations, friends
+  internal/notify       turns game events into pushes
+  internal/push         APNs client, token-based auth
+  internal/sweep        times out games no node is running
+  internal/ratelimit    token bucket shared across nodes
+  internal/metrics      Prometheus counters
+  cmd/server            the binary that runs one node
+deploy/         dev compose (Postgres + Redis) and a production compose
+scripts/        quality gates that run the same locally and in CI
 ```
 
-## Chạy
+## Running it
+
+Needs Go 1.25, Xcode 26 (iOS 17.0 deployment target), Python 3 for the quality
+gates, Docker for the integration suites, and xcodegen for the app.
 
 ```bash
-make ci           # đúng những gì một pull request phải qua (cần Docker)
-make app          # build app iOS trên simulator + chạy test GameStore (cần xcodegen)
-make test-fast    # như trên, bỏ phần cần Docker
-make db-up        # dựng Postgres + Redis để chạy tay
-make run          # chạy server ở local
-make image        # build image production
-make smoke URL=https://sente.example.com   # kiểm tra một bản đã deploy
-make test         # cả hai engine chạy cùng bộ vector
-make test-ios     # engine Swift chạy conformance vector
-make test-server  # engine Go chạy đúng bộ vector đó
-make perf         # đo lại ở bản release, nơi con số mới có nghĩa
-make spec         # sinh lại bảng Zobrist và vector
+make ci           # everything a pull request must pass, run locally
+make test         # both engine suites plus the database integration tests
+make test-fast    # the same, minus anything that needs Docker
+make test-ios     # the Swift packages
+make test-server  # the Go suites
+make app          # build the iOS app on the simulator and run its unit tests
+make db-up        # start PostgreSQL and Redis for local development
+make run          # run the server locally against db-up
+make image        # build the production container image
+make smoke URL=https://sente.example.com   # check a deployed instance end to end
+make perf         # run the Swift suite in release, where the timings mean something
+make spec         # regenerate the Zobrist table and conformance vectors
 
-make cover        # gate: >= 95% dòng, >= 90% nhánh
-make drift        # chặn việc sửa tay file được sinh tự động
+make cover        # gates: rules engines 95% (Swift also 90% of branches),
+                  # everything else 80%
+make drift        # fail if a generated file was edited by hand
+make parity       # fail if the two engines carry different Zobrist constants
+make testflight   # archive and upload to TestFlight (needs the App Store Connect key)
 ```
 
-## Điều quan trọng nhất cần biết
-
-Có **hai** engine luật — Swift ở client để phản hồi trong một frame, Go ở server vì server
-là trọng tài. Chúng lệch nhau là rủi ro lớn nhất của dự án. Thứ giữ chúng đồng bộ là
-`rules-spec/`: cùng bảng hằng số, cùng bộ vector, cùng file parity, chạy trong CI của cả hai
-bên. Chi tiết ở [ADR-002](docs/03-solution-design.md#adr-002--nơi-đặt-engine-luật-cờ).
-
-Ba lớp ràng buộc, từ yếu tới mạnh:
-
-1. **43 conformance vector** — viết tay từ đặc tả, cả hai engine cùng chạy.
-2. **36 parity position** — hash của thế cờ cuối, bắt việc một engine đổi cách hash.
-3. **24 game trace** — 3.936 lần kiểm hash *từng nước*, bắt phân kỳ đúng tại nước xảy ra.
-
-Rủi ro thứ hai — **hai node cùng sở hữu một ván** — được chặn bằng lease Redis có
-compare-and-swap, và được chứng minh bằng chaos test trong `internal/node`: giết node giữa
-ván, node khác dựng lại từ database, thế cờ và tù binh phải khớp từng chút.
-
-Mọi bug luật phát hiện được **phải** thành một vector mới **trước khi** sửa. Đây là quy trình,
-không phải công cụ — không có gì tự động ép được nó.
+Secrets are never in git — see [docs/11](docs/11-deployment.md) for how a
+deployment is configured.
